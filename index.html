@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#f8f8f1"/><meta name="description" content="小芽 - 面向大学生的成长与生活管理助手"/>
+<title>小芽 · 今天，也在慢慢成长</title>
+<link rel="stylesheet" href="./styles.css"/>
+<link rel="stylesheet" href="./growth-simulator.css"/>
+<link rel="stylesheet" href="./agent-evidence.css"/>
+<link rel="stylesheet" href="./byok.css"/>
+<link rel="stylesheet" href="./api-presence.css"/>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM9 21v-7h6v7"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 10h18"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="m8 12 3 3 5-6"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2z"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V4m0 16h16M8 16l4-5 3 2 5-7"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M9 4v6M16 14v6"/><circle cx="9" cy="7" r="2"/><circle cx="16" cy="17" r="2"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20L12 3Z"/><path d="M12 9v5m0 3v.5"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="m5 16-1 4 4-1L20 7l-4-4L5 16zM14 5l4 4"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16m-14 0 1 14h10l1-14M9 7V4h6v3M10 11v6m4-6v6"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></symbol>
+<symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 17V5m-5 5 5-5 5 5M4 17v4h16v-4"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10v1"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 16A8 8 0 0 1 8 4a8 8 0 1 0 12 12z"/></symbol>
+</svg>
+<div class="app-layout" id="app">
+<aside class="sidebar">
+ <div class="brand" role="banner"><div class="brand-mark"><span class="mini-leaf">✦</span></div><div><strong>小芽</strong><small>陪你把日子过好</small></div></div>
+ <div class="sidebar-label">我的空间</div>
+ <nav class="side-nav" aria-label="主导航">
+  <button class="nav-link is-active" data-view="today"><svg><use href="#i-home"/></svg><span>今天</span><span class="nav-dot"></span></button>
+  <button class="nav-link" data-view="schedule"><svg><use href="#i-calendar"/></svg><span>我的课表</span></button>
+  <button class="nav-link" data-view="tasks"><svg><use href="#i-check"/></svg><span>作业与考试</span></button>
+  <button class="nav-link" data-view="goals"><svg><use href="#i-spark"/></svg><span>兴趣与成长</span></button>
+  <button class="nav-link" data-view="review"><svg><use href="#i-chart"/></svg><span>成长复盘</span></button>
+ </nav>
+ <div class="sidebar-bottom">
+  <div class="sidebar-quote"><span>“</span>不必一下子变得很厉害，<br/>把今天过好就很好。<span class="end-quote">”</span></div>
+  <button class="nav-link" data-view="settings"><svg><use href="#i-settings"/></svg><span>设置与隐私</span></button>
+  <div class="privacy-hint"><span class="privacy-dot"></span> 数据只留在这台浏览器</div>
+ </div>
+</aside>
+<div class="center-wrap">
+<header class="topbar">
+ <div class="breadcrumb"><span>我的空间</span><svg><use href="#i-chevron"/></svg><strong id="crumb">今天</strong></div>
+ <div class="top-actions"><button type="button" id="ai-global-entry" class="ai-global-indicator" data-view="settings" data-ai-mode="offline" aria-label="AI 未配置，打开设置"><span class="ai-indicator-icon" aria-hidden="true">✧</span><span class="ai-indicator-copy"><strong id="ai-global-title">规则模式</strong><small id="ai-global-subtitle">AI 未配置</small></span><span class="ai-indicator-chevron" aria-hidden="true">›</span></button><a href="./judge.html" class="small-ghost judge-top-link" style="text-decoration:none">评委体验</a><span id="mode-badge" class="mode-badge">私人空白档案</span><button class="small-ghost" id="mode-switch" type="button">载入合成演示</button><button class="icon-button" data-view="settings" aria-label="设置"><svg><use href="#i-settings"/></svg></button></div>
+</header>
+<div class="content-grid">
+<main id="main"><div id="storage-error" class="panel" role="alert" hidden><p id="storage-error-text"></p><button class="btn btn-soft" id="export-raw" data-export-raw="true">导出原始存储</button><button class="btn btn-soft" data-view="settings">恢复备份</button></div>
+ <section id="view-today" class="view active">
+  <div class="hero">
+   <div class="hero-copy"><div class="eyebrow"><span class="sun-icon">✳</span> YOUR LITTLE MOMENTS · <span id="today-date"></span></div>
+    <h1 id="hero-title">今天，也在慢慢成长<span class="hero-period">.</span></h1>
+    <p id="hero-description">把重要的事情放在心上，也给喜欢的事情留一点时间。</p>
+    <div class="hero-actions"><button class="btn btn-dark" data-add="task"><svg><use href="#i-plus"/></svg> 记录新事项</button><button class="btn btn-plain" data-view="schedule">看看这一周 <svg><use href="#i-arrow"/></svg></button></div>
+   </div>
+   <div class="hero-decoration" aria-hidden="true"><div class="sun-disc"><span class="sun-inner">✻</span></div><span class="orb orb-1"></span><span class="orb orb-2"></span><span class="hero-caption">one day at a time</span></div>
+  </div>
+  <div class="section-heading"><div><span class="kicker">TODAY'S FOCUS</span><h2>今天的重点 <span class="heading-spark">✳</span></h2></div><span class="muted" id="today-count">一切从这里开始</span></div>
+  <div class="overview-grid">
+   <article class="panel focus-panel"><div class="card-topline"><span class="overline"><span class="dot green"></span> 临近事项</span><button class="text-link" data-view="tasks">全部任务 <svg><use href="#i-arrow"/></svg></button></div><div id="today-tasks"></div></article>
+   <article class="panel schedule-panel"><div class="card-topline"><span class="overline"><span class="dot peach"></span> 今日课程与活动</span><button class="text-link" data-view="schedule">打开课表 <svg><use href="#i-arrow"/></svg></button></div><div id="today-schedule"></div></article>
+  </div>
+  <div class="panel onboarding" id="onboarding"><h3>让小芽认识你的这一周</h3><p id="onboard-progress"></p><div class="setting-buttons"><button class="btn btn-soft" data-view="settings">设置学期</button><button class="btn btn-soft" data-view="schedule">导入课表</button><button class="btn btn-plain" id="onboard-dismiss">我已经熟悉，收起引导</button></div></div><div class="free-time" id="free-time"></div><div id="today-alerts"></div>
+  <div class="section-heading secondary-section"><div><span class="kicker">A GENTLE NUDGE</span><h2>小芽给你的小建议</h2></div><span class="helper-tag">本机规则辅助 · 非真实 LLM</span></div>
+  <div id="today-advice"></div><section class="panel agent-evidence" aria-labelledby="agent-evidence-title"><div class="agent-evidence-heading"><div><span class="kicker">TRACEABLE AGENT</span><h3 id="agent-evidence-title">小芽的分析依据</h3></div><button class="btn btn-soft" type="button" id="agent-inspect">分析当前档案</button></div><div id="agent-inspection" aria-live="polite"><p class="muted">不会擅自执行建议；所有操作仍需逐项批准。</p></div></section>
+  <section class="panel ai-today-panel" id="ai-today-panel" data-ai-mode="offline" aria-label="小芽当前能力">
+   <div class="ai-today-copy"><span class="ai-micro-label">LIFELAB · YOUR CAPABILITIES</span><h3>小芽的两种规划能力</h3><p id="ai-today-summary">本机规则功能正常可用。连接并授权模型后，才可使用 AI 个性化成长规划。</p><span class="ai-capability-state" data-ai-capability-state data-mode="offline">规则模式 · AI 未配置</span><div class="ai-today-actions"><button type="button" class="btn btn-dark" data-view="goals">打开成长规划 ↗</button><button type="button" class="btn btn-soft" data-view="settings" id="ai-today-connect">配置 AI →</button></div><a class="ai-lab-link" href="./model-lab.html">查看合成模型实验室与研究记录 ↗</a></div>
+   <div class="ai-today-abilities" aria-label="可用功能列表"><div class="ai-ability"><span class="ai-ability-mark">01</span><div><strong>本机生活管理</strong><small>课表、DDL、规则建议与复盘</small></div><span class="ai-ability-status">始终可用</span></div><div class="ai-ability ai-ability-cloud"><span class="ai-ability-mark">02</span><div><strong>AI 成长规划</strong><small>需要配置模型与逐次授权</small></div><span class="ai-ability-status" id="ai-ability-cloud-status">尚未启用</span></div></div>
+  </section>
+  <div class="bottom-stats" id="today-stats"></div>
+ </section>
+ <section id="view-schedule" class="view"><div class="page-head"><div class="kicker">YOUR WEEK</div><h1>这一周，安排得刚刚好。</h1><p>课程与社团活动放在同一张时间表中，重叠会被真实检测。</p><button class="btn btn-dark" data-add="course"><svg><use href="#i-plus"/></svg> 添加课程</button><button class="btn btn-soft" data-add="event">添加活动</button></div><div class="week-toolbar"><button class="btn btn-soft" id="week-prev" aria-label="上一周">← 上一周</button><span id="week-label"></span><button class="btn btn-soft" id="week-next" aria-label="下一周">下一周 →</button><button class="btn btn-plain" id="week-now">回到本周</button><button class="btn btn-dark" id="schedule-import">导入 CSV / ICS</button><input id="schedule-file" type="file" accept=".csv,.ics,text/csv,text/calendar" hidden></div><div class="panel schedule-board"><div class="board-head"><h3>周课表</h3><span class="muted">点击项目可以编辑</span></div><div class="day-tabs" id="day-tabs"></div><div class="week-grid" id="week-grid"></div><div id="day-detail" class="day-detail"></div></div><div id="schedule-conflicts"></div></section>
+ <section id="view-tasks" class="view"><div class="page-head"><div class="kicker">THE IMPORTANT THINGS</div><h1>每一件努力，都算数。</h1><p>不遗漏截止时间，也不把安排变成压力。</p><button class="btn btn-dark" data-add="task"><svg><use href="#i-plus"/></svg> 新建事项</button></div><form id="quick-task-form" class="quick-entry panel"><label for="quick-title">快捷事项</label><input id="quick-title" name="title" placeholder="例如：提交实验报告" required maxlength="160"><input name="due" type="datetime-local" required aria-label="截止日期与时间"><button class="btn btn-dark" type="submit">记录</button></form><div id="task-filters" class="filter-row"><button class="chip selected" data-filter="all">全部</button><button class="chip" data-filter="open">待完成</button><button class="chip" data-filter="done">已完成</button></div><div class="panel list-panel" id="all-tasks"></div></section>
+ <section id="view-goals" class="view"><div class="page-head"><div class="kicker">BEYOND THE CLASSROOM</div><h1>学习之外，也有喜欢的生活。</h1><p>音乐、运动、社团和个人的小计划，都值得认真记录。</p><button class="btn btn-dark" data-add="goal"><svg><use href="#i-plus"/></svg> 写下新目标</button></div><div class="ai-goals-banner" id="ai-goals-banner" data-ai-mode="offline" aria-label="成长规划当前模式"><span class="ai-goals-banner-orb" aria-hidden="true">✧</span><div class="ai-goals-banner-copy"><span>SMART GROWTH / CAPABILITY STATUS</span><strong id="ai-goals-banner-title">基础规划随时可用 · AI 尚未配置</strong><p id="ai-goals-banner-summary">你可以先用本机规则制定目标，AI 个性化规划需另外连接并授权。</p></div><button type="button" id="ai-goals-banner-action" data-view="settings">连接模型 ↗</button></div><div class="growth-tabs"><button class="btn btn-soft" data-view="goals" aria-current="page">我的目标与习惯</button><button class="btn btn-soft" data-view="review">查看成长复盘</button></div><div class="goal-grid" id="all-goals"></div><div class="panel growth-simulator-panel"><h3>小芽成长模拟器</h3>
+  <section class="ai-mode-dashboard" id="ai-mode-dashboard" data-ai-mode="offline" aria-label="规划模式与功能状态">
+    <div class="ai-mode-overview"><div><span class="ai-micro-label">PLAN WITH XIAOYA / CAPABILITY</span><h4 id="ai-mode-headline">规则版已就绪，AI 尚未启用</h4><p id="ai-mode-summary">不用 API 也可以规划成长。AI 个性化生成属于独立功能，需要连接模型后明确授权。</p></div><span class="ai-capability-state" data-ai-capability-state data-mode="offline">规则模式 · AI 未配置</span></div>
+    <div class="ai-mode-grid">
+      <article class="ai-mode-card ai-mode-card-rule"><div class="ai-mode-icon" aria-hidden="true">01</div><span class="ai-mode-kicker">LOCAL / EXPLAINABLE</span><h5>本机规则规划</h5><p>根据预设规则、目标领域和时间预算，生成两条可解释路线。</p><div class="ai-mode-card-footer"><span class="ai-mode-ready">✓ 无需 API · 已可使用</span></div></article>
+      <article class="ai-mode-card ai-mode-card-cloud"><div class="ai-mode-icon" aria-hidden="true">✧</div><span class="ai-mode-kicker">MODEL / EXPLICIT CONSENT</span><h5>AI 个性化规划</h5><p>仅在你授权后发送填写的目标与预算，由真实模型生成并经过本地校验。</p><div class="ai-mode-card-footer"><span class="ai-mode-cloud-state" id="ai-mode-cloud-state">未配置 · 功能锁定</span><button type="button" class="ai-mode-connect" data-view="settings" id="ai-mode-connect">配置 API →</button></div></article>
+    </div>
+    <p class="ai-mode-truth" id="ai-mode-truth">下方两种生成方式不是同一个功能；基础规划不会假装调用云端 AI。</p>
+  </section>
+  <p>填写目标后选择生成方式。任何路线都需要你再次确认才会写入任务，不会预测未来。</p><div class="form-fields"><div class="field wide"><label for="growth-goal">成长目标</label><input id="growth-goal" maxlength="100" placeholder="例如：成为芯片工程师"></div><div class="field wide"><label for="growth-baseline">当前基础（选填）</label><input id="growth-baseline" maxlength="180" placeholder="例如：刚学过 C 语言基础，想做一个小项目"></div><div class="field"><label for="growth-hours">每周投入小时</label><input id="growth-hours" type="number" min="1" max="40" value="6"></div><div class="field"><label for="growth-weeks">规划周期</label><input id="growth-weeks" type="number" min="4" max="52" step="1" value="24"></div></div><div class="growth-action-row"><button class="btn btn-dark" id="growth-generate">生成规则成长路线</button><button class="btn btn-soft" type="button" id="growth-ai-generate" disabled>使用我的 API 智能规划</button></div>
+ <div class="growth-ai-privacy"><label><input id="growth-ai-consent" type="checkbox"/> 仅将上方填写的目标、基础、时间与考试周发送给已配置的 AI，不发送整张课表或私人档案。</label>
+ <label for="growth-exam-week">考试周（选填）<input id="growth-exam-week" type="number" min="1" max="52" placeholder="例如 8"/></label>
+ <span id="growth-ai-status" role="status" aria-live="polite">未配置 API：仅规则版可用，智能规划需要配置模型。</span><button class="btn btn-soft" type="button" id="growth-ai-config-link" data-view="settings">配置 API 解锁智能规划 →</button></div>
+ <div id="growth-result" aria-live="polite"></div><div id="growth-active"></div></div></section>
+ <section id="view-review" class="view"><div class="page-head"><div class="kicker">LOOKING BACK, GENTLY</div><h1>成长，有迹可循。</h1><p>只统计真正保存的事项，不凭空生成成长分数。</p></div><div class="growth-tabs"><button class="btn btn-soft" data-view="goals">返回目标与习惯</button><button class="btn btn-soft" data-view="review" aria-current="page">跨周成长复盘</button></div><div id="review-overview"></div><div class="panel review-panel"><h3>成长路线 · 真实执行进度</h3><div id="growth-review"></div></div><div class="panel review-panel"><h3>目标行动证据</h3><div id="checkin-history"></div></div><div class="panel review-panel"><h3>最近的行动记录</h3><div id="history-list"></div></div></section>
+ <section id="view-settings" class="view"><div class="page-head"><div class="kicker">MAKE IT YOURS</div><h1>舒适一点，刚刚好。</h1><p>由你决定提醒、动效和记录如何保存。</p></div><div class="panel rc-settings"><h3>大学学期</h3><p class="muted">第一教学周为开学日所在的周一至周日。开始/结束外，重复课程不出现；单次活动仍保留。</p><div class="form-fields"><div class="field wide"><label for="semester-name">学期名称</label><input id="semester-name"></div><div class="field"><label for="semester-start">开学日期</label><input id="semester-start" type="date"></div><div class="field"><label for="semester-end">结束日期</label><input id="semester-end" type="date"></div></div><button class="btn btn-dark" id="semester-save">保存学期</button></div><div class="panel byok-panel" id="byok-settings">
+   <div class="byok-head"><div><span class="kicker">AI / BRING YOUR OWN KEY</span><h3>AI 模型连接</h3></div><span class="byok-state" id="byok-status" role="status">检测中…</span></div>
+   <p>基础课表、任务、桌宠提醒与规则建议<strong>不需要 API</strong>；“使用我的 API 智能规划”必须配置 Key 并授权。保存 Key 仅表示已配置，不代表已通过真实模型测试。</p>
+   <p class="muted">API Key 仅放在当前<strong>本机服务的临时内存会话</strong>，不写入网页 LocalStorage、备份文件、GitHub 或参赛包。请不要在公共电脑使用自己的付费 Key。</p>
+   <form id="byok-form" autocomplete="off">
+    <div class="form-fields">
+     <div class="field"><label for="byok-provider">服务商</label><select id="byok-provider">
+      <option value="deepseek">DeepSeek 官方（推荐）</option><option value="zhipu">智谱 GLM</option><option value="openai">OpenAI</option><option value="siliconflow">硅基流动</option><option value="dashscope">阿里百炼</option><option value="moonshot">Moonshot</option><option value="openrouter">OpenRouter</option><option value="commandcode">CommandCode</option>
+     </select></div>
+     <div class="field"><label for="byok-model">模型 ID</label><input id="byok-model" maxlength="105" required placeholder="例如 deepseek-flash"/></div>
+     <div class="field wide"><label for="byok-base">OpenAI 兼容 API 根地址（HTTPS）</label><input id="byok-base" type="url" maxlength="190" required spellcheck="false" placeholder="https://api.deepseek.com/v1"/></div>
+     <div class="field wide"><label for="byok-key">API Key（不会回显或保存到网页）</label><input id="byok-key" type="password" minlength="8" maxlength="500" required autocomplete="new-password" spellcheck="false" placeholder="只在此输入一次，服务重启后需重填"/></div>
+    </div>
+    <div class="setting-buttons"><button class="btn btn-dark" type="submit" id="byok-save">连接 API</button><button class="btn btn-soft" type="button" id="byok-clear">清除本机会话</button></div>
+   </form>
+   <div class="byok-test-row"><label><input type="checkbox" id="byok-test-consent"/> 我允许发送一次<strong>虚构测试提示词</strong>到所选服务（可能消耗配额）</label><button class="btn btn-soft" type="button" id="byok-test" disabled>测试真实 AI 连接</button></div>
+   <p id="byok-form-result" role="status" aria-live="polite">建议先配置，成功后再选择是否测试；连接本身不发起模型请求。</p>
+   <small class="muted">安全限制：仅支持列表中的可信公开 HTTPS API 域名，不允许 localhost、内网地址或任意未审核的代理；每会话每小时最多8次 AI 请求。</small>
+  </div>
+  <div class="settings-list panel">
+   <label class="toggle-row"><span><strong>安静模式</strong><small>桌宠不弹出提醒气泡，不请求系统通知。</small></span><input type="checkbox" id="setting-quiet"/><span class="switch"></span></label>
+   <label class="toggle-row"><span><strong>减少动效</strong><small>关闭漂浮和欢呼动画，系统减少动效也会自动生效。</small></span><input type="checkbox" id="setting-motion"/><span class="switch"></span></label>
+   <label class="toggle-row"><span><strong>隐藏桌宠</strong><small>只关闭可爱形象，今天的建议和功能继续可用。</small></span><input type="checkbox" id="setting-pet"/><span class="switch"></span></label>
+  </div>
+  <div class="panel rc-settings"><h3>低打扰的网页提醒</h3><p>网页打开时每30秒检查。关闭浏览器后不会发送系统通知；可导出到你选择的日历，实际通知由日历权限与设置决定。</p><div class="form-fields"><div class="field wide"><label for="reminder-leads">提前量（分钟，逗号分隔）</label><input id="reminder-leads" placeholder="1440,60,15"></div><div class="field"><label for="quiet-start">免打扰开始</label><input id="quiet-start" type="time"></div><div class="field"><label for="quiet-end">免打扰结束</label><input id="quiet-end" type="time"></div><div class="field"><label for="reminder-gap">最小间隔（分钟）</label><input id="reminder-gap" type="number" min="1" max="1440"></div><label class="field"><span>开启网页提醒</span><input id="reminder-enabled" type="checkbox"></label></div><div class="setting-buttons"><button class="btn btn-dark" id="reminder-settings-save">保存提醒偏好</button><button class="btn btn-soft" id="calendar-export">导出未来120天 ICS 日历</button></div><h3>已送达提醒</h3><div id="reminder-list"></div></div><div class="panel rc-settings"><h3>事务记录与撤销</h3><p class="muted">仅撤销相关实体；如果它们已经被再次编辑，将拒绝覆盖。撤销不删除审计记录。</p><div id="transactions"></div></div><div class="panel settings-data"><h3>我的数据</h3><p>本机浏览器 LocalStorage 保存，不登录账户，不向云端上传。换浏览器或清理浏览器数据前，请导出备份。</p><div class="setting-buttons"><button class="btn btn-soft" id="export-btn"><svg><use href="#i-download"/></svg> 导出 JSON</button><button class="btn btn-soft" id="import-btn"><svg><use href="#i-upload"/></svg> 导入备份</button><button class="btn btn-danger" id="clear-btn"><svg><use href="#i-trash"/></svg> 清空当前档案</button></div><button class="btn btn-plain" id="reset-demo">重置匿名合成演示</button><input id="import-file" type="file" accept=".json,application/json" hidden/><p class="small-note">“合成演示档案”和“私人空白档案”物理隔离在不同的浏览器存储键下。</p></div>
+  <div class="panel"><h3>关于小芽</h3><p>独立应用：基础管理采用本机规则，成长页可在明确授权后调用外部真实 AI 模型。所有实际执行限于用户明确批准的应用内操作；Windows 系统桌宠、后台通知、跨设备同步与教务系统登录待单独授权。</p></div>
+ </section>
+</main>
+<aside class="right-rail" id="right-rail">
+ <div class="rail-date"><span id="rail-weekday">星期六</span><small id="rail-date"></small></div>
+ <section class="pet-panel panel" id="pet-panel">
+  <div class="pet-top"><span class="overline">YOUR LITTLE COMPANION</span><button class="pet-menu" id="pet-quiet" aria-label="切换小芽安静模式" title="安静模式"><svg><use href="#i-moon"/></svg></button></div>
+  <button id="pet-button" class="pet-figure" type="button" aria-label="点击小芽查看真实提醒和建议"><div class="pet-glow"></div>
+   <svg class="sprout-svg" viewBox="0 0 230 230" role="img" aria-label="原创嫩芽小精灵小芽">
+    <ellipse class="pet-shadow" cx="115" cy="202" rx="62" ry="12"/>
+    <path class="pet-leaf-left" d="M113 65C64 66 65 24 76 18c30-8 47 15 37 47Z"/>
+    <path class="pet-leaf-right" d="M118 66c-9-44 25-61 41-53 10 25-13 55-41 53Z"/>
+    <path class="pet-stem" d="M115 80c0-25 5-33 12-46"/>
+    <path class="pet-body" d="M116 66C68 65 46 103 45 146c-1 42 30 64 71 64s73-22 70-64c-2-47-29-80-70-80Z"/>
+    <ellipse class="pet-belly" cx="117" cy="169" rx="43" ry="26"/>
+    <ellipse class="pet-blush" cx="76" cy="145" rx="12" ry="7"/><ellipse class="pet-blush" cx="157" cy="145" rx="12" ry="7"/>
+    <path class="pet-eye" d="M89 133q4-8 9 0"/><path class="pet-eye" d="M138 133q4-8 9 0"/>
+    <path class="pet-mouth" d="M110 151q7 10 14 0"/>
+    <path class="pet-arm" d="M58 160q-14 0-16 11"/><path class="pet-arm" d="M176 158q14 0 16 11"/>
+    <path class="pet-sparkle" d="m189 87 3 10 10 3-10 3-3 10-3-10-10-3 10-3z"/>
+    <path class="pet-question" d="M194 87q0-9 10-9t10 10q0 8-9 10m0 9v1"/>
+   </svg>
+   <span class="pet-ground"></span>
+  </button>
+  <div class="pet-state-label" id="pet-state-label">🌿 正在陪伴你</div>
+  <h3 id="pet-title">你好呀，我是小芽</h3><p id="pet-message">日子一点点整理好就行。</p>
+  <button class="pet-action" id="pet-open">看看小芽发现了什么 <svg><use href="#i-arrow"/></svg></button><button class="pet-recheck" id="recheck-btn" type="button">✧ 根据当前记录重新分析</button>
+ </section>
+ <div class="rail-note"><span class="note-flower">✻</span><strong>一点点的坚持</strong><p>每次完成，都来自你真正记录的行动。</p><div id="rail-progress"></div></div>
+</aside>
+</div>
+</div>
+<nav class="mobile-tabs" aria-label="移动端导航"><button data-view="today" class="active"><svg><use href="#i-home"/></svg>今天</button><button data-view="schedule"><svg><use href="#i-calendar"/></svg>课表</button><button data-view="tasks"><svg><use href="#i-check"/></svg>事项</button><button data-view="goals"><svg><use href="#i-spark"/></svg>成长</button><button data-view="settings"><svg><use href="#i-settings"/></svg>设置</button></nav>
+<button class="mobile-pet" id="mobile-pet" aria-label="打开小芽助手"><span>🌱</span><i id="mobile-pet-dot"></i></button>
+<div id="pet-popover" class="pet-popover" hidden><button class="popover-close" id="pet-popover-close" aria-label="关闭助手">×</button><div class="overline">小芽 · 本机规则辅助</div><h3 id="popover-title">你好呀</h3><p id="popover-text"></p><div id="popover-links"></div></div>
+<div id="modal-root" class="modal-root" hidden><div class="modal-scrim" data-close></div><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><span class="kicker" id="modal-eyebrow">NEW MOMENT</span><h2 id="modal-title">添加事项</h2></div><button class="icon-button" aria-label="关闭" data-close>×</button></div><div id="modal-content"></div></section></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="./app.js"></script>
+</body></html>

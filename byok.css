@@ -1,0 +1,29 @@
+/* XiaoYa BYOK settings / growth actions. Uses product's existing CSS design system. */
+.ai-capability-state{display:inline-flex;align-items:center;margin:3px 0 10px;padding:6px 11px;border-radius:999px;border:1px solid #d8e6da;background:#f1f6ef;color:#52705c;font-size:12px;font-weight:700;line-height:1.35}
+.ai-capability-state[data-mode="configured"]{background:#fff7e5;border-color:#e9d9ac;color:#856221}
+.ai-capability-state[data-mode="verified"]{background:#e5f6e9;border-color:#b0dfbd;color:#207046}
+#growth-ai-config-link{flex-basis:100%;width:max-content;max-width:100%}
+#growth-ai-config-link[hidden]{display:none!important}
+.byok-panel{border:1px solid #d3e8d8;background:linear-gradient(145deg,#f5fbf2,#fffdf6);padding:24px 27px}
+.byok-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:15px}
+.byok-head h3{font-size:23px;letter-spacing:-.4px;margin:5px 0}
+.byok-panel p{font-size:14px;line-height:1.65;color:#426453}
+.byok-panel form{margin:20px 0 15px}
+.byok-panel .field input,.byok-panel .field select{width:100%;min-width:0;border:1px solid #bbd4c3;border-radius:11px;background:white;padding:12px 14px;font-size:14px;color:#234b37}
+.byok-panel .field input:focus,.byok-panel .field select:focus{outline:3px solid #80c9a65c;outline-offset:1px;border-color:#54a67d}
+.byok-state{display:inline-flex;max-width:min(100%,560px);font-size:12px;line-height:1.5;font-weight:700;color:#65796e;background:#ecf5ed;border-radius:12px;padding:10px 13px;overflow-wrap:anywhere}
+.byok-state[data-ok="true"]{color:#176740;background:#d8f4df}
+.byok-test-row{display:flex;align-items:center;justify-content:space-between;gap:15px;flex-wrap:wrap;margin-top:17px;border-top:1px solid #dceadd;padding-top:16px}
+.byok-test-row label,.growth-ai-privacy label{font-size:13px;line-height:1.65;color:#40644c;display:flex;align-items:flex-start;gap:9px;max-width:580px}
+.byok-test-row input[type="checkbox"],.growth-ai-privacy input[type="checkbox"]{accent-color:#287b52;width:17px;height:17px;flex:0 0 17px;margin-top:3px}
+#byok-form-result{font-size:13px;line-height:1.6;color:#567463;margin:14px 0}
+#byok-form-result[data-ok="true"],#growth-ai-status[data-ok="true"]{color:#1b7249}
+.growth-action-row{display:flex;flex-wrap:wrap;gap:11px;margin-top:14px}
+.growth-ai-privacy{display:flex;gap:13px;flex-wrap:wrap;align-items:center;border:1px solid #dcebdc;background:#f4faf3;border-radius:14px;padding:14px 16px;margin:16px 0}
+.growth-ai-privacy label[for="growth-exam-week"]{display:flex;align-items:center;white-space:nowrap;gap:10px}
+.growth-ai-privacy input[type="number"]{width:87px;min-height:36px;padding:5px 8px;border:1px solid #bdd8c4;border-radius:8px;background:white}
+#growth-ai-status{font-size:13px;line-height:1.5;color:#657e70;flex-basis:100%}
+#growth-ai-status a{color:#16784b;font-weight:800}
+#growth-ai-generate[disabled],#byok-test[disabled]{opacity:.55;cursor:not-allowed}
+.inline-settings-link{border:0;background:none;color:#227d56;font:700 13px inherit;text-decoration:underline;padding:0;cursor:pointer}.judge-top-link{display:inline-flex;align-items:center;white-space:nowrap;color:#3d7659}
+@media(max-width:700px){.byok-panel{padding:19px 16px}.byok-head{align-items:flex-start}.byok-test-row{align-items:flex-start}.byok-panel .form-fields{grid-template-columns:1fr}.growth-action-row .btn{flex:1;min-width:200px}.growth-ai-privacy{padding:12px}.judge-top-link{font-size:12px;padding:7px}}

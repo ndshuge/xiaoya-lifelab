@@ -1,0 +1,34 @@
+/* Growth simulator: responsive, keyboard-friendly, native to Xiaoya visual system. */
+.growth-simulator-panel{margin-top:24px}
+.growth-preview-intro{margin:24px 0 16px;padding:14px 17px;border-radius:16px;background:#f3f7ef}
+.growth-preview-intro strong{font-size:18px;color:#305b43}
+.growth-preview-intro p{margin:7px 0 0;line-height:1.65}
+.growth-route-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin-top:18px}
+.growth-route-card{padding:20px;border:1px solid #dde7db;background:#fffefa;border-radius:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 8px 26px rgba(56,85,52,.055)}
+.growth-route-card:nth-child(2){background:#faf8f2;border-color:#e7e3d8}
+.growth-route-head span{display:block;color:#70816e;font-size:12px;font-weight:600;margin-bottom:5px}
+.growth-route-head h4{font-size:20px;margin:0;color:#31563f}
+.growth-route-card p{font-size:14px;line-height:1.65;margin:0}
+.growth-route-stages{display:grid;gap:10px}
+.growth-route-stage{padding:12px 14px;background:#f4f7f1;border-radius:12px;display:grid;gap:5px}
+.growth-route-stage span{font-size:12px;color:#6b806b}
+.growth-route-stage strong{font-size:14px;color:#334d39}
+.growth-route-stage small{font-size:12px;line-height:1.5;color:#5b655c}
+.growth-risk{color:#825e40}
+.growth-route-card>.btn{margin-top:auto;align-self:stretch}
+.growth-tracked{margin:15px 0;padding:18px;border-radius:18px;background:#f4f8f1;border:1px solid #dce6d8}
+.growth-tracked-header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.growth-tracked-header strong{color:#305b42}
+.growth-tracked-header span{color:#647a63;font-size:12px}
+.growth-tracked p{margin:10px 0}
+.growth-tracked-actions{display:flex;flex-wrap:wrap;gap:8px}
+.growth-route-card button:focus-visible,.growth-tracked button:focus-visible{outline:3px solid #81aa86;outline-offset:3px}
+@media(max-width:850px){.growth-route-grid{grid-template-columns:1fr}.growth-route-card{padding:17px}}
+@media(max-width:420px){.growth-route-card,.growth-tracked{border-radius:14px;padding:14px}.growth-route-head h4{font-size:18px}}
+.growth-deliverable{display:block;border-left:2px solid #99b899;padding-left:8px;color:#4d7552!important;margin-top:3px}
+.growth-approval-stage{border:1px solid #dfe8d9;background:#f7faf5;border-radius:14px;padding:14px;margin:10px 0;display:grid;gap:10px}
+.growth-approval-stage>span{font-size:12px;color:#62735f;line-height:1.5}
+.growth-approval-stage label{font-size:12px;color:#415b43;display:block}
+.growth-approval-stage input{display:block;box-sizing:border-box;width:100%;font-size:14px;border:1px solid #cfdccb;padding:10px 12px;margin-top:5px;background:#fff;border-radius:9px}
+.growth-approval-stage input:focus-visible{outline:3px solid #8fae90;outline-offset:2px}
+
