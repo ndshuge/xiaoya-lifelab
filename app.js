@@ -73,15 +73,36 @@ function renderAgentInspection(){
    +(c.requiresApproval?'<button type="button" class="btn btn-soft" data-propose="'+esc(c.id)+'">预览授权动作</button>':'<span class="muted">只提醒，不自动执行</span>')+'</div></article>'
  }).join('')+'</div>':'<p>当前没有需要主动处理的建议，可继续正常安排。</p>');
 }
-async function inspectAgent(){
- const btn=$('#agent-inspect');if(btn)btn.disabled=true;
+async function inspectAgent(useAi=false){
+ const buttons=['#agent-inspect','#agent-ai-inspect'].map($).filter(Boolean);
+ if(useAi){
+  if(document.body.dataset.aiMode!=='verified'){notify('请先通过小芽聊天入口连接并验证真实 AI');return}
+  if(!window.confirm('将当前最多12条规则建议的标题、理由和简短说明发送到你已连接的模型用于排序解释，不会发送完整课表或自动修改档案。是否授权？'))return;
+ }
+ for(const btn of buttons)btn.disabled=true;
  try{
-  const result=await analyzeAgent(data,{authorized:false});
+  const provider=useAi?{name:'用户授权的 BYOK 模型',analyze:({candidates})=>new Promise((resolve,reject)=>{
+    const requestId=crypto.randomUUID();
+    let timer;
+    const handler=e=>{
+      if(e.detail?.requestId!==requestId)return;
+      clearTimeout(timer);window.removeEventListener('xiaoya-ai-analysis-result',handler);
+      if(!e.detail.ok){reject(Error(e.detail.error||'模型分析失败'));return}
+      try{resolve(JSON.parse(e.detail.raw))}catch{reject(Error('模型未返回合法 JSON'))}
+    };
+    window.addEventListener('xiaoya-ai-analysis-result',handler);
+    timer=setTimeout(()=>{window.removeEventListener('xiaoya-ai-analysis-result',handler);reject(Error('分析超时'))},18000);
+    window.dispatchEvent(new CustomEvent('xiaoya-ai-analysis-request',{detail:{requestId,candidates:candidates.map(x=>({
+      id:x.id,title:x.title,reason:x.reason,description:x.description
+    }))}}));
+  })}:null;
+  const result=await analyzeAgent(data,{authorized:useAi,provider,timeoutMs:19500});
   agentInspection={result,mode,basis:fingerprint(data)};
   renderAgentInspection();
  }catch(e){notify('分析失败：'+e.message)}
- finally{if(btn)btn.disabled=false}
+ finally{for(const btn of buttons)btn.disabled=false}
 }
+
 function scheduleEntry(x,conflicts){
 const overlapping=conflicts.some(c=>c.a.id===x.id||c.b.id===x.id);
 return '<button class="schedule-entry '+(x.kind==='event'?'activity ':'')+(overlapping?'has-conflict':'')+'" data-open-kind="'+esc(x.kind)+'" data-open-id="'+esc(x.id)+'" data-item="'+esc(x.id)+'"><strong>'+esc(x.name)+'</strong><small>'+esc(x.start)+'–'+esc(x.end)+'</small></button>';
@@ -342,6 +363,7 @@ document.addEventListener('click',e=>{
  if(t.id==='clear-btn')return clearData();
  if(t.id==='recheck-btn')return reanalyze();
  if(t.id==='agent-inspect')return inspectAgent();
+ if(t.id==='agent-ai-inspect')return inspectAgent(true);
 });
 document.addEventListener('submit',e=>{if(e.target.id==='checkin-form'){e.preventDefault();return saveCheckin(e.target)}if(e.target.id==='quick-task-form'){e.preventDefault();return quickTask(e.target)}if(e.target.id==='edit-form'){e.preventDefault();saveForm(e.target)}});
 document.addEventListener('change',e=>{

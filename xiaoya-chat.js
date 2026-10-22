@@ -5,6 +5,36 @@ const panel=document.createElement('section');panel.id='xiaoya-layer';
 panel.innerHTML='<button id="xy-fab" type="button">🌱 和小芽聊天 <small id="xy-state">AI 未接入</small></button><div id="xy-onboard" class="xy-shade" hidden><div class="xy-dialog" role="dialog" aria-modal="true" aria-label="连接小芽"><div class="xy-hero"><span>🌱</span><h2>你好，我是小芽</h2><p>选择体验方式，先把生活整理好。</p><b id="xy-connection">AI 未接入</b></div><div class="xy-content"><button id="xy-local" class="xy-local" type="button"><strong>先用基础功能</strong><span>课表、任务、成长路线与复盘，无需 API →</span></button><h3>连接真实 AI · 开启聊天</h3><p>公开 GitHub Pages 没有模型代理。只能尝试浏览器直连，可能被提供商的 CORS 规则阻止。</p><label>服务商<select id="xy-provider"><option value="zhipu">智谱 GLM（课堂笔记同款）</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option></select></label><label>API Key（只保存在当前标签页内存中）<input id="xy-key" type="password" autocomplete="off" placeholder="仅在你信任的设备上输入"></label><label class="xy-consent"><input id="xy-consent" type="checkbox">我理解直接请求可能产生费用、遇到跨域限制；不在公共设备上使用 Key。</label><button id="xy-connect" type="button">测试连接 AI</button><p id="xy-feedback" role="status"></p><button id="xy-skip" type="button">暂不接入，进入应用</button></div></div></div><div id="xy-window" hidden><header><span>🌱 小芽</span><strong id="xy-chat-state">AI 未接入</strong><button id="xy-config" type="button" aria-label="配置 AI">⚙</button><button id="xy-close" type="button" aria-label="关闭聊天">×</button></header><div id="xy-messages" role="log" aria-live="polite"></div><div class="xy-chips"><button data-ask="今天先做什么？">今天先做什么</button><button data-ask="如何制定学习计划？">学习计划</button><button data-ask="课表怎么导入？">导入课表</button></div><form id="xy-form"><input id="xy-input" placeholder="和小芽说点什么…" maxlength="700" aria-label="聊天消息"><button type="submit">发送</button></form><footer>未接入时仅本机导航引导；不自动读取私人数据或修改任务。</footer></div>';
 document.body.append(panel);
 const modal=q('#xy-onboard'),win=q('#xy-window');
+
+// Shared verified provider in this module closure; credentials never enter storage or global objects.
+window.addEventListener('xiaoya-ai-plan-request',async e=>{
+ const {requestId,input}=e.detail||{};
+ try {
+  if(!api)throw Error('AI 未接入，请先完成真实模型验证');
+  const system='你是大学生学习规划助手。只根据明确授权的目标、基础、周期和时数输出JSON对象。JSON格式：{"summary":"说明","name":"路线名","reason":"理由","risk":"风险","stages":[{"title":"阶段一","action":"行动","deliverable":"证据"},{"title":"阶段二","action":"行动","deliverable":"证据"},{"title":"阶段三","action":"行动","deliverable":"证据"}]}。必须正好3阶段。绝不声称已读取本机课表或执行任务。不得包含Markdown。';
+  const r=await fetch(api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+api.key},body:JSON.stringify({model:api.model,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(input)}],max_tokens:1250}),signal:AbortSignal.timeout(68000)});
+  if(!r.ok)throw Error('模型HTTP '+r.status);
+  const j=await r.json();
+  const raw=j.choices?.[0]?.message?.content;
+  if(typeof raw!=='string'||!raw.trim())throw Error('模型返回空内容');
+  window.dispatchEvent(new CustomEvent('xiaoya-ai-plan-result',{detail:{requestId,ok:true,raw,model:api.model}}));
+ }catch(err){window.dispatchEvent(new CustomEvent('xiaoya-ai-plan-result',{detail:{requestId,ok:false,error:err.message}}))}
+});
+
+// Optional explicit-consent AI ranking of already validated local rule suggestions.
+window.addEventListener('xiaoya-ai-analysis-request',async e=>{
+ const {requestId,candidates}=e.detail||{};
+ try{
+  if(!api)throw Error('先连接真实 AI');
+  if(!Array.isArray(candidates)||candidates.length>12)throw Error('建议数量无效');
+  const system='你只可以给已经存在的建议排序并提供解释，不可创建新建议、改变动作或执行写入。返回严格JSON：{"rankedIds":["已有ID"],"notes":{"已有ID":{"reason":"理由","uncertainty":"不确定性"}}}。只引用用户提供的ID；不输出Markdown。';
+  const r=await fetch(api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+api.key},body:JSON.stringify({model:api.model,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(candidates)}],max_tokens:1100}),signal:AbortSignal.timeout(68000)});
+  if(!r.ok)throw Error('模型HTTP '+r.status);
+  const j=await r.json(),raw=j.choices?.[0]?.message?.content;
+  if(typeof raw!=='string'||!raw.trim())throw Error('模型返回空内容');
+  window.dispatchEvent(new CustomEvent('xiaoya-ai-analysis-result',{detail:{requestId,ok:true,raw,model:api.model}}));
+ }catch(err){window.dispatchEvent(new CustomEvent('xiaoya-ai-analysis-result',{detail:{requestId,ok:false,error:err.message}}))}
+});
 const providers={zhipu:['https://open.bigmodel.cn/api/paas/v4/chat/completions','glm-4-flash'],deepseek:['https://api.deepseek.com/chat/completions','deepseek-flash'],openai:['https://api.openai.com/v1/chat/completions','gpt-4o-mini']};
 function status(){const t=api?'AI 已接入':'AI 未接入';for(const id of ['#xy-state','#xy-connection','#xy-chat-state','#ai-global-title'])if(q(id))q(id).textContent=t;if(q('#ai-global-subtitle'))q('#ai-global-subtitle').textContent=api?api.model:'点击配置';for(const x of document.querySelectorAll('[data-ai-capability-state]')){x.textContent=t;x.dataset.mode=api?'verified':'offline'}}
 function open(){modal.hidden=false;q('#xy-key').value='';q('#xy-feedback').textContent=''}
@@ -17,9 +47,9 @@ function localAnswer(s){if(/课程|课表|上课/.test(s))return '你可以点�
 q('#xy-connect').onclick=async()=>{
 const key=q('#xy-key').value.trim();if(!key||!q('#xy-consent').checked){q('#xy-feedback').textContent='请填写 Key 并确认风险说明。';return}
 const [url,model]=providers[q('#xy-provider').value];q('#xy-connect').disabled=true;q('#xy-feedback').textContent='正在验证模型…';
-try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model,messages:[{role:'user',content:'Say OK'}],max_tokens:20}),signal:AbortSignal.timeout(18000)});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!data.choices?.[0]?.message?.content)throw Error('模型返回无效');api={url,model,key};chat=[];status();close();win.hidden=false;reply('AI 已接入。每次仅发送这次聊天内容，请勿提供敏感数据。')}catch(e){api=null;status();q('#xy-feedback').textContent=e instanceof TypeError?'跨域请求被限制（CORS）。GitHub Pages 没有安全模型代理，不能在此完成连接。':'未接入：'+e.message}finally{q('#xy-key').value='';q('#xy-connect').disabled=false}
+try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+key},body:JSON.stringify({model,messages:[{role:'user',content:'Say OK'}],max_tokens:20}),signal:AbortSignal.timeout(18000)});if(!r.ok)throw Error('HTTP '+r.status);const data=await r.json();if(!data.choices?.[0]?.message?.content)throw Error('模型返回无效');api={url,model,key};chat=[];status();window.dispatchEvent(new CustomEvent('xiaoya-ai-capability',{detail:{connected:true,model}}));close();win.hidden=false;reply('AI 已接入。每次仅发送这次聊天内容，请勿提供敏感数据。')}catch(e){api=null;status();window.dispatchEvent(new CustomEvent('xiaoya-ai-capability',{detail:{connected:false}}));q('#xy-feedback').textContent=e instanceof TypeError?'跨域请求被限制（CORS）。GitHub Pages 没有安全模型代理，不能在此完成连接。':'未接入：'+e.message}finally{q('#xy-key').value='';q('#xy-connect').disabled=false}
 };
 q('#xy-form').onsubmit=async e=>{e.preventDefault();const input=q('#xy-input').value.trim();if(!input)return;q('#xy-input').value='';reply(input,'user');if(!api){reply(localAnswer(input));return}const pending=reply('思考中…');try{const messages=[{role:'system',content:'你是小芽，一个简洁、亲切、务实的大学生生活和学习助手。不要声称读取了用户的本地档案或执行了任何操作。'},...chat.slice(-10),{role:'user',content:input}];const r=await fetch(api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+api.key},body:JSON.stringify({model:api.model,messages,max_tokens:700}),signal:AbortSignal.timeout(35000)});if(!r.ok)throw Error('HTTP '+r.status);const j=await r.json();const answer=j.choices?.[0]?.message?.content;if(!answer)throw Error('无回复');pending.textContent=answer;chat.push({role:'user',content:input},{role:'assistant',content:answer})}catch(e){pending.textContent='AI 请求失败：'+e.message+'。你仍可使用本机功能。'}};
 document.querySelectorAll('[data-ask]').forEach(e=>e.onclick=()=>{q('#xy-input').value=e.dataset.ask;q('#xy-form').requestSubmit()});
-for(const sel of ['#ai-global-entry','#ai-goals-banner-action','#ai-mode-connect','#ai-today-connect','#growth-ai-config-link','#growth-ai-generate']){const el=q(sel);if(!el)continue;el.disabled=false;el.removeAttribute('aria-disabled');el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open()},true)}
+for(const sel of ['#ai-global-entry','#ai-goals-banner-action','#ai-mode-connect','#ai-today-connect','#growth-ai-config-link']){const el=q(sel);if(!el)continue;el.disabled=false;el.removeAttribute('aria-disabled');el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open()},true)}
 status();setTimeout(open,350);window.addEventListener('pagehide',()=>{api=null;chat=[]});

@@ -1,24 +1,68 @@
-export function initByokUI(){
- const $=s=>document.querySelector(s);
- const put=(id,s)=>{const e=$(id);if(e)e.textContent=s};
- const ids=['#ai-global-entry','#ai-today-panel','#ai-mode-dashboard','#ai-goals-banner'];
- for(const id of ids){const e=$(id);if(e)e.dataset.aiMode='offline'}
- document.querySelectorAll('[data-ai-capability-state]').forEach(e=>{e.dataset.mode='offline';e.textContent='公开演示 · 本机规则'});
- put('#ai-global-title','规则模式');put('#ai-global-subtitle','公开静态版');
- put('#ai-goals-banner-title','规则规划可用 · 云端 AI 未包含');
- put('#ai-goals-banner-summary','公开版只提供无需账号的本机功能。真实 AI 个性化规划仅在私有 Node 运行版经用户主动配置与授权后可用。');
- put('#ai-today-summary','课表、任务、成长路线和复盘在当前浏览器中运行；静态站不连接任何模型服务。');
- put('#ai-ability-cloud-status','静态版未提供');
- put('#ai-mode-headline','本机规则规划随时可用');
- put('#ai-mode-summary','无需 API。公开静态版禁用云端规划，不会上传档案或申请 API Key。');
- put('#ai-mode-cloud-state','静态公开版不可用');
- put('#ai-mode-truth','网站不提供服务器端的 AI Key 托管或推理代理；配置请使用单独本机版本。');
- for(const id of ['#growth-ai-generate','#byok-save','#byok-test']){const e=$(id);if(e){e.disabled=true;e.title='GitHub Pages 静态版不提供云端 API 服务'}}
- for(const id of ['#byok-key','#byok-base','#byok-model','#byok-provider']){const e=$(id);if(e)e.disabled=true}
- const form=$('#byok-form');if(form)form.addEventListener('submit',e=>e.preventDefault());
- put('#byok-status','GitHub Pages 公开版 · 无服务器 API');
- put('#byok-form-result','安全说明：本版本不接收 API Key，也不会请求付费模型。请勿在任何公开网页输入私人 API Key。');
- put('#growth-ai-status','AI 智能规划在静态版不可用；上方规则成长路线可正常生成。');
- const v=$('#growth-ai-consent');if(v)v.disabled=true;
- for(const id of ['#growth-ai-config-link','#ai-today-connect','#ai-goals-banner-action','#ai-mode-connect']){const e=$(id);if(e){e.disabled=true;e.title='公开静态版本不提供服务端模型连接';e.setAttribute('aria-disabled','true')}}
+import {buildGrowthRoutes} from './growth-simulator.js';
+// Static Pages: only this browser tab's verified chat session may request AI planning.
+// The API key stays private in xiaoya-chat.js closure, never in app data.
+const $=s=>document.querySelector(s), put=(id,t)=>{const e=$(id);if(e)e.textContent=t};
+let connected=false,model='',busy=false;
+function refresh(){
+ document.body.dataset.aiMode=connected?'verified':'offline';
+ const b=$('#growth-ai-generate');
+ if(b){b.disabled=!connected||busy||!$('#growth-ai-consent')?.checked;b.textContent=busy?'真实模型正在规划…':connected?'使用已连接 AI 规划':'先连接 AI，再生成规划'}
+ put('#ai-global-title',connected?'AI 已接入':'规则模式');
+ put('#ai-global-subtitle',connected?model:'AI 未接入');
+ put('#ai-goals-banner-title',connected?'真实 AI 规划已解锁':'规则成长路线随时可用');
+ put('#ai-goals-banner-summary',connected?'仅经授权发送成长目标、基础、时数、周期及考试周。最终行动必须由你确认。':'可先使用本机规则成长路线，或在小芽聊天窗口连接真实 AI。');
+ put('#ai-ability-cloud-status',connected?'真实模型已验证':'未连接');
+ put('#ai-mode-headline',connected?'真实 AI 已连接':'本机规则规划随时可用');
+ put('#ai-mode-summary',connected?'AI 聊天与成长规划共享已验证模型，不读取私人档案。':'基础规则规划无需 API。');
+ put('#ai-mode-cloud-state',connected?'已验证模型':'AI 未接入');
+ put('#ai-mode-truth','模型仅接收明确授权的成长目标输入，生成后仍须审核才能写入本地。');
+ document.querySelectorAll('[data-ai-capability-state]').forEach(e=>{e.textContent=connected?'AI 已接入':'规则模式';e.dataset.mode=connected?'verified':'offline'});
+}
+const field=(x,n)=>{if(typeof x!=='string'||!x.trim()||x.length>n)throw Error('AI 输出不符合字段约束');return x.trim()};
+function validate(raw,input,usedModel){
+ let v;try{v=JSON.parse(raw)}catch{throw Error('模型未返回有效 JSON')}
+ if(!v||!Array.isArray(v.stages)||v.stages.length!==3)throw Error('模型必须给出3阶段计划');
+ const base=buildGrowthRoutes(input),template=base.routes[0].stages;
+ const stages=v.stages.map((s,i)=>({id:'ai-'+i,title:field(s.title,72),action:field(s.action,400),deliverable:field(s.deliverable,180),
+  startWeek:template[i].startWeek,endWeek:template[i].endWeek,hours:template[i].hours}));
+ return {...base,explain:'真实模型 '+usedModel+' 的建议；时间预算与周段由本机规则控制。'+field(v.summary,500),
+  routes:[{id:'ai-generated',name:field(v.name,80),reason:field(v.reason,450),risk:field(v.risk,450),stages}]};
+}
+export function initByokUI({onGrowthPlan}={}){
+ for(const id of ['#byok-key','#byok-base','#byok-model','#byok-provider','#byok-save','#byok-test']){
+  const el=$(id);if(el){el.disabled=true;el.title='公开版统一在小芽聊天入口连接 AI'}
+ }
+ const oldForm=$('#byok-form');
+ if(oldForm){
+  const connect=document.createElement('button');connect.type='button';connect.id='pages-unified-ai-connect';
+  connect.className='btn btn-dark';connect.textContent='连接或更换 AI 模型（与小芽聊天共用）';
+  connect.addEventListener('click',()=>document.querySelector('#xy-config')?.click());
+  oldForm.before(connect);oldForm.hidden=true;
+ }
+ $('#byok-form')?.addEventListener('submit',e=>e.preventDefault());
+ put('#byok-status','请从右下角的小芽聊天窗口连接真实 AI');
+ put('#byok-form-result','公开版浏览器直连模型，可能受 CORS 规则限制；密钥只留在页面内存。');
+ window.addEventListener('xiaoya-ai-capability',e=>{connected=e.detail?.connected===true;model=connected?String(e.detail?.model||'模型'):'';refresh()});
+ $('#growth-ai-consent')?.addEventListener('change',refresh);
+ $('#growth-ai-generate')?.addEventListener('click',async()=>{
+  if(!connected||busy||!$('#growth-ai-consent')?.checked)return;
+  const input={goal:$('#growth-goal').value,baseline:$('#growth-baseline').value,
+   hours:Number($('#growth-hours').value),weeks:Number($('#growth-weeks').value),examWeek:$('#growth-exam-week').value};
+  try{buildGrowthRoutes(input)}catch(e){put('#growth-ai-status','输入无效：'+e.message);return}
+  busy=true;refresh();put('#growth-ai-status','模型正在生成建议，不会自动更改数据。');
+  const requestId=crypto.randomUUID();
+  try{
+   const r=await new Promise((resolve,reject)=>{
+    let timer;const handler=e=>{if(e.detail?.requestId!==requestId)return;clearTimeout(timer);window.removeEventListener('xiaoya-ai-plan-result',handler);resolve(e.detail)};
+    window.addEventListener('xiaoya-ai-plan-result',handler);
+    timer=setTimeout(()=>{window.removeEventListener('xiaoya-ai-plan-result',handler);reject(Error('模型超时'))},80000);
+    window.dispatchEvent(new CustomEvent('xiaoya-ai-plan-request',{detail:{requestId,input}}));
+   });
+   if(!r.ok)throw Error(r.error||'模型请求失败');
+   onGrowthPlan(validate(r.raw,input,r.model));
+   put('#growth-ai-status','真实模型建议已通过结构校验，请预览并人工批准。');
+  }catch(e){put('#growth-ai-status','AI 规划失败：'+e.message+'，规则路线仍可使用。')}
+  finally{busy=false;$('#growth-ai-consent').checked=false;refresh()}
+ });
+ refresh();
 }
