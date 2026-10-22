@@ -43,7 +43,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 
 /* Xiaoya LifeLab official character V1: exact cropped concept artwork (4-pose sprite).
    The previous .sprout-svg remains mounted as fallback and for regression assertions. */
-.xiaoya-sprite-v1{position:absolute;display:block;pointer-events:none;background-image:url('/assets/brand/xiaoya_sprite_v1.webp');background-repeat:no-repeat;background-size:200% 200%;background-position:0% 0%;opacity:0;transition:opacity .18s ease,filter .24s ease;z-index:2}
+.xiaoya-sprite-v1{position:absolute;display:block;pointer-events:none;background-image:url('./assets/brand/xiaoya_sprite_v1.webp');background-repeat:no-repeat;background-size:200% 200%;background-position:0% 0%;opacity:0;transition:opacity .18s ease,filter .24s ease;z-index:2}
 .pet-figure .xiaoya-sprite-v1{width:min(100%,214px);height:214px;top:0;left:0;right:0;margin:0 auto;transform:none}
 .mobile-pet .xiaoya-sprite-v1{width:56px;height:56px;left:-4px;top:-4px}
 .xiaoya-v1-ready .pet-figure .xiaoya-sprite-v1,.xiaoya-v1-ready .mobile-pet .xiaoya-sprite-v1{opacity:1}
@@ -54,7 +54,7 @@ svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke
 .pet-figure[data-state='silent'] .xiaoya-sprite-v1,.mobile-pet[data-state='silent'] .xiaoya-sprite-v1{filter:saturate(.72)}
 .xiaoya-v1-ready .pet-figure[data-state='celebrate'] .xiaoya-sprite-v1{animation:celebrate .5s ease-in-out 3}
 .xiaoya-v1-ready .pet-figure[data-state='thinking'] .xiaoya-sprite-v1{animation:think 1.2s ease-in-out infinite}
-.xiaoya-v1-ready .brand-mark{background-image:url('/assets/brand/xiaoya_sprite_v1.webp');background-size:200% 200%;background-repeat:no-repeat;background-position:0 0}
+.xiaoya-v1-ready .brand-mark{background-image:url('./assets/brand/xiaoya_sprite_v1.webp');background-size:200% 200%;background-repeat:no-repeat;background-position:0 0}
 .xiaoya-v1-ready .brand-mark .mini-leaf{opacity:0}
 .reduce-motion .xiaoya-sprite-v1,.reduce-motion .sprout-svg{animation:none!important;transition:none!important}
 @media (prefers-reduced-motion:reduce){.xiaoya-sprite-v1{animation:none!important;transition:none!important}}
