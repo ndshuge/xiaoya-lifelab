@@ -3,7 +3,7 @@ const q=s=>document.querySelector(s);
 let api=null,chat=[],restoredSession=false;
 const STORED_KEY='xiaoya.byok.credential.v1';
 const panel=document.createElement('section');panel.id='xiaoya-layer';
-panel.innerHTML='<button id="xy-fab" type="button">🌱 和小芽聊天 <small id="xy-state">AI 未接入</small></button><div id="xy-onboard" class="xy-shade" hidden><div class="xy-dialog" role="dialog" aria-modal="true" aria-label="连接小芽"><div class="xy-hero"><span>🌱</span><h2>你好，我是小芽</h2><p>选择体验方式，先把生活整理好。</p><b id="xy-connection">AI 未接入</b></div><div class="xy-content"><button id="xy-local" class="xy-local" type="button"><strong>先用基础功能</strong><span>课表、任务、成长路线与复盘，无需 API →</span></button><h3>连接真实 AI · 开启聊天</h3><p>公开 GitHub Pages 没有模型代理。只能尝试浏览器直连，可能被提供商的 CORS 规则阻止。</p><label>服务商<select id="xy-provider"><option value="zhipu">智谱 GLM（课堂笔记同款）</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="siliconflow">硅基流动</option><option value="dashscope">阿里百炼</option><option value="moonshot">Moonshot</option><option value="openrouter">OpenRouter</option><option value="commandcode">CommandCode（需服务商允许网页请求）</option></select></label><label>模型 ID<input id="xy-model" type="text" maxlength="120" placeholder="可按你的实际账户修改"></label><label>API Key（可按下面选项保存到此浏览器）<input id="xy-key" type="password" autocomplete="off" placeholder="仅在你信任的设备上输入"></label><label class="xy-consent"><input id="xy-remember" type="checkbox">记住此浏览器中的 API Key（长期保存，关闭 Edge 后仍可恢复；仅限个人设备）</label><p class="xy-storage-warning">安全提示：密钥将存入此网站在浏览器的本地存储（未额外加密）；本机其他用户、浏览器扩展或同源脚本可能读取。不要在公用设备勾选。</p><button id="xy-forget" type="button">清除已保存的 API Key</button><label class="xy-consent"><input id="xy-consent" type="checkbox">我理解直接请求可能产生费用、遇到跨域限制；不在公共设备上使用 Key。</label><button id="xy-connect" type="button">测试连接 AI</button><p id="xy-feedback" role="status"></p><button id="xy-skip" type="button">暂不接入，进入应用</button></div></div></div><div id="xy-window" hidden><header><span>🌱 小芽</span><strong id="xy-chat-state">AI 未接入</strong><button id="xy-config" type="button" aria-label="配置 AI">⚙</button><button id="xy-close" type="button" aria-label="关闭聊天">×</button></header><div id="xy-messages" role="log" aria-live="polite"></div><div class="xy-chips"><button data-ask="今天先做什么？">今天先做什么</button><button data-ask="如何制定学习计划？">学习计划</button><button data-ask="课表怎么导入？">导入课表</button></div><form id="xy-form"><input id="xy-input" placeholder="和小芽说点什么…" maxlength="700" aria-label="聊天消息"><button type="submit">发送</button></form><footer>未接入时仅本机导航引导；不自动读取私人数据或修改任务。</footer></div>';
+panel.innerHTML='<button id="xy-fab" type="button" aria-label="打开小芽聊天，可拖动移动" title="拖动小芽移动，点击聊天"><img src="./assets/brand/xiaoya_hero_v1.webp" alt="" draggable="false"><small id="xy-state" aria-live="polite">AI 未接入</small></button><div id="xy-onboard" class="xy-shade" hidden><div class="xy-dialog" role="dialog" aria-modal="true" aria-label="连接小芽"><div class="xy-hero"><span>🌱</span><h2>你好，我是小芽</h2><p>选择体验方式，先把生活整理好。</p><b id="xy-connection">AI 未接入</b></div><div class="xy-content"><button id="xy-local" class="xy-local" type="button"><strong>先用基础功能</strong><span>课表、任务、成长路线与复盘，无需 API →</span></button><h3>连接真实 AI · 开启聊天</h3><p>公开 GitHub Pages 没有模型代理。只能尝试浏览器直连，可能被提供商的 CORS 规则阻止。</p><label>服务商<select id="xy-provider"><option value="zhipu">智谱 GLM（课堂笔记同款）</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="siliconflow">硅基流动</option><option value="dashscope">阿里百炼</option><option value="moonshot">Moonshot</option><option value="openrouter">OpenRouter</option><option value="commandcode">CommandCode（需服务商允许网页请求）</option></select></label><label>模型 ID<input id="xy-model" type="text" maxlength="120" placeholder="可按你的实际账户修改"></label><label>API Key（可按下面选项保存到此浏览器）<input id="xy-key" type="password" autocomplete="off" placeholder="仅在你信任的设备上输入"></label><label class="xy-consent"><input id="xy-remember" type="checkbox">记住此浏览器中的 API Key（长期保存，关闭 Edge 后仍可恢复；仅限个人设备）</label><p class="xy-storage-warning">安全提示：密钥将存入此网站在浏览器的本地存储（未额外加密）；本机其他用户、浏览器扩展或同源脚本可能读取。不要在公用设备勾选。</p><button id="xy-forget" type="button">清除已保存的 API Key</button><label class="xy-consent"><input id="xy-consent" type="checkbox">我理解直接请求可能产生费用、遇到跨域限制；不在公共设备上使用 Key。</label><button id="xy-connect" type="button">测试连接 AI</button><p id="xy-feedback" role="status"></p><button id="xy-skip" type="button">暂不接入，进入应用</button></div></div></div><div id="xy-window" hidden><header><span>🌱 小芽</span><strong id="xy-chat-state">AI 未接入</strong><button id="xy-config" type="button" aria-label="配置 AI">⚙</button><button id="xy-close" type="button" aria-label="关闭聊天">×</button></header><div id="xy-messages" role="log" aria-live="polite"></div><div class="xy-chips"><button data-ask="今天先做什么？">今天先做什么</button><button data-ask="如何制定学习计划？">学习计划</button><button data-ask="课表怎么导入？">导入课表</button></div><form id="xy-form"><input id="xy-input" placeholder="和小芽说点什么…" maxlength="700" aria-label="聊天消息"><button type="submit">发送</button></form><footer>未接入时仅本机导航引导；不自动读取私人数据或修改任务。</footer></div>';
 document.body.append(panel);
 const modal=q('#xy-onboard'),win=q('#xy-window');
 
@@ -122,6 +122,56 @@ function close(){modal.hidden=true;sessionStorage.setItem('xiaoya-onboard-v2','s
 q('#xy-local').onclick=close;q('#xy-skip').onclick=close;q('#xy-config').onclick=open;
 q('#xy-fab').onclick=()=>{win.hidden=false;if(!q('#xy-messages').children.length)reply(api?'AI 已接入。你想聊什么？':'你好！当前 AI 未接入，我可以帮助你找到课表、待办和规则规划；开放式 AI 聊天需要先连接模型。');q('#xy-input').focus()};
 q('#xy-close').onclick=()=>win.hidden=true;
+// Web-only floating pet. Pointer capture allows dragging without accidental chat opens.
+// Store only non-sensitive normalized pet position within this origin; never write API keys here.
+const pet=q('#xy-fab'),PET_POS_KEY='xiaoya.pet.position.v1';
+let petDrag=null,suppressPetClick=false;
+function clampPetPosition(x,y){
+ const w=pet.offsetWidth||82,h=pet.offsetHeight||82,edge=12;
+ const maxX=Math.max(edge,window.innerWidth-w-edge),maxY=Math.max(edge,window.innerHeight-h-edge);
+ return {x:Math.max(edge,Math.min(maxX,x)),y:Math.max(edge,Math.min(maxY,y))};
+}
+function movePet(x,y){
+ const pt=clampPetPosition(x,y);
+ pet.style.left=pt.x+'px';pet.style.top=pt.y+'px';
+ pet.style.right='auto';pet.style.bottom='auto';
+}
+try{
+ const pos=JSON.parse(localStorage.getItem(PET_POS_KEY)||'null');
+ if(pos&&Number.isFinite(pos.x)&&Number.isFinite(pos.y)&&pos.x>=0&&pos.x<=1&&pos.y>=0&&pos.y<=1){
+   movePet(pos.x*window.innerWidth,pos.y*window.innerHeight);
+ }
+}catch{}
+pet.addEventListener('pointerdown',e=>{
+ if(e.button!==0)return;
+ petDrag={id:e.pointerId,x:e.clientX,y:e.clientY,left:pet.getBoundingClientRect().left,top:pet.getBoundingClientRect().top,moved:false};
+ pet.setPointerCapture(e.pointerId);
+});
+pet.addEventListener('pointermove',e=>{
+ if(!petDrag||petDrag.id!==e.pointerId)return;
+ const dx=e.clientX-petDrag.x,dy=e.clientY-petDrag.y;
+ if(!petDrag.moved&&Math.hypot(dx,dy)<7)return;
+ petDrag.moved=true;pet.classList.add('xy-dragging');
+ movePet(petDrag.left+dx,petDrag.top+dy);
+});
+function finishPetDrag(e){
+ if(!petDrag||petDrag.id!==e.pointerId)return;
+ if(petDrag.moved){
+  suppressPetClick=true;
+  const rect=pet.getBoundingClientRect();
+  try{localStorage.setItem(PET_POS_KEY,JSON.stringify({x:rect.left/innerWidth,y:rect.top/innerHeight}))}catch{}
+ }
+ petDrag=null;pet.classList.remove('xy-dragging');
+}
+pet.addEventListener('pointerup',finishPetDrag);
+pet.addEventListener('pointercancel',finishPetDrag);
+pet.addEventListener('click',e=>{
+ if(suppressPetClick){e.stopImmediatePropagation();e.preventDefault();suppressPetClick=false;}
+},true);
+window.addEventListener('resize',()=>{
+ if(pet.style.left)movePet(pet.getBoundingClientRect().left,pet.getBoundingClientRect().top);
+});
+
 function reply(t,who='bot'){const e=document.createElement('div');e.className='xy-message '+who;e.textContent=t;q('#xy-messages').append(e);e.scrollIntoView({block:'end'});return e}
 function localAnswer(s){if(/课程|课表|上课/.test(s))return '你可以点击“课表”，添加课程或导入 CSV/ICS。当前属于本机引导，不是 AI 推理。';if(/安排|今天|任务|DDL/.test(s))return '打开“今天”查看待办概况，也能在“事项”中新建任务。我不会假称读取了你的记录。';if(/学习|成长|目标/.test(s))return '进入“成长”填写目标、周期及每周预算，再选择免费的规则路线。需要开放式讨论可以配置 AI。';return '目前 AI 未接入。小芽可以引导你使用基础功能，真实 AI 对话需连接模型。'}
 q('#xy-connect').onclick=async()=>{
