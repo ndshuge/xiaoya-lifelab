@@ -13,11 +13,11 @@ function refresh(){
  if(configButton){configButton.hidden=connected;configButton.style.display=connected?'none':'';}
  put('#ai-global-title',connected?'AI 已接入':'规则模式');
  put('#ai-global-subtitle',connected?model:'AI 未接入');
- put('#ai-goals-banner-title',connected?'真实 AI 规划已解锁':'规则成长路线随时可用');
- put('#ai-goals-banner-summary',connected?'仅经授权发送成长目标、基础、时数、周期及考试周。最终行动必须由你确认。':'可先使用本机规则成长路线，或在小芽聊天窗口连接真实 AI。');
- put('#ai-ability-cloud-status',connected?'真实模型已验证':'未连接');
- put('#ai-mode-headline',connected?'真实 AI 已连接':'本机规则规划随时可用');
- put('#ai-mode-summary',connected?'AI 聊天与成长规划共享已验证模型，不读取私人档案。':'基础规则规划无需 API。');
+ put('#ai-goals-banner-title','让计划从你开始');
+ put('#ai-goals-banner-summary','填写目标、基础和时间，再选择规则路线或 AI 建议；只有批准后才保存。');
+ put('#ai-ability-cloud-status',connected?'可使用':'需连接');
+ put('#ai-mode-headline','规划你的下一步');
+ put('#ai-mode-summary','规则规划随时可用；AI 规划需明确授权。');
  put('#ai-mode-cloud-state',connected?'已验证模型':'AI 未接入');
  put('#ai-mode-truth','模型仅接收明确授权的成长目标输入，生成后仍须审核才能写入本地。');
  document.querySelectorAll('[data-ai-capability-state]').forEach(e=>{e.textContent=connected?'AI 已接入':'规则模式';e.dataset.mode=connected?'verified':'offline'});

@@ -61,3 +61,38 @@
  border-radius:14px;background:#fffdf6;box-shadow:0 9px 25px #1e3c2527;
  font-size:12px;line-height:1.55;color:#31583d;pointer-events:none}
 @media(max-width:700px){#xy-pet-actions,#xy-pet-bubble{right:91px;bottom:132px}}
+
+/* Reduced-chrome app navigation, one AI connection badge at top.
+   Existing functional panels remain, without repeated marketing cards. */
+#view-today .ai-today-abilities{display:none}
+#view-today .ai-capability-state{display:none}
+#view-today .ai-today-copy .ai-micro-label{font-size:10px;letter-spacing:.1em}
+#view-today .ai-today-copy h3{font-size:20px}
+#view-goals .ai-goals-banner{padding:16px 20px;min-height:unset}
+#view-goals .ai-goals-banner-orb{display:none}
+#view-goals .ai-goals-banner-copy span{display:none}
+#view-goals #ai-goals-banner-title{font-size:17px}
+#view-goals #ai-goals-banner-summary{font-size:12px;line-height:1.5}
+#view-goals #ai-goals-banner-action{white-space:nowrap}
+#xy-fab img{transform-origin:50% 80%;animation:xy-pet-breathe 3.8s ease-in-out infinite}
+#xy-fab[data-state=thinking]{background:#f1f5ff}
+#xy-fab[data-state=thinking] img{animation:xy-pet-thinking 1.4s ease-in-out infinite}
+#xy-fab[data-state=celebrate]{background:#fff4df}
+#xy-fab[data-state=celebrate] img{animation:xy-pet-happy .8s ease-in-out 3}
+#xy-fab[data-state=care],#xy-fab[data-state=remind]{background:#fff8e7}
+#xy-fab[data-state=care] img,#xy-fab[data-state=remind] img{animation:xy-pet-alert 2.7s ease-in-out infinite}
+#xy-fab[data-state=silent] img{animation:none;filter:saturate(.70);opacity:.84}
+#xy-fab[data-state=thinking]:after,#xy-fab[data-state=celebrate]:after,#xy-fab[data-state=care]:after,#xy-fab[data-state=remind]:after{
+ position:absolute;left:-6px;bottom:1px;z-index:2;border-radius:50%;
+ background:#fffdf9;border:1px solid #d5e2d2;padding:1px 4px;font-size:15px;
+}
+#xy-fab[data-state=thinking]:after{content:'…'}
+#xy-fab[data-state=celebrate]:after{content:'✦'}
+#xy-fab[data-state=care]:after{content:'!'}
+#xy-fab[data-state=remind]:after{content:'•'}
+#xy-fab.xy-dragging img{animation:none!important}
+@keyframes xy-pet-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045) rotate(-1.1deg)}}
+@keyframes xy-pet-thinking{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes xy-pet-happy{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes xy-pet-alert{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){#xy-fab img{animation:none!important}#xy-fab{transition:none!important}}

@@ -129,6 +129,15 @@ q('#xy-fab').onclick=()=>{placePetCompanions();quick.hidden=!quick.hidden;hidePe
 q('#xy-close').onclick=()=>win.hidden=true;
 let bubbleTimer=null,lastPetPrompt=0;
 function hidePetBubble(){bubble.hidden=true;if(bubbleTimer)clearTimeout(bubbleTimer)}
+// The single floating pet reflects the same rule-backed states as the app.
+requestAnimationFrame(()=>{const state=window.OPC_TEST?.petState?.();if(['idle','remind','thinking','celebrate','care','silent'].includes(state))pet.dataset.state=state});
+const PET_STATES=new Set(['idle','remind','thinking','celebrate','care','silent']);
+window.addEventListener('xiaoya-pet-state',e=>{
+ const state=PET_STATES.has(e.detail?.state)?e.detail.state:'idle';
+ pet.dataset.state=state;
+ pet.title=(e.detail?.headline||'小芽')+' · 点击打开快捷操作，可拖动';
+});
+
 function petSay(msg,auto=false){
  if(!msg)return;
  const now=Date.now();

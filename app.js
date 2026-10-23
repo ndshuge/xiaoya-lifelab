@@ -255,7 +255,7 @@ function mountMascotV1(button){
 function renderPet(){
 let now=new Date(),s=summary(data,now),state=petState(),chosen=currentSuggestions[0];
 const words={idle:['正在陪伴你','你好呀，我是小芽','慢慢来，今天也是新的一天。'],remind:['有一件事要注意','记得留意截止时间','我发现一项待完成的近期任务。'],thinking:['正在整理建议','我看一下你的安排','只分析你主动保存的课程和任务。'],celebrate:['小小地庆祝一下','这一件，真的完成了！','刚才的完成记录已经保存。'],care:['发现时间有点挤','记得给自己留空档','我发现两件真实日程重叠。'],silent:['已经安静下来','我会静静陪着你','勿扰已开启，仍可主动查看建议。']};
-const w=words[state];$('#pet-figure')?.setAttribute('data-state',state);
+const w=words[state];window.dispatchEvent(new CustomEvent('xiaoya-pet-state',{detail:{state,headline:w[1],hint:w[2]}}));$('#pet-figure')?.setAttribute('data-state',state);
 $('#pet-button').dataset.state=state;$('#pet-state-label').textContent=w[0];$('#pet-title').textContent=w[1];$('#pet-message').textContent=w[2];
 $('#popover-title').textContent=w[1];$('#popover-text').textContent=(chosen?chosen.description+'。'+chosen.reason:w[2]);
 $('#popover-links').innerHTML=chosen?sourceButtons(chosen)+(chosen.action?'<button data-propose="'+esc(chosen.id)+'">查看行动建议</button>':''):'<button data-view="today">返回今天</button>';
