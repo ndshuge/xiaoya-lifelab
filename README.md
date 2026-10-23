@@ -15,6 +15,12 @@
 
 </div>
 
+## 竞赛公开材料
+
+- [最新作品介绍 PDF（18 页）](competition-materials/Xiaoya_LifeLab_18P_QR.pdf)
+- [材料清单、SHA-256 与验证结果](competition-materials/README.md)
+- [公开证据摘要](competition-materials/evidence/PUBLIC_EVIDENCE.md)
+
 ---
 
 ## 今天的安排，与未来的想法
