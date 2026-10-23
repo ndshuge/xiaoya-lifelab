@@ -29,6 +29,8 @@ function validate(raw,input,usedModel){
   routes:[{id:'ai-generated',name:field(v.name,80),reason:field(v.reason,450),risk:field(v.risk,450),stages}]};
 }
 export function initByokUI({onGrowthPlan}={}){
+ connected=document.body.dataset.aiMode==='verified';
+ model=connected?(document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'';
  for(const id of ['#byok-key','#byok-base','#byok-model','#byok-provider','#byok-save','#byok-test']){
   const el=$(id);if(el){el.disabled=true;el.title='公开版统一在小芽聊天入口连接 AI'}
  }
