@@ -237,7 +237,7 @@ if(s.some(x=>x.kind==='conflict'))return 'care';
 return 'idle';
 }
 // Brand V1: original illustration sprites, backed by the original SVG if loading fails.
-const MASCOT_V1_SRC='/assets/brand/xiaoya_sprite_v1.webp';
+const MASCOT_V1_SRC='./assets/brand/xiaoya_sprite_v1.webp';
 const mascotPreloader=new Image();
 mascotPreloader.onload=()=>document.body.classList.add('xiaoya-v1-ready');
 mascotPreloader.onerror=()=>document.body.classList.remove('xiaoya-v1-ready');
