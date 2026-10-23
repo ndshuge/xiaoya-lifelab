@@ -15,4 +15,9 @@ GitHub Pages 不能运行本机 Node 服务、私有 HttpOnly BYOK 代理、127.
 ## 演示
 - 产品：https://ndshuge.github.io/xiaoya-lifelab/
 - 匿名：https://ndshuge.github.io/xiaoya-lifelab/?judge=1
-- `model-lab.html` 展示本机合成实验室界面；依赖本机服务的模型调用在 Pages 不可用，并会如实提示。
+- `model-lab.html` 保留完整的三合成案例规则基线、人工接力、沙盒审批和撤销，并新增浏览器临时 BYOK 真模型合成规划。独立的本机 Qwen / HanaAgent 接口仍只能在本机 Node 环境运行。
+
+## 公开浏览器适配验收（2026-10-23）
+- 完成8类服务商选择及手动模型 ID，默认不存储 API Key。实际能否调用由对应服务商的 CORS、权限、额度决定。
+- 浏览器模型实验室支持真实请求、类型/时间约束验证、人工沙盒批准与撤销；错误或无Key则绝不展示伪造规划。
+- 保留独立 Qwen 本机实验入口的诚实状态，不将 Node 或 Qwen 推理进程伪装成已经部署在 GitHub Pages。

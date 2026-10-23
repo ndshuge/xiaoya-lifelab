@@ -2,15 +2,15 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>小芽 LifeLab｜合成 AI 规划实验室</title>
 <link rel="stylesheet" href="./local-model-lab.css"/>
-</head><body>
+<link rel="stylesheet" href="./xiaoya-chat.css"/></head><body>
 <main class="shell">
  <header class="top"><a href="./" class="back">← 返回小芽</a><span class="topbrand">✳ 小芽 <small>LIFELAB</small></span><span class="eyebrow">STATIC PAGES · RULE DEMO</span></header>
  <section class="hero"><span class="kicker">模型实验 · Qwen / CommandCode / OpenCode</span>
   <h1>让小芽真正学会<span>思考规划</span>，先从合成案例开始。</h1>
-  <p>这不是聊天机器人窗口。本公开入口保留三个合成情境与可核查的规则阶段计划。独立的本机 Qwen / Coding Provider 推理需在私有 Node 环境运行，GitHub Pages 不会模拟真实模型调用；你的私人课表、浏览器储存、真实姓名、账号和密钥不会进入本实验。</p>
+  <p>这是一座真实的合成规划实验室：三个预设案例支持规则基线、浏览器自带 API 的真实模型建议、结构校验、沙盒批准和撤销。独立的本机 Qwen / Coding Provider 私有接口仍需要本机 Node 环境，Pages 不会虚构调用结果；你的私人课表、浏览器储存、真实姓名、账号和密钥不会进入本实验。</p>
   <div class="stats">
    <div><strong id="model-state">检查中…</strong><small>需要本机 Node/Qwen 环境</small></div>
-   <div><strong>云端只在确认后调用</strong><small>CommandCode / OpenCode 均会占用所选模型额度</small></div>
+   <div><strong>网页 BYOK 需授权后调用</strong><small>网页 BYOK 由你选择模型；实际请求可能产生费用</small></div>
    <div><strong>批准后进入合成沙盒</strong><small>不修改真实任务，支持一键撤销</small></div>
   </div>
  </section>
@@ -27,16 +27,16 @@
  </section>
  <section class="section coding-direct" aria-labelledby="direct-title">
   <div class="section-title"><div><span class="kicker">03 / CODING PLAN · OPENCODE</span><h2 id="direct-title">真实 Coding Plan 双模型接入</h2></div></div>
-  <p class="muted">此入口会把<strong>唯一选中的虚构案例</strong>发送到选定云模型，可能消耗订阅配额。此接口仅在本机 Node 环境可用，GitHub Pages 未连接 HanaAgent，云端自动调用按钮在公开版禁用。模型只能给出建议，不能读取私人档案、执行任务或修改日程。</p>
+  <p class="muted">此入口会把<strong>唯一选中的虚构案例</strong>发送到选定云模型，可能消耗订阅配额。这里的浏览器 BYOK 允许你主动连接已支持跨域的模型进行真实合成规划；私有 HanaAgent / Coding Provider 后端仍仅在本机运行。模型只能给出建议，不能读取私人档案、执行任务或修改日程。</p>
   <div class="controls">
-    <label for="coding-provider">选择已配置的 Provider</label>
+    <label for="coding-provider">选择浏览器 AI Provider</label>
     <select id="coding-provider" aria-label="模型服务商"><option value="commandcode">CommandCode · DeepSeek V4.1 Flash</option><option value="opencode-go">OpenCode Go · DeepSeek V4.1 Flash</option></select>
-    <button class="outline" id="coding-refresh" type="button">检查 API 配置</button>
+    <button class="outline" id="lab-web-connect" type="button">连接或更换浏览器 AI 模型</button><button class="outline" id="coding-refresh" type="button">检查 API 配置</button>
     <span id="coding-status" role="status" aria-live="polite">尚未检查云端配置；此时不会发生任何模型请求。</span>
   </div>
-  <p class="muted">依据服务商使用范围：CommandCode 可用于本页三个合成规划场景；OpenCode Go 仅在选择「编程项目与作业期限」时允许测试编程 Agent 类型请求。</p>
+  <p class="muted">浏览器版使用上方连接的模型处理预设合成案例。原 CommandCode / OpenCode 私有 Node 接口在公开版不自动调用，须使用独立本机环境。</p>
   <label class="coding-consent"><input id="coding-consent" type="checkbox"/> 我确认当前案例完全虚构，并允许向所选服务发送<strong>一次</strong>有限额度的推理请求。</label>
-  <div class="controls"><button id="coding-run" type="button" class="primary" disabled>调用选定 Coding Plan · 生成真实规划 →</button><span class="muted">同一小时最多4次；每个Provider最多2次；只做单次生成。</span></div>
+  <div class="controls"><button id="coding-run" type="button" class="primary" disabled>使用已连接模型 · 生成真实规划 →</button><span class="muted">同一小时最多4次；每个Provider最多2次；只做单次生成。</span></div>
   <div class="panel" id="coding-result" aria-live="polite"><p class="empty">选择 Provider 并勾选确认后点击生成。未执行前不会出现假造的“AI结果”。</p></div>
   <p class="evidence" id="coding-evidence" aria-live="polite"></p>
   <div class="sandbox" aria-labelledby="sandbox-title">
@@ -62,4 +62,4 @@
  <section class="foot"><h2>权限与真实性边界</h2><p>公开版不会调用本机 HTTP 服务；手动复制接力仅处理预设的3个合成案例。模型不能访问任意用户输入、私有浏览器档案或硬盘文件；只生成建议，不直接修改日程。所有模型结果必须通过类型、周数、时间预算与考试周约束验证；失败时显示错误而不会伪造一个 AI 规划结果。模型速度取决于本机负载。</p><p>CommandCode / OpenCode 直接 Provider 仅在你选择并确认后才调用；HanaAgent 手动复制方式保留作备用。远程调用仅限三个内置合成案例，可能消耗额度。请勿输入私人课表、真实聊天或密钥。即使模型不可用，原有课程/任务/规则辅助仍可使用。</p></section>
 </main>
 <script type="module" src="./model-lab-ui.js"></script>
-</body></html>
+<script src="./xiaoya-chat.js" defer></script></body></html>

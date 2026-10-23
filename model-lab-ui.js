@@ -172,60 +172,79 @@ function resetCoding(){
 }
 function updateCodingButton(){
  const selectedProvider=$('#coding-provider').value;
- const configured=cloudProviders.some(x=>x.id===selectedProvider&&x.configured);
+ const configured=selectedProvider==='browser-byok'&&sharedCloudConnected;
  $('#coding-run').disabled=codingBusy||!configured||!$('#coding-consent').checked||
   (selectedProvider==='opencode-go'&&selected!=='coding-project');
 }
+let sharedCloudConnected=false,sharedCloudModel='';
+const selector=$('#coding-provider');
+for(const option of selector.options)option.disabled=true;
+const webOption=new Option('浏览器自带 Key · 当前模型','browser-byok',true,true);
+selector.add(webOption);
+window.addEventListener('xiaoya-ai-capability',event=>{
+ sharedCloudConnected=event.detail?.connected===true;
+ sharedCloudModel=sharedCloudConnected?String(event.detail.model||'当前模型'):'';
+ cloudProviders=sharedCloudConnected?[{id:'browser-byok',configured:true}]:[];
+ webOption.text=sharedCloudConnected?'浏览器 AI · '+sharedCloudModel:'浏览器 AI · 请先连接';
+ updateCodingButton();
+ $('#coding-status').textContent=sharedCloudConnected?
+ '已验证模型 '+sharedCloudModel+'；勾选授权后可提交选中的虚构案例。':
+ '尚未连接 AI，请点击页面右下角小芽聊天 → 设置，输入模型 Key 并测试';
+});
 async function codingStatus(){
- cloudProviders=[];
- $('#coding-status').textContent='GitHub Pages 不包含私有 HanaAgent 接口；请使用下方手动接力和本地结果验证。';
+ cloudProviders=sharedCloudConnected?[{id:'browser-byok',configured:true}]:[];
+ $('#coding-status').textContent=sharedCloudConnected?
+ '已连接：'+sharedCloudModel+'。不会自动读取私人档案。':
+ 'GitHub Pages 使用用户自己配置的浏览器模型连接；CommandCode/OpenCode 本机专用接口在公开版不自动启用。';
  updateCodingButton();
 }
 
 async function runCoding(){
- if(codingBusy||!$('#coding-consent').checked)return;
- const provider=$('#coding-provider').value;
- if(!cloudProviders.some(x=>x.id===provider&&x.configured))return;
+ if(codingBusy||!sharedCloudConnected||!$('#coding-consent').checked)return;
  codingBusy=true;resetSandbox();updateCodingButton();
  const current=selected;
- $('#coding-status').textContent='已获得一次合成案例调用确认；正在等待 '+provider+' 返回规划…';
- $('#coding-result').replaceChildren(node('p','远程真实模型请求进行中；结果必须通过本机周数、时间预算与考试周校验。','empty'));
+ $('#coding-status').textContent='用户已授权，正在请求真实模型规划合成案例…';
+ $('#coding-result').replaceChildren(node('p','等待模型返回，结果需要先经过本机校验。','empty'));
  $('#coding-evidence').textContent='';
+ const scenario=SYNTHETIC_CASES.find(x=>x.id===current);
  try{
-  const r=await fetch('/api/coding/plan',{
-   method:'POST',
-   headers:{'Content-Type':'application/json','X-Xiaoya-Synthetic-Only':'1'},
-   body:JSON.stringify({caseId:current,provider}),
-   signal:AbortSignal.timeout(85000)
+  const requestId=crypto.randomUUID();
+  const response=await new Promise((resolve,reject)=>{
+   let timer;
+   const listener=e=>{
+    if(e.detail?.requestId!==requestId)return;
+    clearTimeout(timer);window.removeEventListener('xiaoya-ai-synthetic-result',listener);
+    if(!e.detail.ok){reject(Error(e.detail.error||'模型调用失败'));return}
+    resolve(e.detail);
+   };
+   window.addEventListener('xiaoya-ai-synthetic-result',listener);
+   timer=setTimeout(()=>{window.removeEventListener('xiaoya-ai-synthetic-result',listener);reject(Error('模型请求超时'))},85000);
+   window.dispatchEvent(new CustomEvent('xiaoya-ai-synthetic-request',{detail:{requestId,input:scenario}}));
   });
-  const data=await r.json();
-  if(!r.ok||data.mode!=='coding-provider-real'||data.syntheticOnly!==true||
-   data.privateDataUsed!==false||data.writeOperations!==0||data.provider!==provider)
-    throw Error(data.error||'模型响应未通过安全门槛');
+  const raw=JSON.parse(response.raw);
+  const {validateSyntheticPlan}=await import('./local-model-lab.js');
+  const plan=validateSyntheticPlan(raw,scenario);
   const box=$('#coding-result');box.replaceChildren();
-  add(box,'p',data.plan.summary,'muted');
-  for(const m of data.plan.milestones){
-   const item=node('section','','milestone');
-   add(item,'span','第'+m.week+'周 · 建议投入'+m.hours+'小时');
-   add(item,'strong',m.title);
-   add(item,'p',m.reason);
-   add(item,'p','可检验成果：'+m.deliverable,'note');
-   box.appendChild(item);
+  add(box,'p',plan.summary,'muted');
+  for(const m of plan.milestones){
+   const card=node('section','','milestone');
+   add(card,'span','第'+m.week+'周 · 建议投入'+m.hours+'小时');
+   add(card,'strong',m.title);add(card,'p',m.reason);
+   add(card,'p','可核验成果：'+m.deliverable,'note');box.appendChild(card);
   }
-  if(data.plan.risks?.length)add(box,'p','风险：'+data.plan.risks.join('；'),'muted');
-  if(data.plan.assumptions?.length)add(box,'p','前提：'+data.plan.assumptions.join('；'),'muted');
-  codingPlan={caseId:current,provider,plan:data.plan};
+  if(plan.risks.length)add(box,'p','风险：'+plan.risks.join('；'),'muted');
+  if(plan.assumptions.length)add(box,'p','前提：'+plan.assumptions.join('；'),'muted');
+  codingPlan={caseId:current,provider:'browser-byok',plan};
   $('#sandbox-preview').disabled=false;
-  $('#coding-status').textContent=provider+' 返回合法合成计划，等待你人工检查。';
-  $('#coding-evidence').textContent='真实 Provider 请求 '+data.modelCalls+' 次，模型 '+data.model+
-   '，历时 '+(data.elapsedMs/1000).toFixed(1)+'秒，输出 tokens '+data.tokens?.completion+
-   '。仅合成数据，私人档案读取0，自动写入0。';
- }catch(e){
-  $('#coding-result').replaceChildren(node('p','本次远程规划未通过：'+e.message+'。没有修改任何任务；规则版仍可用。','empty'));
-  $('#coding-status').textContent='模型调用/输出校验失败，已安全降级。';
-  $('#coding-evidence').textContent='真实请求可能已经占用额度；未经验证的回答一律不采纳。';
+  $('#coding-status').textContent='真实模型返回通过结构及学习时间预算校验，请人工预览。';
+  $('#coding-evidence').textContent='浏览器临时 BYOK 模型：'+response.model+' · 本次合成案例请求1次 · 私人档案读取0 · 自动写入0。';
+ }catch(error){
+  $('#coding-result').replaceChildren(node('p','真实模型规划未通过：'+error.message,'empty'));
+  $('#coding-status').textContent='模型请求或结果未通过验证；未生成任何任务。';
+  $('#coding-evidence').textContent='即使未通过验证，请求仍可能产生模型费用。';
  }finally{codingBusy=false;$('#coding-consent').checked=false;updateCodingButton()}
 }
+$('#lab-web-connect')?.addEventListener('click',()=>document.querySelector('#xy-config')?.click());
 $('#coding-consent').addEventListener('change',updateCodingButton);
 $('#coding-provider').addEventListener('change',()=>{resetCoding()});
 $('#coding-refresh').addEventListener('click',codingStatus);
