@@ -137,7 +137,7 @@ function petSay(msg,auto=false){
  const now=Date.now();
  if(auto&&(document.hidden||!quick.hidden||!win.hidden||now-lastPetPrompt<60*60*1000))return;
  if(auto)lastPetPrompt=now;
- setFloatingPetMood(auto?'remind':'thinking');
+ if(!window.__xiaoyaPetBusy)setFloatingPetMood(auto?'remind':rulePetMood);
  bubble.textContent=String(msg).slice(0,170);
  bubble.hidden=false;
  if(bubbleTimer)clearTimeout(bubbleTimer);
@@ -147,13 +147,13 @@ quick.addEventListener('click',e=>{
  const action=e.target.closest('[data-pet-action]')?.dataset.petAction;
  if(!action)return;
  quick.hidden=true;
- if(action==='chat'){win.hidden=false;if(!api)reply('你可以从设置中连接模型。');return}
+ if(action==='chat'){win.hidden=false;placePetCompanions();if(!api)reply('你可以从设置中连接模型。');q('#xy-input').focus();return}
  if(action==='advice'){window.dispatchEvent(new Event('xiaoya-pet-advice'));return}
  window.dispatchEvent(new CustomEvent('xiaoya-pet-navigate',{detail:{view:action==='goals'?'goals':'tasks'}}));
  petSay(action==='goals'?'成长规划已经打开，我陪你一步一步完成。':'已打开事项列表，看看先处理哪一件。');
 });
 window.addEventListener('xiaoya-pet-advice-result',e=>{if(e.detail?.auto&&!e.detail?.urgent)return;petSay(e.detail?.text||'今天也值得好好生活。',e.detail?.auto===true)});
-window.addEventListener('xiaoya-ai-capability',e=>{if(e.detail?.connected)petSay('我已经连上 AI 啦！有问题可以点我。')});
+window.addEventListener('xiaoya-ai-capability',e=>{if(e.detail?.connected&&!e.detail?.restored&&document.visibilityState==='visible')petSay('AI 已连接，需要我时点一下就好。')});
 window.addEventListener('xiaoya-pet-nudge',e=>petSay(e.detail?.text,true));
 function promptFromExistingData(){
  if(document.hidden||!win.hidden||!quick.hidden)return;
@@ -165,6 +165,18 @@ function promptFromExistingData(){
 setTimeout(promptFromExistingData,22000);
 setInterval(()=>{if(!document.hidden)promptFromExistingData()},60*60*1000);
 window.addEventListener('scroll',()=>{if(!quick.hidden)quick.hidden=true},{passive:true});
+window.addEventListener('keydown',e=>{
+ if(e.key!=='Escape')return;
+ if(!modal.hidden){close();return}
+ if(!quick.hidden){quick.hidden=true;return}
+ if(!win.hidden){win.hidden=true;return}
+ hidePetBubble();
+});
+document.addEventListener('pointerdown',e=>{
+ if(!quick.hidden&&!pet.contains(e.target)&&!quick.contains(e.target))quick.hidden=true;
+ if(!bubble.hidden&&!pet.contains(e.target)&&!bubble.contains(e.target))hidePetBubble();
+});
+
 // Web-only floating pet. Pointer capture allows dragging without accidental chat opens.
 // Store only non-sensitive normalized pet position within this origin; never write API keys here.
 const pet=q('#xy-fab'),PET_POS_KEY='xiaoya.pet.position.v1';
@@ -189,6 +201,12 @@ function placePetCompanions(){
  const rect=pet.getBoundingClientRect();
  const onRight=rect.left>window.innerWidth/2;
  const gap=10;
+ if(!win.hidden && window.innerWidth>700){
+  const w=Math.min(390,window.innerWidth-24);
+  win.style.left=onRight?'auto':Math.min(window.innerWidth-w-12,rect.right+12)+'px';
+  win.style.right=onRight?Math.max(12,window.innerWidth-rect.left+12)+'px':'auto';
+  win.style.bottom='12px';win.style.top='auto';
+ }
  for(const el of [quick,bubble]){
   if(onRight){
    el.style.right=Math.max(gap,window.innerWidth-rect.left+gap)+'px';

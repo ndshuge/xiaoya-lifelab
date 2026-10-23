@@ -139,3 +139,14 @@
  #view-goals .growth-page-head h1{font-size:25px}
  .agent-evidence-summary{padding:12px 14px}
 }
+
+/* Final companion interaction: keep reading space usable. */
+#xy-fab{outline-offset:3px}
+#xy-fab:active{box-shadow:0 6px 15px #264d342e}
+#xy-pet-actions button:focus-visible{outline:2px solid #3b7657;outline-offset:2px}
+#xy-window{max-height:calc(100dvh - 22px)}
+@media (max-width:700px){
+ #xy-window{left:8px!important;right:8px!important;top:auto!important;bottom:max(90px,env(safe-area-inset-bottom))!important;width:auto!important;height:min(60dvh,530px)!important;max-height:calc(100dvh - 110px)}
+ #xy-window #xy-messages{overscroll-behavior:contain}
+ #xy-pet-bubble{max-width:min(245px,calc(100vw - 110px));font-size:12px}
+}
