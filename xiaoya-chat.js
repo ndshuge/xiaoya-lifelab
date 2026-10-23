@@ -17,13 +17,19 @@ window.addEventListener('xiaoya-ai-plan-request',async e=>{
  const {requestId,input}=e.detail||{};
  try {
   if(!api)throw Error('AI 未接入，请先完成真实模型验证');
-  const system='你是大学生学习规划助手。只根据明确授权的目标、基础、周期和时数输出JSON对象。JSON格式：{"summary":"说明","name":"路线名","reason":"理由","risk":"风险","stages":[{"title":"阶段一","action":"行动","deliverable":"证据"},{"title":"阶段二","action":"行动","deliverable":"证据"},{"title":"阶段三","action":"行动","deliverable":"证据"}]}。必须正好3阶段。绝不声称已读取本机课表或执行任务。不得包含Markdown。';
+  const system='你是大学生学习规划助手。只根据用户明确授权的目标、基础、周期与每周投入生成严格JSON，不得输出Markdown或代码围栏。格式：{"summary":"整体说明","name":"路线名","reason":"适配理由","risk":"现实风险","stages":[{"title":"阶段一标题","action":"具体行动，不超过100字","deliverable":"可核验成果"},{"title":"阶段二标题","action":"具体行动，不超过100字","deliverable":"可核验成果"},{"title":"阶段三标题","action":"具体行动，不超过100字","deliverable":"可核验成果"}]}。必须恰好3个阶段，按先基础、再实践、后验证的顺序推进。重要：页面会独立计算并显示每个阶段的准确起止周和投入时数，因此任何阶段的title、action、deliverable都严禁出现周次、周数范围、具体第几周或重复时数；不得写“第5至8周”“第9-12周”等时间标签，也不得与页面展示的阶段边界冲突。不要在阶段正文复述周期数字。所有建议须可执行、可验证，不得声称已读取本机课表、已执行任务或保证结果。';
   const r=await fetch(api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+api.key},body:JSON.stringify({model:api.model,messages:[{role:'system',content:system},{role:'user',content:JSON.stringify(input)}],max_tokens:1250}),signal:AbortSignal.timeout(68000)});
   if(!r.ok){requireReconnectIfUnauthorized(r.status);throw Error('模型HTTP '+r.status)}
   const j=await r.json();
   const raw=j.choices?.[0]?.message?.content;
   if(typeof raw!=='string'||!raw.trim())throw Error('模型返回空内容');
-  window.dispatchEvent(new CustomEvent('xiaoya-ai-plan-result',{detail:{requestId,ok:true,raw,model:api.model}}));
+  let parsed;
+  try{parsed=JSON.parse(raw.trim().replace(/^```(?:json)?\s*/i,'').replace(/\s*```$/,''))}catch{throw Error('模型未返回有效JSON，请重新生成')}
+  if(!parsed||!Array.isArray(parsed.stages)||parsed.stages.length!==3)throw Error('模型必须返回正好三个阶段，请重新生成');
+  const stageText=parsed.stages.map(s=>[s?.title,s?.action,s?.deliverable].join(' ')).join(' ');
+  if(/第\s*\d+\s*(?:至|到|[-—–])\s*\d+\s*周|第\s*\d+\s*周|\bweeks?\s*\d+\s*(?:to|-|–)\s*\d+\b/i.test(stageText))throw Error('阶段正文重复指定周次；页面会自动计算周次范围，请重新生成');
+  if(typeof raw!=='string'||!raw.trim())throw Error('模型返回空内容');
+  window.dispatchEvent(new CustomEvent('xiaoya-ai-plan-result',{detail:{requestId,ok:true,raw:JSON.stringify(parsed),model:api.model}}));
  }catch(err){window.dispatchEvent(new CustomEvent('xiaoya-ai-plan-result',{detail:{requestId,ok:false,error:err.message}}))}
 });
 
