@@ -176,11 +176,11 @@ function updateCodingButton(){
  $('#coding-run').disabled=codingBusy||!configured||!$('#coding-consent').checked||
   (selectedProvider==='opencode-go'&&selected!=='coding-project');
 }
-let sharedCloudConnected=false,sharedCloudModel='';
+let sharedCloudConnected=document.body.dataset.aiMode==='verified',sharedCloudModel=sharedCloudConnected?(document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'';
 const selector=$('#coding-provider');
 for(const option of selector.options)option.disabled=true;
 const webOption=new Option('浏览器自带 Key · 当前模型','browser-byok',true,true);
-selector.add(webOption);
+selector.add(webOption);if(sharedCloudConnected){cloudProviders=[{id:'browser-byok',configured:true}];webOption.text='浏览器 AI · '+sharedCloudModel}
 window.addEventListener('xiaoya-ai-capability',event=>{
  sharedCloudConnected=event.detail?.connected===true;
  sharedCloudModel=sharedCloudConnected?String(event.detail.model||'当前模型'):'';

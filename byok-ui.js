@@ -2,7 +2,7 @@ import {buildGrowthRoutes} from './growth-simulator.js';
 // Static Pages: only this browser tab's verified chat session may request AI planning.
 // The API key stays private in xiaoya-chat.js closure, never in app data.
 const $=s=>document.querySelector(s), put=(id,t)=>{const e=$(id);if(e)e.textContent=t};
-let connected=false,model='',busy=false;
+let connected=document.body.dataset.aiMode==='verified',model=connected?(document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'',busy=false;
 function refresh(){
  document.body.dataset.aiMode=connected?'verified':'offline';
  const b=$('#growth-ai-generate');
