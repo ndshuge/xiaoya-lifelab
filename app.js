@@ -1,7 +1,7 @@
 import {teachingWeek,monday,plusDays,dateKey,occurrences,freeSlots,parseSchedule,applyImport,undoTransaction,parseExceptions,checkSemester,checkSchedule,deliverReminders,isQuiet,growth,exportCalendar,fingerprint} from './domain.js';
 import {buildGrowthRoutes,growthStageTasks,commitGrowthRoute,growthRouteProgress,summarizeGrowthWorkload} from './growth-simulator.js';
 import {analyzeAgent} from './agent-engine.js';
-import {initByokUI} from './byok-ui.js';
+import {initByokUI} from './byok-ui.js?v=dbe24b13r2';
 import {DAYS,dayIndex,localStamp,uid,esc,emptyStore,validateStore,detectConflicts,dueState,dueLabel,fmtDate,suggestions,approve,summary,demoData} from './core.js';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const keys={personal:'xiaoya:personal:v1',demo:'xiaoya:synthetic-demo:v1'};
