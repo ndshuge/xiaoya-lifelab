@@ -2,7 +2,8 @@ import {buildGrowthRoutes} from './growth-simulator.js';
 // Static Pages: only this browser tab's verified chat session may request AI planning.
 // The API key stays private in xiaoya-chat.js closure, never in app data.
 const $=s=>document.querySelector(s), put=(id,t)=>{const e=$(id);if(e)e.textContent=t};
-let connected=document.body.dataset.aiMode==='verified',model=connected?(document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'',busy=false;
+const browserSavedModel=()=>{try{const value=JSON.parse(localStorage.getItem('xiaoya.byok.credential.v1')||'null');return value&&typeof value.provider==='string'&&typeof value.model==='string'&&typeof value.key==='string'&&value.key?value.model:null}catch{return null}};
+let connected=document.body.dataset.aiMode==='verified'||Boolean(browserSavedModel()),model=connected?(browserSavedModel()||document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'',busy=false;
 function refresh(){
  document.body.dataset.aiMode=connected?'verified':'offline';
  const b=$('#growth-ai-generate');
@@ -29,8 +30,8 @@ function validate(raw,input,usedModel){
   routes:[{id:'ai-generated',name:field(v.name,80),reason:field(v.reason,450),risk:field(v.risk,450),stages}]};
 }
 export function initByokUI({onGrowthPlan}={}){
- connected=document.body.dataset.aiMode==='verified';
- model=connected?(document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'';
+ connected=document.body.dataset.aiMode==='verified'||Boolean(browserSavedModel());
+ model=connected?(browserSavedModel()||document.querySelector('#ai-global-subtitle')?.textContent||'已保存模型'):'';
  for(const id of ['#byok-key','#byok-base','#byok-model','#byok-provider','#byok-save','#byok-test']){
   const el=$(id);if(el){el.disabled=true;el.title='公开版统一在小芽聊天入口连接 AI'}
  }
