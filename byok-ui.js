@@ -8,6 +8,9 @@ function refresh(){
  document.body.dataset.aiMode=connected?'verified':'offline';
  const b=$('#growth-ai-generate');
  if(b){b.disabled=!connected||busy||!$('#growth-ai-consent')?.checked;b.textContent=busy?'真实模型正在规划…':connected?'使用已连接 AI 规划':'先连接 AI，再生成规划'}
+ const growthStatus=$('#growth-ai-status'),configButton=$('#growth-ai-config-link');
+ if(growthStatus&&!busy&&!growthStatus.textContent.startsWith('AI 规划失败'))growthStatus.textContent=connected?'AI 已接入 '+model+'；勾选授权后可以生成 AI 成长路线。':'未配置 API：仅规则版可用，智能规划需要配置模型。';
+ if(configButton){configButton.hidden=connected;configButton.style.display=connected?'none':'';}
  put('#ai-global-title',connected?'AI 已接入':'规则模式');
  put('#ai-global-subtitle',connected?model:'AI 未接入');
  put('#ai-goals-banner-title',connected?'真实 AI 规划已解锁':'规则成长路线随时可用');
