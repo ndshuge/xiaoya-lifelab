@@ -25,7 +25,18 @@
  user-select:none;-webkit-user-select:none;cursor:grab;z-index:980;
  transition:box-shadow .15s,transform .15s;overflow:visible
 }
-#xy-fab img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none;user-select:none}
+#xy-fab .xy-pet-art{position:absolute;inset:0;display:block;pointer-events:none;background-image:url('./assets/brand/xiaoya_sprite_v1.webp');background-size:200% 200%;background-repeat:no-repeat;background-position:0 0;transform-origin:50% 82%;animation:xy-pet-idle 3.6s ease-in-out infinite;transition:background-position .22s ease,filter .22s ease} 
+#xy-fab #xy-state{display:none!important}
+#xy-fab[data-state="celebrate"] .xy-pet-art{background-position:100% 0%;animation:xy-pet-celebrate .58s ease-in-out 2}
+#xy-fab[data-state="thinking"] .xy-pet-art{background-position:0% 100%;animation:xy-pet-thinking 1.8s ease-in-out infinite}
+#xy-fab[data-state="remind"] .xy-pet-art{background-position:0% 100%;animation:xy-pet-remind 1.3s ease-in-out 2}
+#xy-fab[data-state="care"] .xy-pet-art{background-position:100% 100%;animation:xy-pet-idle 4.2s ease-in-out infinite}
+#xy-fab[data-state="silent"] .xy-pet-art{background-position:100% 100%;filter:saturate(.58);animation:none}
+@keyframes xy-pet-idle{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(-1deg)}}
+@keyframes xy-pet-thinking{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-2px) rotate(1.5deg)}}
+@keyframes xy-pet-remind{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes xy-pet-celebrate{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-7px) scale(1.035)}}
+@media(prefers-reduced-motion:reduce){#xy-fab .xy-pet-art{animation:none!important;transition:none!important}}
 #xy-fab small{
  position:absolute;top:-7px;right:-8px;white-space:nowrap;
  padding:3px 6px;font-size:10px;font-weight:600;line-height:1.25;
@@ -96,3 +107,35 @@
 @keyframes xy-pet-happy{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px) rotate(3deg)}}
 @keyframes xy-pet-alert{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
 @media(prefers-reduced-motion:reduce){#xy-fab img{animation:none!important}#xy-fab{transition:none!important}}
+
+
+/* LifeLab UI cleanup v2: one global AI status, progressive disclosure elsewhere. */
+#ai-today-panel{display:none!important}
+#ai-goals-banner{display:none!important}
+#view-goals>.growth-tabs{display:none!important}
+#ai-mode-dashboard{display:none!important}
+#ai-mode-dashboard .ai-mode-overview{display:block!important;margin:0!important}
+#ai-mode-dashboard .ai-micro-label,#ai-mode-dashboard .ai-capability-state,
+#ai-mode-dashboard .ai-mode-grid,#ai-mode-dashboard .ai-mode-truth,
+#ai-mode-dashboard .ai-mode-grid,#ai-mode-truth{display:none!important}
+#ai-mode-headline{font-size:14px!important;line-height:1.4!important;margin:0!important;font-weight:650!important}
+#ai-mode-summary{font-size:12px!important;line-height:1.5!important;margin:4px 0 0!important;color:#69746b!important}
+#ai-mode-connect,#growth-ai-config-link{display:none!important}
+#growth-ai-status{display:block;font-size:12px;line-height:1.5;color:#6a756b;margin-top:6px}
+#view-goals .growth-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+#view-goals .growth-page-head h1{font-size:clamp(25px,3vw,34px);margin:0}
+#view-goals .growth-page-head .btn{white-space:nowrap}
+.agent-evidence{padding:0!important;overflow:hidden}
+.agent-evidence-summary{cursor:pointer;list-style:none;padding:14px 17px;color:#59665b;font-size:13px;font-weight:600}
+.agent-evidence-summary::-webkit-details-marker{display:none}
+.agent-evidence-summary:after{content:'＋';float:right;color:#8c998b}
+.agent-evidence[open]>.agent-evidence-summary:after{content:'−'}
+.agent-evidence>.agent-evidence-heading,.agent-evidence>#agent-inspection{margin-left:16px;margin-right:16px}
+.agent-evidence>#agent-inspection{margin-bottom:16px}
+.agent-evidence-heading h3{font-size:15px}
+.secondary-section .helper-tag{font-size:11px}
+@media(max-width:700px){
+ #view-goals .growth-page-head{margin-bottom:12px}
+ #view-goals .growth-page-head h1{font-size:25px}
+ .agent-evidence-summary{padding:12px 14px}
+}

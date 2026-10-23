@@ -1,7 +1,7 @@
 import {teachingWeek,monday,plusDays,dateKey,occurrences,freeSlots,parseSchedule,applyImport,undoTransaction,parseExceptions,checkSemester,checkSchedule,deliverReminders,isQuiet,growth,exportCalendar,fingerprint} from './domain.js';
 import {buildGrowthRoutes,growthStageTasks,commitGrowthRoute,growthRouteProgress,summarizeGrowthWorkload} from './growth-simulator.js';
 import {analyzeAgent} from './agent-engine.js';
-import {initByokUI} from './byok-ui.js?v=dbe24b13r2';
+import {initByokUI} from './byok-ui.js?v=20261023uix3';
 import {DAYS,dayIndex,localStamp,uid,esc,emptyStore,validateStore,detectConflicts,dueState,dueLabel,fmtDate,suggestions,approve,summary,demoData} from './core.js';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const keys={personal:'xiaoya:personal:v1',demo:'xiaoya:synthetic-demo:v1'};
@@ -48,7 +48,7 @@ function notify(text){const el=$('#toast');el.textContent=text;el.classList.add(
 function setMode(next){growthPreview=null;agentInspection=null;mode=next;sessionStorage.setItem('xiaoya:mode',mode);data=load();committed=structuredClone(data);storedSnapshot=localStorage.getItem(keys[mode]);transient='';render();navigate('today');notify(mode==='demo'?'已进入合成演示档案（不影响私人档案）':'已切换到私人档案')}
 function isDemo(){return mode==='demo'}
 function toggleDemo(){if(isDemo())setMode('personal');else {if(!localStorage.getItem(keys.demo))localStorage.setItem(keys.demo,JSON.stringify(demoData()));setMode('demo')}}
-function navigate(next,ref=''){view=next;$$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+next));$$('[data-view]').forEach(n=>{const active=n.dataset.view===next;n.classList.toggle('is-active',active);n.classList.toggle('active',active)});$('#crumb').textContent={today:'今天',schedule:'我的课表',tasks:'作业与考试',goals:'兴趣与成长',review:'成长复盘',settings:'设置与隐私'}[next]||'今天';$('#pet-popover').hidden=true;window.scrollTo({top:0,behavior:data.settings.reducedMotion?'instant':'smooth'});if(ref)setTimeout(()=>{const el=$$('[data-item]').find(e=>e.dataset.item===ref);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('focused-item');setTimeout(()=>el.classList.remove('focused-item'),2400)}},120)}
+function navigate(next,ref=''){view=next;$$('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+next));$$('[data-view]').forEach(n=>{const active=n.dataset.view===next;n.classList.toggle('is-active',active);n.classList.toggle('active',active)});$('#crumb').textContent={today:'今天',schedule:'我的课表',tasks:'作业与考试',goals:'成长规划',review:'成长复盘',settings:'设置与隐私'}[next]||'今天';$('#pet-popover').hidden=true;window.scrollTo({top:0,behavior:data.settings.reducedMotion?'instant':'smooth'});if(ref)setTimeout(()=>{const el=$$('[data-item]').find(e=>e.dataset.item===ref);if(el){el.scrollIntoView({block:'center',behavior:'smooth'});el.classList.add('focused-item');setTimeout(()=>el.classList.remove('focused-item'),2400)}},120)}
 function empty(label,detail){return '<div class="empty-state"><div class="empty-art">✳</div><strong>'+esc(label)+'</strong><p>'+esc(detail)+'</p></div>'}
 function typeName(t){return {assignment:'作业',exam:'考试',task:'事项'}[t]||'事项'}
 function findItem(id){for(const [kind,key] of [['task','tasks'],['course','courses'],['event','events'],['goal','goals']]){const x=data[key].find(t=>t.id===id);if(x)return {kind,item:x}}return null}

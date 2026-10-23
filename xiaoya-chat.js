@@ -3,7 +3,7 @@ const q=s=>document.querySelector(s);
 let api=null,chat=[],restoredSession=false;
 const STORED_KEY='xiaoya.byok.credential.v1';
 const panel=document.createElement('section');panel.id='xiaoya-layer';
-panel.innerHTML='<button id="xy-fab" type="button" aria-label="打开小芽聊天，可拖动移动" title="拖动小芽移动，点击聊天"><img src="./assets/brand/xiaoya_hero_v1.webp" alt="" draggable="false"><small id="xy-state" aria-live="polite">AI 未接入</small></button><div id="xy-onboard" class="xy-shade" hidden><div class="xy-dialog" role="dialog" aria-modal="true" aria-label="连接小芽"><div class="xy-hero"><span>🌱</span><h2>你好，我是小芽</h2><p>选择体验方式，先把生活整理好。</p><b id="xy-connection">AI 未接入</b></div><div class="xy-content"><button id="xy-local" class="xy-local" type="button"><strong>先用基础功能</strong><span>课表、任务、成长路线与复盘，无需 API →</span></button><h3>连接真实 AI · 开启聊天</h3><p>公开 GitHub Pages 没有模型代理。只能尝试浏览器直连，可能被提供商的 CORS 规则阻止。</p><label>服务商<select id="xy-provider"><option value="zhipu">智谱 GLM（课堂笔记同款）</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="siliconflow">硅基流动</option><option value="dashscope">阿里百炼</option><option value="moonshot">Moonshot</option><option value="openrouter">OpenRouter</option><option value="commandcode">CommandCode（需服务商允许网页请求）</option></select></label><label>模型 ID<input id="xy-model" type="text" maxlength="120" placeholder="可按你的实际账户修改"></label><label>API Key（可按下面选项保存到此浏览器）<input id="xy-key" type="password" autocomplete="off" placeholder="仅在你信任的设备上输入"></label><label class="xy-consent"><input id="xy-remember" type="checkbox">记住此浏览器中的 API Key（长期保存，关闭 Edge 后仍可恢复；仅限个人设备）</label><p class="xy-storage-warning">安全提示：密钥将存入此网站在浏览器的本地存储（未额外加密）；本机其他用户、浏览器扩展或同源脚本可能读取。不要在公用设备勾选。</p><button id="xy-forget" type="button">清除已保存的 API Key</button><label class="xy-consent"><input id="xy-consent" type="checkbox">我理解直接请求可能产生费用、遇到跨域限制；不在公共设备上使用 Key。</label><button id="xy-connect" type="button">测试连接 AI</button><p id="xy-feedback" role="status"></p><button id="xy-skip" type="button">暂不接入，进入应用</button></div></div></div><div id="xy-window" hidden><header><span>🌱 小芽</span><strong id="xy-chat-state">AI 未接入</strong><button id="xy-config" type="button" aria-label="配置 AI">⚙</button><button id="xy-close" type="button" aria-label="关闭聊天">×</button></header><div id="xy-messages" role="log" aria-live="polite"></div><div class="xy-chips"><button data-ask="今天先做什么？">今天先做什么</button><button data-ask="如何制定学习计划？">学习计划</button><button data-ask="课表怎么导入？">导入课表</button></div><form id="xy-form"><input id="xy-input" placeholder="和小芽说点什么…" maxlength="700" aria-label="聊天消息"><button type="submit">发送</button></form><footer>未接入时仅本机导航引导；不自动读取私人数据或修改任务。</footer></div>';
+panel.innerHTML='<button id="xy-fab" type="button" aria-label="打开小芽聊天，可拖动移动" title="拖动小芽移动，点击聊天"><span class="xy-pet-art" aria-hidden="true"></span><small id="xy-state" aria-live="polite">AI 未接入</small></button><div id="xy-onboard" class="xy-shade" hidden><div class="xy-dialog" role="dialog" aria-modal="true" aria-label="连接小芽"><div class="xy-hero"><span>🌱</span><h2>你好，我是小芽</h2><p>选择体验方式，先把生活整理好。</p><b id="xy-connection">AI 未接入</b></div><div class="xy-content"><button id="xy-local" class="xy-local" type="button"><strong>先用基础功能</strong><span>课表、任务、成长路线与复盘，无需 API →</span></button><h3>连接真实 AI · 开启聊天</h3><p>公开 GitHub Pages 没有模型代理。只能尝试浏览器直连，可能被提供商的 CORS 规则阻止。</p><label>服务商<select id="xy-provider"><option value="zhipu">智谱 GLM（课堂笔记同款）</option><option value="deepseek">DeepSeek</option><option value="openai">OpenAI</option><option value="siliconflow">硅基流动</option><option value="dashscope">阿里百炼</option><option value="moonshot">Moonshot</option><option value="openrouter">OpenRouter</option><option value="commandcode">CommandCode（需服务商允许网页请求）</option></select></label><label>模型 ID<input id="xy-model" type="text" maxlength="120" placeholder="可按你的实际账户修改"></label><label>API Key（可按下面选项保存到此浏览器）<input id="xy-key" type="password" autocomplete="off" placeholder="仅在你信任的设备上输入"></label><label class="xy-consent"><input id="xy-remember" type="checkbox">记住此浏览器中的 API Key（长期保存，关闭 Edge 后仍可恢复；仅限个人设备）</label><p class="xy-storage-warning">安全提示：密钥将存入此网站在浏览器的本地存储（未额外加密）；本机其他用户、浏览器扩展或同源脚本可能读取。不要在公用设备勾选。</p><button id="xy-forget" type="button">清除已保存的 API Key</button><label class="xy-consent"><input id="xy-consent" type="checkbox">我理解直接请求可能产生费用、遇到跨域限制；不在公共设备上使用 Key。</label><button id="xy-connect" type="button">测试连接 AI</button><p id="xy-feedback" role="status"></p><button id="xy-skip" type="button">暂不接入，进入应用</button></div></div></div><div id="xy-window" hidden><header><span>🌱 小芽</span><strong id="xy-chat-state">AI 未接入</strong><button id="xy-config" type="button" aria-label="配置 AI">⚙</button><button id="xy-close" type="button" aria-label="关闭聊天">×</button></header><div id="xy-messages" role="log" aria-live="polite"></div><div class="xy-chips"><button data-ask="今天先做什么？">今天先做什么</button><button data-ask="如何制定学习计划？">学习计划</button><button data-ask="课表怎么导入？">导入课表</button></div><form id="xy-form"><input id="xy-input" placeholder="和小芽说点什么…" maxlength="700" aria-label="聊天消息"><button type="submit">发送</button></form><footer>未接入时仅本机导航引导；不自动读取私人数据或修改任务。</footer></div>';
 document.body.append(panel);
 const quick=document.createElement('nav');quick.id='xy-pet-actions';quick.hidden=true;
 quick.setAttribute('aria-label','小芽快捷操作');
@@ -124,25 +124,20 @@ q('#xy-forget').onclick=()=>{
 function status(){document.body.dataset.aiMode=api?'verified':'offline';const t=api?(restoredSession?'AI 已恢复':'AI 已接入'):'AI 未接入';for(const id of ['#xy-state','#xy-connection','#xy-chat-state','#ai-global-title'])if(q(id))q(id).textContent=t;if(q('#ai-global-subtitle'))q('#ai-global-subtitle').textContent=api?api.model:'点击配置';for(const x of document.querySelectorAll('[data-ai-capability-state]')){x.textContent=t;x.dataset.mode=api?'verified':'offline'}}
 function open(){modal.hidden=false;q('#xy-key').value=api?.key||'';q('#xy-feedback').textContent='';if(!api)fillStored()}
 function close(){modal.hidden=true;sessionStorage.setItem('xiaoya-onboard-v2','seen')}
-q('#xy-local').onclick=close;q('#xy-skip').onclick=close;q('#xy-config').onclick=open;
+q('#xy-local').onclick=close;q('#xy-skip').onclick=close;q('#xy-config').onclick=open;window.addEventListener('xiaoya-open-ai-settings',()=>{win.hidden=false;open()});
 q('#xy-fab').onclick=()=>{placePetCompanions();quick.hidden=!quick.hidden;hidePetBubble()};
 q('#xy-close').onclick=()=>win.hidden=true;
 let bubbleTimer=null,lastPetPrompt=0;
-function hidePetBubble(){bubble.hidden=true;if(bubbleTimer)clearTimeout(bubbleTimer)}
+function hidePetBubble(){bubble.hidden=true;if(bubbleTimer)clearTimeout(bubbleTimer);if(!window.__xiaoyaPetBusy)setFloatingPetMood(rulePetMood)}
 // The single floating pet reflects the same rule-backed states as the app.
-requestAnimationFrame(()=>{const state=window.OPC_TEST?.petState?.();if(['idle','remind','thinking','celebrate','care','silent'].includes(state))pet.dataset.state=state});
-const PET_STATES=new Set(['idle','remind','thinking','celebrate','care','silent']);
-window.addEventListener('xiaoya-pet-state',e=>{
- const state=PET_STATES.has(e.detail?.state)?e.detail.state:'idle';
- pet.dataset.state=state;
- pet.title=(e.detail?.headline||'小芽')+' · 点击打开快捷操作，可拖动';
-});
+
 
 function petSay(msg,auto=false){
  if(!msg)return;
  const now=Date.now();
- if(auto&&(document.hidden||!quick.hidden||!win.hidden||now-lastPetPrompt<12*60*1000))return;
+ if(auto&&(document.hidden||!quick.hidden||!win.hidden||now-lastPetPrompt<60*60*1000))return;
  if(auto)lastPetPrompt=now;
+ setFloatingPetMood(auto?'remind':'thinking');
  bubble.textContent=String(msg).slice(0,170);
  bubble.hidden=false;
  if(bubbleTimer)clearTimeout(bubbleTimer);
@@ -163,16 +158,27 @@ window.addEventListener('xiaoya-pet-nudge',e=>petSay(e.detail?.text,true));
 function promptFromExistingData(){
  if(document.hidden||!win.hidden||!quick.hidden)return;
  const now=Date.now();
- if(now-lastPetPrompt<12*60*1000)return;
+ if(now-lastPetPrompt<60*60*1000)return;
  window.__xiaoyaPetAutoPrompt=true;
  try{window.dispatchEvent(new Event('xiaoya-pet-advice'))}finally{window.__xiaoyaPetAutoPrompt=false}
 }
 setTimeout(promptFromExistingData,22000);
-setInterval(()=>{if(!document.hidden)promptFromExistingData()},15*60*1000);
+setInterval(()=>{if(!document.hidden)promptFromExistingData()},60*60*1000);
 window.addEventListener('scroll',()=>{if(!quick.hidden)quick.hidden=true},{passive:true});
 // Web-only floating pet. Pointer capture allows dragging without accidental chat opens.
 // Store only non-sensitive normalized pet position within this origin; never write API keys here.
 const pet=q('#xy-fab'),PET_POS_KEY='xiaoya.pet.position.v1';
+const petMoods={idle:'陪伴中',remind:'提醒',thinking:'思考中',celebrate:'开心',care:'关心你',silent:'安静模式'};
+let rulePetMood=q('#pet-button')?.dataset.state||'idle';
+function setFloatingPetMood(state){
+ const valid=Object.hasOwn(petMoods,state)?state:'idle';
+ pet.dataset.state=valid;
+ pet.setAttribute('aria-label','小芽 · '+petMoods[valid]+'。点击查看对话与建议，可拖动移动。');
+}
+setFloatingPetMood(rulePetMood);
+window.addEventListener('xiaoya-pet-state',e=>{rulePetMood=Object.hasOwn(petMoods,e.detail?.state)?e.detail.state:'idle';if(!window.__xiaoyaPetBusy)setFloatingPetMood(rulePetMood)});
+window.addEventListener('xiaoya-ai-plan-request',()=>{window.__xiaoyaPetBusy=true;setFloatingPetMood('thinking')});
+window.addEventListener('xiaoya-ai-plan-result',e=>{window.__xiaoyaPetBusy=false;setFloatingPetMood(e.detail?.ok?'celebrate':'care');setTimeout(()=>setFloatingPetMood(rulePetMood),1800)});
 let petDrag=null,suppressPetClick=false;
 function clampPetPosition(x,y){
  const w=pet.offsetWidth||82,h=pet.offsetHeight||82,edge=12;
@@ -255,7 +261,7 @@ try{const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/
  close();win.hidden=false;
  reply('AI 已接入。'+(persisted?'已保存到当前浏览器；下次打开会自动恢复，不需再次测试。':'密钥未持久保存；关闭标签页后需要重新输入。')+' 仅发送此次明确授权的请求。')}catch(e){api=null;status();window.dispatchEvent(new CustomEvent('xiaoya-ai-capability',{detail:{connected:false}}));q('#xy-feedback').textContent=e instanceof TypeError?'跨域请求被限制（CORS）。GitHub Pages 没有安全模型代理，不能在此完成连接。':'未接入：'+e.message}finally{q('#xy-key').value='';q('#xy-connect').disabled=false}
 };
-q('#xy-form').onsubmit=async e=>{e.preventDefault();const input=q('#xy-input').value.trim();if(!input)return;q('#xy-input').value='';reply(input,'user');if(!api){reply(localAnswer(input));return}const pending=reply('思考中…');try{const messages=[{role:'system',content:'你是小芽，一个简洁、亲切、务实的大学生生活和学习助手。不要声称读取了用户的本地档案或执行了任何操作。'},...chat.slice(-10),{role:'user',content:input}];const r=await fetch(api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+api.key},body:JSON.stringify({model:api.model,messages,max_tokens:700}),signal:AbortSignal.timeout(35000)});if(!r.ok){requireReconnectIfUnauthorized(r.status);throw Error('HTTP '+r.status)}const j=await r.json();const answer=j.choices?.[0]?.message?.content;if(!answer)throw Error('无回复');pending.textContent=answer;chat.push({role:'user',content:input},{role:'assistant',content:answer})}catch(e){pending.textContent='AI 请求失败：'+e.message+'。你仍可使用本机功能。'}};
+q('#xy-form').onsubmit=async e=>{e.preventDefault();const input=q('#xy-input').value.trim();if(!input)return;q('#xy-input').value='';reply(input,'user');if(!api){reply(localAnswer(input));return}const pending=reply('思考中…');window.__xiaoyaPetBusy=true;setFloatingPetMood('thinking');try{const messages=[{role:'system',content:'你是小芽，一个简洁、亲切、务实的大学生生活和学习助手。不要声称读取了用户的本地档案或执行了任何操作。'},...chat.slice(-10),{role:'user',content:input}];const r=await fetch(api.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+api.key},body:JSON.stringify({model:api.model,messages,max_tokens:700}),signal:AbortSignal.timeout(35000)});if(!r.ok){requireReconnectIfUnauthorized(r.status);throw Error('HTTP '+r.status)}const j=await r.json();const answer=j.choices?.[0]?.message?.content;if(!answer)throw Error('无回复');pending.textContent=answer;chat.push({role:'user',content:input},{role:'assistant',content:answer});window.__xiaoyaPetBusy=false;setTimeout(()=>setFloatingPetMood(rulePetMood),900)}catch(e){pending.textContent='AI 请求失败：'+e.message+'。你仍可使用本机功能。';window.__xiaoyaPetBusy=false;setFloatingPetMood('care');setTimeout(()=>setFloatingPetMood(rulePetMood),1800)}};
 document.querySelectorAll('[data-ask]').forEach(e=>e.onclick=()=>{q('#xy-input').value=e.dataset.ask;q('#xy-form').requestSubmit()});
 for(const sel of ['#ai-global-entry','#ai-goals-banner-action','#ai-mode-connect','#ai-today-connect','#growth-ai-config-link']){const el=q(sel);if(!el)continue;el.disabled=false;el.removeAttribute('aria-disabled');el.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open()},true)}
 // The saved profile was already explicitly verified before persistence.
