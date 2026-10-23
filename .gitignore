@@ -1,0 +1,36 @@
+# Credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.secret
+*.secrets.json
+**/auth.json
+**/credentials.json
+.npmrc
+secrets/
+private/
+credentials/
+# Dependencies and generated local files
+node_modules/
+dist/
+build/
+coverage/
+logs/
+tmp/
+temp/
+*.log
+*.db
+*.sqlite
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+# Submission-only media, not part of Pages
+*.pdf
+*.mp4
+*.mov
+*.mkv

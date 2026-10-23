@@ -1,28 +1,63 @@
-# 小芽 LifeLab · 本机最新版网页镜像 (GitHub Pages)
+<div align="center">
 
-主产品网页、样式、学习与任务业务逻辑直接取自当前本机 `src/`，不再使用此前落后的 Pages 应用代码。
-公开网页功能：课表、任务、时间冲突、成长目标、规则路线、预览与人工批准、撤销、复盘、日历导出、匿名演示及小芽桌宠。
+<img src="assets/brand/xiaoya_hero_v1.webp" width="170" alt="小芽形象"/>
 
-## 实际 AI 功能
-聊天、AI 三阶段成长路线、已有规则建议的 AI 辅助分析采用原 Pages 已经做过浏览器自动化回归的 **单标签页临时 BYOK 模型会话**。
-必须主动输入自己的 Key 并成功测试，然后由用户逐次授权。
-成长规划必须预览、批准后才写入；AI 辅助分析只能重排解释既有规则建议，不能执行动作。
+# 小芽 LifeLab
+### 大学生活，不只有一张课表。
 
-GitHub Pages 不能运行本机 Node 服务、私有 HttpOnly BYOK 代理、127.0.0.1 Qwen 推理或后台推送。
-因此网页不假装具备以上进程；可用浏览器直连模型仍受服务商 CORS 限制。
-不会发布服务端代码、API Key、私有档案或本机模型文件。公开数据只保存在当前访问浏览器。
+**大学生时间管理 · 兴趣成长 · 可审核的 AI 建议**
 
-## 演示
-- 产品：https://ndshuge.github.io/xiaoya-lifelab/
-- 匿名：https://ndshuge.github.io/xiaoya-lifelab/?judge=1
-- `model-lab.html` 保留完整的三合成案例规则基线、人工接力、沙盒审批和撤销，并新增浏览器临时 BYOK 真模型合成规划。独立的本机 Qwen / HanaAgent 接口仍只能在本机 Node 环境运行。
+[![Live](https://img.shields.io/badge/GitHub_Pages-在线体验-2B8951?logo=githubpages&logoColor=white)](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)
+[![Demo](https://img.shields.io/badge/匿名演示-无需密钥-77B26A)](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)
+[![Source](https://img.shields.io/badge/JavaScript-Source-295E45?logo=javascript&logoColor=white)](app.js)
 
-## 公开浏览器适配验收（2026-10-23）
-- 完成8类服务商选择及手动模型 ID，默认不存储 API Key。默认服务商是本次跨域 OPTIONS 预检有许可头的 DeepSeek；仅预检通过不代表真实付费模型调用通过。GLM 本次未返回跨域许可头，OpenAI 网络请求超时，其他服务商可自行切换；最终以本人实际 API Key 验证为准。
-- 浏览器模型实验室支持真实请求、类型/时间约束验证、人工沙盒批准与撤销；错误或无Key则绝不展示伪造规划。
-- 保留独立 Qwen 本机实验入口的诚实状态，不将 Node 或 Qwen 推理进程伪装成已经部署在 GitHub Pages。
+**[立即体验小芽 →](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)** · [日常首页](https://ndshuge.github.io/xiaoya-lifelab/) · [模型实验室](model-lab.html) · [设计说明](DESIGN.md)
 
-## 浏览器记住 API Key（2026-10-23）
-- 用户主动勾选“记住此浏览器”并测试成功后，当前服务商、模型 ID 与 Key 保存在此站点 localStorage。
-- 关闭/重开 Edge 会自动恢复已保存且此前成功测试过的配置，并启用模型功能，无需再次点击「测试连接 AI」；自动恢复不会向服务商发起请求，首次使用如果 Key 失效会提示重新配置。
-- 密钥未额外加密：不要在公用设备或不可信浏览器扩展环境启用。支持“清除已保存的 API Key”，同时立即断开模型会话。
+</div>
+
+---
+
+## 今天的安排，与未来的想法
+
+面对课表、作业、考试、社团和想坚持的兴趣，小芽希望帮你把分散事项组织起来，又不替你做决定。
+
+| 今天要做什么 | 想成长为什么 | 智能建议怎么用 |
+|---|---|---|
+| 课程、任务、截止提醒 | 长期兴趣目标与阶段路线 | 解释冲突、提供下一步建议 |
+| 清楚地看到时间和状态 | 留下成长复盘记录 | 先预览，后由本人批准 |
+
+## 在线体验
+
+**[打开匿名演示版](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)** — 手机或电脑均可访问。无需注册、无需 API Key，即可体验课程、任务、成长与桌宠交互。
+
+可选 AI 功能需要用户主动配置模型和密钥；GitHub Pages 受服务商 CORS 和浏览器限制，本机 Node 代理、Qwen 服务和后台推送**并未部署在公开网页**。
+
+## 交互逻辑
+
+**真实事项 → 时间/约束判断 → 规则或可选模型建议 → 用户审核 → 写入行动 → 复盘**
+
+- **今天与课表**：按实际课程、活动和任务安排组织视图。
+- **兴趣与成长**：把“我想学会”拆成阶段、里程碑与可执行行动。
+- **小芽桌宠**：统一入口、表情状态、轻量提醒。
+- **人类最终决定**：建议不自动成为必须执行的任务。
+
+## 仓库结构
+
+| 入口 | 内容 |
+|---|---|
+| [index.html](index.html) / [styles.css](styles.css) | 产品网页 |
+| [app.js](app.js) / [domain.js](domain.js) | 应用及时间管理规则 |
+| [agent-engine.js](agent-engine.js) | 建议逻辑 |
+| [byok-ui.js](byok-ui.js) | 模型连接配置 |
+| [model-lab.html](model-lab.html) | 可操作的合成测试场景 |
+| [assets/brand/](assets/brand/) | 小芽原创角色 |
+
+## 数据与 API Key 安全说明
+
+**默认不需要密钥。** 使用者主动勾选“记住此浏览器”并测试成功后，服务商、模型及 Key 可能保存到站点 localStorage，**没有额外加密**。请勿在公用设备保存，并在需要时使用清除已保存密钥功能。
+
+真实 DeepSeek 基础聊天已实测；完整长期云端规划、人工批准到任务读回的闭环仍需要最后的实机验收。合成演示不是实际用户成长效果。
+
+---
+
+<div align="center"><sub>小芽 LifeLab · 帮想做的事，在时间里留一个位置。</sub></div>
