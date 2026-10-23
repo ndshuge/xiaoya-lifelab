@@ -42,3 +42,22 @@
  #xy-fab small{top:-5px;right:-7px;font-size:9px;padding:2px 5px}
  #xy-window{right:6px;bottom:176px;height:min(570px,calc(100dvh - 190px));width:calc(100vw - 12px)}
 }
+
+/* One interactive companion: hide legacy right-rail and duplicate mobile sprite.
+   Keep their DOM elements for non-interactive rule/status rendering. */
+#pet-panel,#mobile-pet,#pet-popover{display:none!important}
+#xy-pet-actions{
+ position:fixed;z-index:982;display:flex;flex-direction:column;gap:7px;
+ background:#fffdf8;border:1px solid #d5e4d6;border-radius:16px;
+ padding:10px;box-shadow:0 13px 35px #27473527;
+ right:115px;bottom:114px;max-width:170px
+}
+#xy-pet-actions[hidden],#xy-pet-bubble[hidden]{display:none!important}
+#xy-pet-actions button{border:0;background:#edf6ec;color:#27553b;text-align:left;
+ padding:9px 12px;border-radius:10px;white-space:nowrap;cursor:pointer;font-size:13px}
+#xy-pet-actions button:hover{background:#d9ecdc}
+#xy-pet-bubble{position:fixed;z-index:981;right:115px;bottom:114px;
+ max-width:min(290px,calc(100vw - 116px));padding:11px 13px;border:1px solid #c6dec8;
+ border-radius:14px;background:#fffdf6;box-shadow:0 9px 25px #1e3c2527;
+ font-size:12px;line-height:1.55;color:#31583d;pointer-events:none}
+@media(max-width:700px){#xy-pet-actions,#xy-pet-bubble{right:91px;bottom:132px}}

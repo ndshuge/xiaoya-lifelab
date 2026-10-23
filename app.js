@@ -399,12 +399,25 @@ window.addEventListener('storage',e=>{if(e.key===keys[mode]){data=load();committ
 document.addEventListener('keydown',e=>{if(e.key!=='Tab'||$('#modal-root').hidden)return;const nodes=$('#modal-root button,#modal-root input,#modal-root select,#modal-root textarea').filter(x=>!x.disabled);const first=nodes[0],last=nodes.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}});
 window.OPC_TEST={getMode:()=>mode,getData:()=>structuredClone(data),suggestions:()=>suggestions(data),petState:()=>petState(),navigate,reanalyze,load,checkReminders,growthPreview:()=>structuredClone(growthPreview)};
 renderGrowthSimulator();
-render();checkReminders();
+render();
+// Isolate reminder failures so the following AI planning modules still initialize.
 initByokUI({onGrowthPlan:plan=>{
  growthPreview={plan,mode,basis:fingerprint(data)};
  paintGrowthPreview();
  notify('AI 规划已通过规则审核，批准前不会新增任何任务');
 }});
+// The original right-rail companion stays as a passive progress panel.
+ // Only the new draggable floating Xiaoya is an interactive pet.
+window.addEventListener('xiaoya-pet-advice',()=>{
+ currentSuggestions=suggestions(data);
+ const item=currentSuggestions[0];
+ const text=item?item.description+'。'+item.reason:'目前没有紧急提醒。可以从今天的一项小任务开始。';
+ window.dispatchEvent(new CustomEvent('xiaoya-pet-advice-result',{detail:{text:text.slice(0,170),urgent:!!item}}));
+});
+window.addEventListener('xiaoya-pet-navigate',e=>{
+ const target=e.detail?.view;
+ if(['today','schedule','tasks','goals','review','settings'].includes(target))navigate(target);
+});
 const entryQuery=new URLSearchParams(location.search);
 if(entryQuery.get('judge')==='1'&&mode!=='demo')toggleDemo();
 if(['today','schedule','tasks','goals','review','settings'].includes(entryQuery.get('view')))navigate(entryQuery.get('view'));
