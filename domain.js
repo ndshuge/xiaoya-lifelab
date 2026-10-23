@@ -72,6 +72,8 @@ export function plans(data,now=new Date()){
  const earliest=new Date(+now+APPROVAL_PREVIEW_LEAD_MINUTES*60000);
  const result=[],version=fingerprint(data);const add=p=>{p.id=p.kind+':'+hash(JSON.stringify([p.sources,p.identity]));p.basis=version;p.createdAt=now.toISOString();delete p.identity;if(!data.decisions.some(d=>d.id===p.id&&['executed','rejected'].includes(d.status)))result.push(p)};
  for(const c of calendarConflicts(data,monday(now),plusDays(monday(now),7))){
+  // Do not present a conflict from earlier this week as an upcoming active reminder.
+  if(new Date(c.date+'T'+c.end)<=now)continue;
   const moving=[c.a,c.b].find(x=>x.kind==='event'&&!x.locked&&new Date(x.startsAt)>now);
   const duration=moving?(new Date(moving.endsAt)-new Date(moving.startsAt))/60000:0;
   const slots=moving?freeSlots(data,new Date(Math.max(+earliest,+new Date(c.date+'T08:00'))),new Date(c.date+'T22:00'),duration,[moving.id]):[];

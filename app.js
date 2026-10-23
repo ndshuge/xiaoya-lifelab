@@ -1,4 +1,4 @@
-import {teachingWeek,monday,plusDays,dateKey,occurrences,freeSlots,parseSchedule,applyImport,undoTransaction,parseExceptions,checkSemester,checkSchedule,deliverReminders,isQuiet,growth,exportCalendar,fingerprint} from './domain.js';
+import {teachingWeek,monday,plusDays,dateKey,occurrences,freeSlots,parseSchedule,applyImport,undoTransaction,parseExceptions,checkSemester,checkSchedule,deliverReminders,isQuiet,growth,exportCalendar,fingerprint} from './domain.js?v=20261023uix5';
 import {buildGrowthRoutes,growthStageTasks,commitGrowthRoute,growthRouteProgress,summarizeGrowthWorkload} from './growth-simulator.js';
 import {analyzeAgent} from './agent-engine.js';
 import {initByokUI} from './byok-ui.js?v=20261023uix4';
