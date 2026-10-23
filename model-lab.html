@@ -1,1 +1,65 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>模型实验室 · 公开版说明</title><style>body{font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif;max-width:650px;margin:12vh auto;padding:24px;color:#254c38;background:#f5faf4}article{padding:26px;border-radius:18px;background:white;border:1px solid #d9eadc}a{color:#21764a}</style><article><h1>模型实验室</h1><p>公开静态演示不包含本机模型实验服务、真实模型 API 代理或开发诊断日志，以保护凭据和私人数据。</p><p>你仍然可以体验课表、事项、冲突检测、成长规则规划与撤销。</p><p><a href="./index.html">返回小芽 LifeLab</a></p></article></html>
+<!doctype html><html lang="zh-CN"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>小芽 LifeLab｜合成 AI 规划实验室</title>
+<link rel="stylesheet" href="./local-model-lab.css"/>
+</head><body>
+<main class="shell">
+ <header class="top"><a href="./" class="back">← 返回小芽</a><span class="topbrand">✳ 小芽 <small>LIFELAB</small></span><span class="eyebrow">STATIC PAGES · RULE DEMO</span></header>
+ <section class="hero"><span class="kicker">模型实验 · Qwen / CommandCode / OpenCode</span>
+  <h1>让小芽真正学会<span>思考规划</span>，先从合成案例开始。</h1>
+  <p>这不是聊天机器人窗口。本公开入口保留三个合成情境与可核查的规则阶段计划。独立的本机 Qwen / Coding Provider 推理需在私有 Node 环境运行，GitHub Pages 不会模拟真实模型调用；你的私人课表、浏览器储存、真实姓名、账号和密钥不会进入本实验。</p>
+  <div class="stats">
+   <div><strong id="model-state">检查中…</strong><small>需要本机 Node/Qwen 环境</small></div>
+   <div><strong>云端只在确认后调用</strong><small>CommandCode / OpenCode 均会占用所选模型额度</small></div>
+   <div><strong>批准后进入合成沙盒</strong><small>不修改真实任务，支持一键撤销</small></div>
+  </div>
+ </section>
+ <section class="section"><div class="section-title"><div><span class="kicker">01 / SYNTHETIC CASES</span><h2>选择虚构大学生案例</h2></div><button id="refresh-status" class="outline">重新检查模型</button></div>
+  <div id="case-choices" class="choices" aria-label="虚构测试案例"></div>
+ </section>
+ <section class="section"><div class="section-title"><div><span class="kicker">02 / LOCAL INFERENCE</span><h2>真实模型生成 vs 本地规则基线</h2></div></div>
+  <div class="controls"><button id="run-model" class="primary" disabled>运行 Qwen3-8B 合成规划实验 →</button><span id="run-status" role="status" aria-live="polite">请选择合成案例并等待模型状态。</span></div>
+  <div class="results">
+   <article class="panel"><div class="panel-title"><span class="dot rule"></span><strong>规则基线</strong><small>已有确定性成长模板</small></div><div id="rule-result"></div></article>
+   <article class="panel"><div class="panel-title"><span class="dot model"></span><strong>本机 Qwen3-8B</strong><small>真实推理，失败则不采纳</small></div><div id="model-result"><p class="empty">点击实验后显示真实模型生成的阶段行动、风险与前提。</p></div></article>
+  </div>
+  <p id="experiment-evidence" class="evidence" aria-live="polite"></p>
+ </section>
+ <section class="section coding-direct" aria-labelledby="direct-title">
+  <div class="section-title"><div><span class="kicker">03 / CODING PLAN · OPENCODE</span><h2 id="direct-title">真实 Coding Plan 双模型接入</h2></div></div>
+  <p class="muted">此入口会把<strong>唯一选中的虚构案例</strong>发送到选定云模型，可能消耗订阅配额。此接口仅在本机 Node 环境可用，GitHub Pages 未连接 HanaAgent，云端自动调用按钮在公开版禁用。模型只能给出建议，不能读取私人档案、执行任务或修改日程。</p>
+  <div class="controls">
+    <label for="coding-provider">选择已配置的 Provider</label>
+    <select id="coding-provider" aria-label="模型服务商"><option value="commandcode">CommandCode · DeepSeek V4.1 Flash</option><option value="opencode-go">OpenCode Go · DeepSeek V4.1 Flash</option></select>
+    <button class="outline" id="coding-refresh" type="button">检查 API 配置</button>
+    <span id="coding-status" role="status" aria-live="polite">尚未检查云端配置；此时不会发生任何模型请求。</span>
+  </div>
+  <p class="muted">依据服务商使用范围：CommandCode 可用于本页三个合成规划场景；OpenCode Go 仅在选择「编程项目与作业期限」时允许测试编程 Agent 类型请求。</p>
+  <label class="coding-consent"><input id="coding-consent" type="checkbox"/> 我确认当前案例完全虚构，并允许向所选服务发送<strong>一次</strong>有限额度的推理请求。</label>
+  <div class="controls"><button id="coding-run" type="button" class="primary" disabled>调用选定 Coding Plan · 生成真实规划 →</button><span class="muted">同一小时最多4次；每个Provider最多2次；只做单次生成。</span></div>
+  <div class="panel" id="coding-result" aria-live="polite"><p class="empty">选择 Provider 并勾选确认后点击生成。未执行前不会出现假造的“AI结果”。</p></div>
+  <p class="evidence" id="coding-evidence" aria-live="polite"></p>
+  <div class="sandbox" aria-labelledby="sandbox-title">
+   <h3 id="sandbox-title">安全执行实验 · 仅合成沙盒</h3>
+   <p class="muted">模型计划通过验证后，可以先预览，再由你<strong>二次批准</strong>将阶段任务放进此页面的临时内存。刷新自动清空，不写入课表、私人任务或浏览器存储。周次不等于具体日历时间。</p>
+   <div class="controls">
+    <button id="sandbox-preview" type="button" class="outline" disabled>预览临时阶段任务</button>
+    <button id="sandbox-approve" type="button" class="primary" disabled>批准生成合成任务</button>
+    <button id="sandbox-undo" type="button" class="outline" disabled>撤销这次操作</button>
+   </div>
+   <div class="panel" id="sandbox-result" aria-live="polite"><p class="empty">尚无可执行的合成计划；不会触碰个人档案。</p></div>
+   <p class="evidence" id="sandbox-status" role="status" aria-live="polite">未批准 · 临时任务0 · 私人档案写入0</p>
+  </div>
+ </section>
+ <section class="section relay-section" aria-labelledby="relay-title"><div class="section-title"><div><span class="kicker">04 / MANUAL FALLBACK</span><h2 id="relay-title">HanaAgent 手动接力（备用）</h2></div></div>
+  <p class="muted">无需读取、复制或保存 API Key：复制下方仅含虚构案例的提示词，在 HanaAgent 中用现有模型生成 JSON，再粘贴结果让小芽本地验证。当前是<strong>手动接力</strong>，并非小芽已经自动调用 Coding Plan。HanaAgent 的请求可能消耗你的 Coding Plan 额度。</p>
+  <div class="controls"><button id="relay-copy" class="outline" type="button">复制当前合成案例提示词</button><span id="relay-copy-status" role="status" aria-live="polite">仅复制合成内容，不会自动调用模型。</span></div>
+  <label class="relay-label" for="relay-json">粘贴 HanaAgent 返回的 JSON 计划</label>
+  <textarea id="relay-json" class="relay-textarea" rows="8" maxlength="20000" spellcheck="false" placeholder="{\"summary\":\"...\",\"milestones\":[...],\"risks\":[],\"assumptions\":[]}"></textarea>
+  <div class="controls"><button id="relay-validate" class="primary" type="button">本机验证并预览 →</button><button id="relay-clear" class="outline" type="button">清空输入</button><span id="relay-status" role="status" aria-live="polite">等待粘贴；不存档、不创建任务。</span></div>
+  <div class="panel" id="relay-result" aria-live="polite"><p class="empty">粘贴后会按当前合成案例核验周次、学习时间、考试周上限与成果。校验通过后仅显示预览。</p></div>
+ </section>
+ <section class="foot"><h2>权限与真实性边界</h2><p>公开版不会调用本机 HTTP 服务；手动复制接力仅处理预设的3个合成案例。模型不能访问任意用户输入、私有浏览器档案或硬盘文件；只生成建议，不直接修改日程。所有模型结果必须通过类型、周数、时间预算与考试周约束验证；失败时显示错误而不会伪造一个 AI 规划结果。模型速度取决于本机负载。</p><p>CommandCode / OpenCode 直接 Provider 仅在你选择并确认后才调用；HanaAgent 手动复制方式保留作备用。远程调用仅限三个内置合成案例，可能消耗额度。请勿输入私人课表、真实聊天或密钥。即使模型不可用，原有课程/任务/规则辅助仍可使用。</p></section>
+</main>
+<script type="module" src="./model-lab-ui.js"></script>
+</body></html>

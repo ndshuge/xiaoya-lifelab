@@ -9,7 +9,8 @@
 <link rel="stylesheet" href="./agent-evidence.css"/>
 <link rel="stylesheet" href="./byok.css"/>
 <link rel="stylesheet" href="./api-presence.css"/>
-<link rel="stylesheet" href="./xiaoya-chat.css"></head>
+<link rel="stylesheet" href="./xiaoya-chat.css"/>
+</head>
 <body>
 <svg width="0" height="0" style="position:absolute;overflow:hidden" aria-hidden="true">
 <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM9 21v-7h6v7"/></symbol>
@@ -93,11 +94,11 @@
  <label for="growth-exam-week">考试周（选填）<input id="growth-exam-week" type="number" min="1" max="52" placeholder="例如 8"/></label>
  <span id="growth-ai-status" role="status" aria-live="polite">未配置 API：仅规则版可用，智能规划需要配置模型。</span><button class="btn btn-soft" type="button" id="growth-ai-config-link" data-view="settings">配置 API 解锁智能规划 →</button></div>
  <div id="growth-result" aria-live="polite"></div><div id="growth-active"></div></div></section>
- <section id="view-review" class="view"><div class="page-head"><div class="kicker">LOOKING BACK, GENTLY</div><h1>成长，有迹可循。</h1><p>只统计真正保存的事项，不凭空生成成长分数。</p></div><div class="growth-tabs"><button class="btn btn-soft" data-view="goals">返回目标与习惯</button><button class="btn btn-soft" data-view="review" aria-current="page">跨周成长复盘</button></div><div id="review-overview"></div><div class="panel review-panel"><h3>成长路线 · 真实执行进度</h3><div id="growth-review"></div></div><div class="panel review-panel"><h3>目标行动证据</h3><div id="checkin-history"></div></div><div class="panel review-panel"><h3>最近的行动记录</h3><div id="history-list"></div></div></section>
+ <section id="view-review" class="view"><div class="page-head"><div class="kicker">LOOKING BACK, GENTLY</div><h1>成长，有迹可循。</h1><p>只统计真正保存的事项，不凭空生成成长分数。</p></div><div class="growth-tabs"><button class="btn btn-soft" data-view="goals">返回目标与习惯</button><button class="btn btn-soft" data-view="review" aria-current="page">跨周成长复盘</button></div><div id="review-overview"></div><div class="panel review-panel"><h3>成长路线 · 真实执行进度</h3><div id="growth-review"></div></div><div class="panel review-panel"><h3>目标行动证据</h3><div id="checkin-history"></div></div><div class="panel review-panel" id="history-record-panel" hidden><h3>最近的行动记录</h3><div id="history-list"></div></div></section>
  <section id="view-settings" class="view"><div class="page-head"><div class="kicker">MAKE IT YOURS</div><h1>舒适一点，刚刚好。</h1><p>由你决定提醒、动效和记录如何保存。</p></div><div class="panel rc-settings"><h3>大学学期</h3><p class="muted">第一教学周为开学日所在的周一至周日。开始/结束外，重复课程不出现；单次活动仍保留。</p><div class="form-fields"><div class="field wide"><label for="semester-name">学期名称</label><input id="semester-name"></div><div class="field"><label for="semester-start">开学日期</label><input id="semester-start" type="date"></div><div class="field"><label for="semester-end">结束日期</label><input id="semester-end" type="date"></div></div><button class="btn btn-dark" id="semester-save">保存学期</button></div><div class="panel byok-panel" id="byok-settings">
    <div class="byok-head"><div><span class="kicker">AI / BRING YOUR OWN KEY</span><h3>AI 模型连接</h3></div><span class="byok-state" id="byok-status" role="status">检测中…</span></div>
-   <p>基础课表、任务、桌宠提醒与规则建议<strong>不需要 API</strong>；“使用我的 API 智能规划”必须配置 Key 并授权。保存 Key 仅表示已配置，不代表已通过真实模型测试。</p>
-   <p class="muted">API Key 仅放在当前<strong>本机服务的临时内存会话</strong>，不写入网页 LocalStorage、备份文件、GitHub 或参赛包。请不要在公共电脑使用自己的付费 Key。</p>
+   <p>基础课表、任务、桌宠提醒与规则建议<strong>不需要 API</strong>；“使用我的 API 智能规划”必须配置 Key 并授权。只有通过真实模型响应验证后，才标识 AI 已接入。</p>
+   <p class="muted">GitHub Pages 中 API Key 仅保存在<strong>当前浏览器标签页的临时内存</strong>，不写入网页 LocalStorage、备份文件、GitHub 或参赛包。公开网站由浏览器直连模型，可能受提供商 CORS 限制；不要在公共电脑使用自己的付费 Key。</p>
    <form id="byok-form" autocomplete="off">
     <div class="form-fields">
      <div class="field"><label for="byok-provider">服务商</label><select id="byok-provider">
@@ -156,5 +157,6 @@
 <div id="pet-popover" class="pet-popover" hidden><button class="popover-close" id="pet-popover-close" aria-label="关闭助手">×</button><div class="overline">小芽 · 本机规则辅助</div><h3 id="popover-title">你好呀</h3><p id="popover-text"></p><div id="popover-links"></div></div>
 <div id="modal-root" class="modal-root" hidden><div class="modal-scrim" data-close></div><section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-header"><div><span class="kicker" id="modal-eyebrow">NEW MOMENT</span><h2 id="modal-title">添加事项</h2></div><button class="icon-button" aria-label="关闭" data-close>×</button></div><div id="modal-content"></div></section></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script type="module" src="./app.js"></script><script type="module" src="./xiaoya-chat.js"></script>
+<script type="module" src="./app.js"></script>
+<script src="./xiaoya-chat.js" defer></script>
 </body></html>

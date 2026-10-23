@@ -12,7 +12,26 @@ let growthPreview=null,agentInspection=null;
 let startupError='';
 const ico=(name)=>'<svg aria-hidden="true"><use href="#i-'+name+'"/></svg>';
 const list=[['course','课程'],['event','活动'],['task','事项'],['goal','目标']];
-function load(){try{let raw=localStorage.getItem(keys[mode]);const result=raw?validateStore(JSON.parse(raw)):emptyStore();window.OPC_LOAD_ERROR='';return result}catch(e){window.OPC_LOAD_ERROR=e.message;return emptyStore()}}
+function load(){try{
+ let raw=localStorage.getItem(keys[mode]);
+ // One-off migration: erase only the user-requested action-log array.
+ // Never touch tasks, goals, schedules, approvals, credentials or other records.
+ const flag='xiaoya:action-history-cleared:20261022:'+mode;
+ if(raw&&localStorage.getItem(flag)!=='1'){
+  const source=JSON.parse(raw);
+  if(!source||!Array.isArray(source.history))throw Error('行动记录格式异常，停止清理');
+  if(source.history.length){
+   const cleaned={...source,history:[]};
+   const next=JSON.stringify(cleaned);
+   localStorage.setItem(keys[mode],next);
+   if(localStorage.getItem(keys[mode])!==next)throw Error('行动记录清理验证失败');
+   raw=next;
+  }
+  localStorage.setItem(flag,'1');
+ }
+ const result=raw?validateStore(JSON.parse(raw)):emptyStore();
+ window.OPC_LOAD_ERROR='';return result
+ }catch(e){window.OPC_LOAD_ERROR=e.message;return emptyStore()}}
 function save(next){
  if(window.OPC_LOAD_ERROR)throw Error('原档案无法读取，已禁止覆盖。请先导出原始文件，或明确恢复有效备份');
  const current=localStorage.getItem(keys[mode]);if(current!==storedSnapshot){data=load();committed=structuredClone(data);storedSnapshot=current;throw Error('另一个标签页已更新档案。已读取最新记录，请重新预览后再保存')}
@@ -218,7 +237,7 @@ if(s.some(x=>x.kind==='conflict'))return 'care';
 return 'idle';
 }
 // Brand V1: original illustration sprites, backed by the original SVG if loading fails.
-const MASCOT_V1_SRC='./assets/brand/xiaoya_sprite_v1.webp';
+const MASCOT_V1_SRC='/assets/brand/xiaoya_sprite_v1.webp';
 const mascotPreloader=new Image();
 mascotPreloader.onload=()=>document.body.classList.add('xiaoya-v1-ready');
 mascotPreloader.onerror=()=>document.body.classList.remove('xiaoya-v1-ready');
