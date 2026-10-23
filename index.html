@@ -98,7 +98,7 @@
  <section id="view-settings" class="view"><div class="page-head"><div class="kicker">MAKE IT YOURS</div><h1>舒适一点，刚刚好。</h1><p>由你决定提醒、动效和记录如何保存。</p></div><div class="panel rc-settings"><h3>大学学期</h3><p class="muted">第一教学周为开学日所在的周一至周日。开始/结束外，重复课程不出现；单次活动仍保留。</p><div class="form-fields"><div class="field wide"><label for="semester-name">学期名称</label><input id="semester-name"></div><div class="field"><label for="semester-start">开学日期</label><input id="semester-start" type="date"></div><div class="field"><label for="semester-end">结束日期</label><input id="semester-end" type="date"></div></div><button class="btn btn-dark" id="semester-save">保存学期</button></div><div class="panel byok-panel" id="byok-settings">
    <div class="byok-head"><div><span class="kicker">AI / BRING YOUR OWN KEY</span><h3>AI 模型连接</h3></div><span class="byok-state" id="byok-status" role="status">检测中…</span></div>
    <p>基础课表、任务、桌宠提醒与规则建议<strong>不需要 API</strong>；“使用我的 API 智能规划”必须配置 Key 并授权。只有通过真实模型响应验证后，才标识 AI 已接入。</p>
-   <p class="muted">GitHub Pages 中 API Key 仅保存在<strong>当前浏览器标签页的临时内存</strong>，不写入网页 LocalStorage、备份文件、GitHub 或参赛包。公开网站由浏览器直连模型，可能受提供商 CORS 限制；不要在公共电脑使用自己的付费 Key。</p>
+   <p class="muted">GitHub Pages 默认将 Key 保存在本次标签页内存；个人设备可主动勾选“记住此浏览器”，把 Key 存入当前网站的浏览器本地存储（未额外加密，可随时清除）。不会上传到 GitHub 或参赛包。公开网站由浏览器直连模型，可能受提供商 CORS 限制；不要在公共电脑使用自己的付费 Key。</p>
    <form id="byok-form" autocomplete="off">
     <div class="form-fields">
      <div class="field"><label for="byok-provider">服务商</label><select id="byok-provider">

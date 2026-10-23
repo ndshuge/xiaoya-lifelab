@@ -41,7 +41,7 @@ export function initByokUI({onGrowthPlan}={}){
  }
  $('#byok-form')?.addEventListener('submit',e=>e.preventDefault());
  put('#byok-status','请从右下角的小芽聊天窗口连接真实 AI');
- put('#byok-form-result','公开版浏览器直连模型，可能受 CORS 规则限制；密钥只留在页面内存。');
+ put('#byok-form-result','公开版浏览器直连模型，可能受 CORS 规则限制；密钥默认仅留在页面内存；个人设备可主动勾选浏览器保存并随时清除。');
  window.addEventListener('xiaoya-ai-capability',e=>{connected=e.detail?.connected===true;model=connected?String(e.detail?.model||'模型'):'';refresh()});
  $('#growth-ai-consent')?.addEventListener('change',refresh);
  $('#growth-ai-generate')?.addEventListener('click',async()=>{
