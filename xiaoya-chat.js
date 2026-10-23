@@ -64,9 +64,9 @@ const providers={
  openrouter:['https://openrouter.ai/api/v1/chat/completions',''],
  commandcode:['https://api.commandcode.ai/provider/v1/chat/completions','deepseek/deepseek-v4.1-flash']
 };
-function updateModelPreset(){const p=providers[q('#xy-provider').value];if(p)q('#xy-model').value=p[1]}
+function updateModelPreset(){const id=q('#xy-provider').value,p=providers[id];if(p)q('#xy-model').value=p[1];if(q('#xy-feedback'))q('#xy-feedback').textContent=id==='zhipu'?'提示：本次 Pages 预检中 GLM 未返回跨域许可头；如果连接失败，请换用其他服务商。':''}
 q('#xy-provider').addEventListener('change',updateModelPreset);
-updateModelPreset();
+q('#xy-provider').value='deepseek';updateModelPreset();
 function status(){document.body.dataset.aiMode=api?'verified':'offline';const t=api?'AI 已接入':'AI 未接入';for(const id of ['#xy-state','#xy-connection','#xy-chat-state','#ai-global-title'])if(q(id))q(id).textContent=t;if(q('#ai-global-subtitle'))q('#ai-global-subtitle').textContent=api?api.model:'点击配置';for(const x of document.querySelectorAll('[data-ai-capability-state]')){x.textContent=t;x.dataset.mode=api?'verified':'offline'}}
 function open(){modal.hidden=false;q('#xy-key').value='';q('#xy-feedback').textContent=''}
 function close(){modal.hidden=true;sessionStorage.setItem('xiaoya-onboard-v2','seen')}
