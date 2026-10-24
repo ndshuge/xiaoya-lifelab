@@ -17,7 +17,11 @@
 
 ## 竞赛公开材料
 
-- [最新作品介绍 PDF（18 页）](competition-materials/Xiaoya_LifeLab_18P_QR.pdf)
+**[观看或下载最新完整演示视频（V5 · 233 秒 · 1080p60）](https://github.com/ndshuge/xiaoya-lifelab/releases/tag/showcase-20261024)** · [下载最新作品介绍 PDF](https://github.com/ndshuge/xiaoya-lifelab/releases/tag/showcase-20261024)
+
+以下为此前同步到源码仓库的参赛材料存档：
+
+- [仓库存档版作品介绍 PDF（18 页）](competition-materials/Xiaoya_LifeLab_18P_QR.pdf)
 - [材料清单、SHA-256 与验证结果](competition-materials/README.md)
 - [公开证据摘要](competition-materials/evidence/PUBLIC_EVIDENCE.md)
 
