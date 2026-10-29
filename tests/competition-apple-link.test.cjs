@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const target = 'https://ndshuge.github.io/ndshuge-galaxy/little-works/xiaoya-apple/';
+const target = 'https://ndshuge.github.io/ndshuge-galaxy/little-works/xiaoya-apple/native-v3/';
 
 function redirect(source) {
   const url = new URL(source);
@@ -58,5 +58,5 @@ test('original edition direct link stays present', () => {
 });
 
 test('without JavaScript, HTML fallback links to Apple edition', () => {
-  assert.match(html, /<noscript>.*?url=\/ndshuge-galaxy\/little-works\/xiaoya-apple\//s);
+  assert.match(html, /<noscript>.*?url=\/ndshuge-galaxy\/little-works\/xiaoya-apple\/native-v3\//s);
 });
