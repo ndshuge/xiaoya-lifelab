@@ -9,8 +9,8 @@
 <script>
 (function(){
   var query=new URLSearchParams(location.search);
-  // Preserve old judge links and offer a permanent, explicit Original entry.
-  if(query.get('edition')==='original'||query.has('judge')){
+  // Preserve contest QR links on Apple Edition; Original is explicitly opt-in.
+  if(query.get('edition')==='original'){
     query.delete('edition');
     var original=new URL('./original.html',location.href);
     original.search=query.toString();original.hash=location.hash;
