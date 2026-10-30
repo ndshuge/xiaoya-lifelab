@@ -47,7 +47,7 @@
 
 
 /* Growth world: a single static miniature terrain, never a simulated progress score. */
-.garden-scene{height:490px;background:#dbe5d9 url('./assets/garden-landscape.svg') center 53%/cover no-repeat;border-radius:8px;box-shadow:inset 0 0 0 1px #d4dbc8;isolation:isolate}
+.garden-scene{height:490px;background:#dbe5d9 url('./garden.svg') center 53%/cover no-repeat;border-radius:8px;box-shadow:inset 0 0 0 1px #d4dbc8;isolation:isolate}
 .garden-sun,.garden-hill{display:none}
 .garden-markers{inset:29% 7% 18%;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-around;gap:10px;z-index:3}
 .garden-marker{position:relative;padding:15px 18px;background:#f8f7e8f5;border:1px solid #d5dbc6;border-bottom:3px solid #9eaf95;border-radius:6px;box-shadow:0 9px 25px #304b3650,0 2px 4px #213e3322;min-width:130px;max-width:min(220px,39%);font-size:13px;text-align:left;transform:translateY(-12px);transition:transform .18s,box-shadow .18s}
