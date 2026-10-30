@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f3f1e9"><meta name="color-scheme" content="light">
+<title>DAYLINE｜小芽 Pro · 时光流域</title>
+<meta name="description" content="以真实时间为画布，陪你安排每一天。小芽 Pro 独立预览。">
+<link rel="stylesheet" href="./dayline.css">
+<script type="module" src="./dayline.js"></script>
+</head>
+<body>
+<div id="app" class="app">
+ <header class="masthead">
+  <a class="identity" href="./" aria-label="小芽 Pro 首页"><span class="identity-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 27V15M16 17C7 18 6 11 7 8c6-.6 11 1.7 9 9Zm0-3c1-8 6-11 11-10 1 8-3 12-11 10Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span>小芽<span class="pro-word"> Pro</span><small>DAYLINE / 时光流域</small></span></a>
+  <nav class="scale" aria-label="时间尺度">
+   <button class="scale-button selected" data-scale="day" aria-pressed="true">今天</button>
+   <button class="scale-button" data-scale="week" aria-pressed="false">本周</button>
+   <button class="scale-button" data-scale="month" aria-pressed="false">本月</button>
+   <button class="scale-button" data-scale="semester" aria-pressed="false">学期</button>
+  </nav>
+  <div class="header-actions"><button type="button" class="subtle-btn" id="mode-toggle">合成演示</button><button type="button" id="create-top" class="dark-button">＋ 记录</button></div>
+ </header>
+ <div id="mode-banner" class="mode-banner" hidden>当前为明确标记的合成演示档案，不属于你的私人数据。</div>
+ <main>
+  <section class="lead" aria-labelledby="date-title">
+    <div class="lead-copy"><span id="weekday" class="lead-week">星期五</span><h1 id="date-title">今天，<em>顺着时间生活。</em></h1><p id="today-summary">没有急着完成什么也没关系。从记录一件真实的事开始。</p></div>
+    <div class="lead-clock"><span id="current-clock">--:--</span><span id="date-stamp">--</span></div>
+  </section>
+  <div class="workspace">
+   <section class="flow-area" aria-label="时间画布">
+    <div class="flow-tools"><div class="flow-heading"><h2 id="flow-title">今天的流域</h2><p id="flow-subtitle">课程和活动占据时段，作业只标明截止点。</p></div><div class="date-controls"><button id="prev" aria-label="上一时间段">←</button><button id="today" class="date-reset">回到今天</button><button id="next" aria-label="下一时间段">→</button></div></div>
+    <div id="time-surface" class="time-surface" aria-live="polite"></div>
+   </section>
+   <aside class="margin-column" aria-label="截止事项与建议">
+    <section class="next-up" id="next-up"><div class="section-line"><span class="mini-label">接下来</span></div><div id="next-content" class="next-content">正在整理真实日程…</div></section>
+    <section class="deadline-ledger"><div class="section-line"><h2>截止簿</h2><span class="ledger-hint">截止 ≠ 安排</span></div><div id="deadline-list" class="deadline-list"></div><a href="../index.html" class="text-control">打开完整任务列表 <span aria-hidden="true">↗</span></a></section>
+    <section id="insight" class="insight"><div class="section-line"><h2>小芽的观察</h2><span class="insight-mode">本机规则</span></div><div id="insight-content"></div></section>
+    <section class="mascot-section" id="mascot-area"><button id="mascot-button" type="button" aria-expanded="false" aria-controls="mascot-detail"><span class="mascot-art"><span class="mascot-sprite" aria-hidden="true"></span></span><span class="mascot-copy"><strong>小芽在这里</strong><small id="mascot-state">安静地陪伴着你</small></span></button><div id="mascot-detail" hidden><p id="mascot-explanation"></p><button id="quiet-toggle" class="text-control">开启勿扰</button><button id="pet-hide" class="text-control">隐藏角色</button></div></section>
+   </aside>
+  </div>
+  <section id="growth-area" class="growth-area" hidden aria-label="成长庭院">
+   <div class="garden-header"><h2>留给生活的，<i>一座小庭院。</i></h2><p>这里的每一道痕迹，都来自你自己保存的目标和行动。</p></div>
+   <div class="garden-scene"><div class="garden-sun"></div><div class="garden-hill hill-far"></div><div class="garden-hill hill-front"></div><div id="garden-markers" class="garden-markers"></div></div>
+   <div id="growth-records" class="growth-records"></div>
+  </section>
+ </main>
+ <footer class="site-footer"><p>时间属于你。数据留在当前浏览器。</p><div><button id="growth-toggle" type="button">成长庭院</button><button id="archive-tools" type="button">备份与设置</button><a href="../index.html">完整管理功能 ↗</a></div></footer>
+ <nav class="mobile-dock" aria-label="手机快捷操作"><button id="mobile-time" class="active"><span aria-hidden="true">◷</span>时间</button><button id="mobile-growth"><span aria-hidden="true">⌁</span>成长</button><button id="mobile-add" class="mobile-add" aria-label="记录新事项">＋</button><button id="mobile-advice"><span aria-hidden="true">↗</span>建议</button><button id="mobile-tools"><span aria-hidden="true">≡</span>管理</button></nav>
+</div>
+<dialog id="editor-dialog" class="sheet"><form id="editor-form" novalidate><div class="sheet-head"><div><span class="mini-label">保存到当前档案</span><h2 id="editor-heading">记录一件事</h2></div><button type="button" class="icon-close" data-close aria-label="关闭">×</button></div><div class="field"><label for="kind">记录类型</label><select id="kind" name="kind"><option value="task">作业 / 截止事项</option><option value="course">课程</option><option value="event">活动</option><option value="goal">目标</option></select></div><div class="field"><label for="entry-title">名称</label><input id="entry-title" name="title" maxlength="160" required autocomplete="off" placeholder="例如：完成线性代数习题"></div><div id="editor-fields"></div><p id="editor-error" class="field-error" role="alert"></p><div class="sheet-actions"><button type="button" class="subtle-btn" data-close>取消</button><button type="submit" class="dark-button" id="save-entry">保存记录</button></div></form></dialog>
+<dialog id="review-dialog" class="sheet"><div class="sheet-head"><h2 id="review-heading">建议详情</h2><button class="icon-close" data-close aria-label="关闭">×</button></div><div id="review-content"></div><p id="review-error" class="field-error" role="alert"></p></dialog>
+<dialog id="tools-dialog" class="sheet"><div class="sheet-head"><h2>档案与设置</h2><button class="icon-close" data-close aria-label="关闭">×</button></div><div class="tools-list"><p>这是本地优先应用。私人档案不会自动同步到其他设备。</p><button id="undo-last">撤销最近一次事务（安全核对）</button><button id="export-json">导出当前档案 JSON</button><button id="import-json">导入 JSON（需要确认）</button><button id="export-ics">导出日历 ICS</button><button id="import-schedule">导入课表 CSV / ICS（先预览确认）</button><label class="switch-line"><input type="checkbox" id="reduced-motion"> 减少界面动效</label><label class="switch-line"><input type="checkbox" id="hide-pet"> 隐藏小芽</label><label class="switch-line"><input type="checkbox" id="quiet-check"> 勿扰模式</label><a href="../index.html">打开原版完整管理（学期 / 精细编辑 / AI 设置等） ↗</a></div></dialog>
+<input hidden type="file" id="json-file" accept="application/json,.json">
+<input hidden type="file" id="schedule-file" accept=".csv,.ics,text/csv,text/calendar">
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body></html>
