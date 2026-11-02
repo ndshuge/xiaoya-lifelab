@@ -1,0 +1,19 @@
+/* Restored mature growth routes, presented in the Native V3 visual language. */
+.growth-planner-card{border-radius:19px;background:#fff;padding:22px 22px 24px;box-shadow:0 1px 2px rgba(25,29,32,.028)}
+.growth-planner-card>p{font-size:13px;line-height:1.8;color:#63716a;margin:0 0 18px}
+.growth-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.growth-fields label{display:flex;flex-direction:column;gap:7px;font-size:12px;font-weight:610;color:#52635a;min-width:0}
+.growth-fields label:nth-child(-n+2){grid-column:1 / -1}
+.growth-fields input{border:1px solid #e0e8e3;background:#f7f9f8;border-radius:12px;padding:11px 12px;min-height:45px;min-width:0;width:100%;font-size:16px;color:#2c3430;outline-offset:2px}
+.growth-fields input:focus{border-color:var(--accent);background:#fff}
+#growth-generate{min-height:42px}
+#growth-preview{margin-top:16px}#growth-preview:empty{display:none}.growth-explain{padding:12px 13px;background:#edf5f0;color:#4a6654;border-radius:13px;font-size:12px;line-height:1.7;margin:0 0 14px}
+.growth-route-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.growth-route{border:1px solid #e9eeeb;background:#fcfdfc;border-radius:17px;padding:17px 16px 18px;display:flex;flex-direction:column;min-width:0}
+.growth-route-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.growth-route-head strong{font-size:16px;font-weight:680;color:#2c3d32}.growth-route-head small{font-size:11px;color:#56866d}
+.growth-route>p{font-size:12px;color:#66726c;line-height:1.72}.growth-route ol{padding:0;margin:5px 0 12px;list-style:none;counter-reset:stage;display:grid;gap:13px}.growth-route li{counter-increment:stage;min-width:0}
+.growth-route li strong{font-size:12px;color:#375d48;line-height:1.5}.growth-route li p{font-size:12px;color:#56635d;margin:4px 0;line-height:1.67}.growth-route li small{display:block;font-size:11px;color:#77837b;line-height:1.6}.growth-route .growth-risk{margin-top:auto;padding:10px 0 3px;font-size:11px;color:#9a7462}
+.growth-route .secondary{white-space:normal;text-align:center;line-height:1.45}
+.growth-active-row{display:flex;flex-direction:column;gap:4px;padding:16px 17px;border-bottom:1px solid var(--line)}.growth-active-row:last-child{border-bottom:0}.growth-active-row strong{font-size:15px;font-weight:650}.growth-active-row span{font-size:12px;color:#498065}.growth-active-row small{font-size:11px;color:#7e8880}
+@media(max-width:700px){.growth-planner-card{padding:17px 15px 19px}.growth-route-grid{grid-template-columns:1fr}.growth-route{padding:16px 14px}.growth-fields{gap:11px}}

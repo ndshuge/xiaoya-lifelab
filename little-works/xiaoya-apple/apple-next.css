@@ -1,0 +1,1028 @@
+/* XiaoYa Apple Next · Apple Hybrid, porcelain workspace / refractive control layer */
+body.design-apple.redesign-v2 {
+  /* Apple Corner & Surface System — scoped to the Apple variant.
+     Hierarchical + concentric radii; progressive continuous-corner support. */
+  --xy-radius-sheet: 36px;
+  --xy-radius-hero: 34px;
+  --xy-radius-group: 30px;
+  --xy-radius-card: 28px;
+  --xy-radius-control: 17px;
+  --xy-radius-compact: 13px;
+  --xy-radius-dock: 33px;
+  --xy-radius-lens: 25px;
+  --xy-radius-pill: 999px;
+  --xy-surface: #ffffff;
+  --xy-ground: #f5f5f7;
+  --xy-hairline: rgba(60,60,67,.10);
+  --xy-muted: #6e6e73;
+  color-scheme:light!important;
+  --ink:#202025!important;--sub:#65656f!important;--line:#e7e6e8!important;
+  --soft:#f2f1f3!important;--white:#fff!important;--sage:#19191e!important;
+  --sage-dark:#111114!important;--shadow:none!important;
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","PingFang SC","Microsoft YaHei","Segoe UI",sans-serif!important;
+  color:#242329!important;background:#f5f5f7!important;font-size:16px;
+  -webkit-font-smoothing:antialiased;
+}
+html{background:#f5f5f7!important}
+.design-apple.redesign-v2 .comparison-nav{
+  min-height:54px;gap:16px;padding:6px 24px;
+  border:0!important;border-bottom:1px solid #ecebed!important;
+  background:#fafafbed!important;color:#45444a!important;
+  box-shadow:none;z-index:150;font-size:13px;
+}
+.design-apple.redesign-v2 .comparison-title{font-size:14px!important;color:#45444a!important;font-weight:650}
+.design-apple.redesign-v2 .comparison-links{border:1px solid #e8e7e9!important;background:#ededf0!important;padding:3px;border-radius:999px!important;gap:2px}
+.design-apple.redesign-v2 .comparison-links a{min-height:36px;padding:8px 18px!important;color:#6b6971!important;font-size:13px;font-weight:520}
+.design-apple.redesign-v2 .comparison-links a[aria-current=page]{background:#fff!important;color:#19181c!important;box-shadow:0 1px 5px #00000014!important}
+.design-apple.redesign-v2 .comparison-back{color:#54525b!important;font-size:13px;min-height:36px;display:inline-flex;align-items:center}
+.design-apple.redesign-v2 .app-layout{background:#f5f5f7!important;max-width:none!important;min-height:calc(100vh - 54px)}
+.design-apple.redesign-v2 .center-wrap{min-width:0;max-width:1530px;width:100%;margin:0 auto}
+.design-apple.redesign-v2 .topbar{height:auto;min-height:80px;display:flex;align-items:center;padding:12px clamp(21px,3.3vw,57px)!important;border:0!important}
+.design-apple.redesign-v2 .breadcrumb{font-size:13px;color:#7e7c83}
+.design-apple.redesign-v2 .breadcrumb strong{font-size:14px;color:#424149}
+.design-apple.redesign-v2 .top-actions{gap:10px}
+.design-apple.redesign-v2 .mode-badge{background:#edecf0;color:#64636b;border:0;border-radius:999px;font-size:12px}
+.design-apple.redesign-v2 .ai-global-indicator{border-radius:17px;min-height:48px;background:#fff;border:1px solid #e8e7eb;box-shadow:0 1px 3px #0000000a}
+.design-apple.redesign-v2 .ai-global-indicator strong{font-size:13px;color:#35333a}
+.design-apple.redesign-v2 .ai-global-indicator small{color:#737178}
+.design-apple.redesign-v2 .ai-global-indicator .ai-indicator-icon{color:#8d6b5a}
+.design-apple.redesign-v2 .icon-button,.design-apple.redesign-v2 .small-ghost{border-radius:14px;min-width:44px;min-height:44px}
+.design-apple.redesign-v2 .content-grid{padding:10px clamp(21px,3.3vw,57px) 110px;gap:26px;grid-template-columns:minmax(0,1fr) 254px}
+.design-apple.redesign-v2 .content-grid #main{min-width:0}
+.design-apple.redesign-v2 .xy-cinema{
+  background:#fbfbfd!important;
+  border:1px solid #efebea!important;border-radius:var(--xy-radius-hero)!important;
+  padding:0!important;min-height:0!important;overflow:hidden;
+  box-shadow:inset 0 1px #fff!important;
+}
+.design-apple.redesign-v2 .xy-cinema:before{
+  background:none!important;
+  filter:none!important;animation:none!important;pointer-events:none;
+}
+.design-apple.redesign-v2 .xy-cinema:after{
+  content:"";display:none;position:absolute;width:250px;height:250px;right:-56px;bottom:-130px;
+  border:1px solid #f4dcd369;border-radius:50%;pointer-events:none;opacity:.5;
+}
+.design-apple.redesign-v2 .xy-feature{
+  min-height:285px!important;margin:0!important;padding:43px clamp(26px,4vw,58px) 38px!important;
+  position:relative!important;display:flex!important;align-items:center!important;background:transparent!important;border:0!important;
+  border-radius:0!important;box-shadow:none!important;z-index:1;
+}
+.design-apple.redesign-v2 .xy-feature .hero-copy{max-width:720px;position:relative;z-index:1}
+.design-apple.redesign-v2 .xy-feature .eyebrow{font-size:14px!important;line-height:1.4!important}
+.design-apple.redesign-v2 .xy-feature #today-date{font-size:14px!important;font-weight:570!important;color:#6e6e73!important;letter-spacing:0!important}
+.design-apple.redesign-v2 .xy-feature h1{
+  color:#262128!important;font-weight:680!important;
+  font-size:clamp(28px,3vw,40px)!important;
+  letter-spacing:-.055em!important;line-height:1.17!important;
+  margin:15px 0 14px!important;max-width:720px;
+}
+.design-apple.redesign-v2 .xy-feature .hero-period{color:#6e6e73!important}
+.design-apple.redesign-v2 .xy-feature p{
+  font-size:17px!important;line-height:1.7!important;max-width:570px;color:#726a70!important;
+  margin:0!important;letter-spacing:-.01em;
+}
+.design-apple.redesign-v2 .xy-feature .hero-actions{margin:29px 0 0!important;gap:10px}
+.design-apple.redesign-v2 .xy-feature .hero-decoration{display:none!important}
+.design-apple.redesign-v2 .btn{min-height:44px;border-radius:var(--xy-radius-control);font-size:15px;font-weight:560}
+.design-apple.redesign-v2 .btn-dark,.design-apple.redesign-v2 .xy-feature .btn-dark{
+  background:#252327!important;color:#fff!important;border:1px solid #252327!important;
+  box-shadow:none!important;transition:background .18s ease,box-shadow .2s ease;
+}
+.design-apple.redesign-v2 .btn-dark:hover{background:#454149!important}
+.design-apple.redesign-v2 .btn-soft,.design-apple.redesign-v2 .xy-feature .btn-plain{
+  background:#eceaf0!important;border:1px solid #e4e2e7!important;color:#3b3940!important;box-shadow:none!important;
+}
+.design-apple.redesign-v2 .xy-feature .btn-plain{background:#ffffffb2!important;border-color:#eee7e6!important}
+.design-apple.redesign-v2 .xy-feature .btn-plain:hover{background:#fff!important}
+.design-apple.redesign-v2 .xy-floating-panels{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:16px!important;margin:22px 0 26px!important}
+.design-apple.redesign-v2 .xy-floating-panels .panel{
+  background:#fff!important;border:1px solid #eae8ed!important;border-radius:var(--xy-radius-card)!important;
+  color:#25232a!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  box-shadow:0 3px 16px #17131908!important;min-height:250px;padding:23px;
+}
+.design-apple.redesign-v2 .xy-floating-panels .card-topline{border-color:#f1eff2!important}
+.design-apple.redesign-v2 .xy-floating-panels .overline,
+.design-apple.redesign-v2 .xy-floating-panels .task-title,
+.design-apple.redesign-v2 .xy-floating-panels .agenda-item strong{color:#242229!important;font-size:15px!important}
+.design-apple.redesign-v2 .xy-floating-panels .subline,.design-apple.redesign-v2 .xy-floating-panels .agenda-item small,
+.design-apple.redesign-v2 .xy-floating-panels .text-link{color:#6d6973!important;font-size:13px!important}
+.design-apple.redesign-v2 .xy-floating-panels .task-mini,.design-apple.redesign-v2 .xy-floating-panels .agenda-item{border-color:#eeecf0!important;min-height:55px}
+.design-apple.redesign-v2 .xy-floating-panels .time-pill{background:#f5eee9!important;color:#8c5f52!important;font-size:12px!important}
+.design-apple.redesign-v2 .panel,
+.design-apple.redesign-v2 .right-rail .pet-panel,
+.design-apple.redesign-v2 .advice-card{background:var(--xy-surface)!important;border:1px solid var(--xy-hairline)!important;color:#29272e!important;box-shadow:none!important}
+.design-apple.redesign-v2 .section-heading h2,.design-apple.redesign-v2 .panel h3,
+.design-apple.redesign-v2 .rail-date,.design-apple.redesign-v2 .right-rail .rail-date span{color:#28262c!important}
+.design-apple.redesign-v2 .panel{border-radius:var(--xy-radius-card)}
+.design-apple.redesign-v2 .right-rail .rail-date{padding:5px 7px 18px;font-size:14px}
+.design-apple.redesign-v2 .right-rail .pet-panel{border-radius:25px;padding:21px}
+.design-apple.redesign-v2 .right-rail .pet-panel .overline{display:none}
+.design-apple.redesign-v2 .right-rail .pet-panel strong{color:#403038!important}
+.design-apple.redesign-v2 .right-rail .pet-figure{height:195px}
+.design-apple.redesign-v2 .right-rail .pet-glow{background:radial-gradient(circle,#faece0,#fff 72%,transparent)}
+.design-apple.redesign-v2 .right-rail .rail-note{border:1px solid #eceaee;border-radius:24px;padding:19px;background:#fff}
+.design-apple.redesign-v2 .right-rail .rail-note p{font-size:13px;line-height:1.55;color:#77727a}
+.design-apple.redesign-v2 .stat-tile{background:#f7f6f8!important;border-radius:17px}
+.design-apple.redesign-v2 .stat-tile strong{color:#27252b!important}
+.design-apple.redesign-v2 .advice-body h3,.design-apple.redesign-v2 .advice-body p{color:#514b53!important}
+.design-apple.redesign-v2 .page-head h1,.design-apple.redesign-v2 .growth-page-head h1{color:#26242a!important}
+.design-apple.redesign-v2 .page-head p{font-size:16px}
+.design-apple.redesign-v2 .kicker,.design-apple.redesign-v2 .overline{color:#77717b}
+.design-apple.redesign-v2 input,.design-apple.redesign-v2 select,.design-apple.redesign-v2 textarea{background:#fff;color:#25242a;font-size:16px}
+.design-apple.redesign-v2 button:focus-visible,.design-apple.redesign-v2 a:focus-visible,
+.design-apple.redesign-v2 input:focus-visible{outline:3px solid #ae786a!important;outline-offset:3px}
+.design-apple.redesign-v2 .mobile-pet{box-shadow:0 8px 20px #48353020}
+.design-apple.redesign-v2 .modal-card{background:#fff;color:#29252a}
+@media(min-width:791px){
+  .design-apple.redesign-v2 .app-layout{display:grid!important;grid-template-columns:234px minmax(0,1fr)!important;align-items:start}
+  .design-apple.redesign-v2 .sidebar{
+    position:sticky!important;top:54px!important;left:auto!important;right:auto!important;
+    width:234px!important;height:calc(100vh - 54px)!important;min-height:575px;
+    margin:0!important;padding:27px 15px 22px!important;display:flex!important;flex-direction:column!important;
+    justify-content:flex-start!important;align-items:stretch!important;gap:38px!important;
+    background:#fafafb!important;border:0!important;border-right:1px solid #e7e6e9!important;
+    border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important;
+  }
+  .design-apple.redesign-v2 .sidebar .brand{padding:0 11px!important;gap:11px}
+  .design-apple.redesign-v2 .sidebar .brand strong{font-size:23px!important;letter-spacing:-.05em;color:#222125!important}
+  .design-apple.redesign-v2 .sidebar .brand small{font-size:12px!important;color:#8b888e!important;letter-spacing:0!important}
+  .design-apple.redesign-v2 .sidebar .brand-mark{background:#f0e5dd!important;color:#936c5e!important;border-radius:14px!important;width:42px;height:42px}
+  .design-apple.redesign-v2 .side-nav{display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:4px!important}
+  .design-apple.redesign-v2 .side-nav .nav-link,.design-apple.redesign-v2 .sidebar-bottom .nav-link{
+    display:flex!important;flex-direction:row!important;justify-content:flex-start!important;gap:13px!important;
+    color:#696770!important;font-size:15px!important;text-align:left!important;font-weight:530!important;
+    min-height:47px!important;width:100%!important;padding:11px 16px!important;border-radius:14px!important;
+  }
+  .design-apple.redesign-v2 .side-nav .nav-link svg,.design-apple.redesign-v2 .sidebar-bottom .nav-link svg{width:19px;height:19px}
+  .design-apple.redesign-v2 .side-nav .nav-link.is-active{background:#ebeaef!important;color:#26242b!important}
+  .design-apple.redesign-v2 .side-nav .nav-link.is-active svg{color:#26242b!important}
+  .design-apple.redesign-v2 .sidebar-bottom{display:flex!important;margin-top:auto!important;width:100%;align-items:stretch}
+  .design-apple.redesign-v2 .sidebar .sidebar-quote{display:none!important}
+  .design-apple.redesign-v2 .sidebar .privacy-hint{display:none!important}
+  .design-apple.redesign-v2 .mobile-tabs{display:none!important}
+}
+@media(min-width:791px) and (max-width:1140px){
+  .design-apple.redesign-v2 .app-layout{grid-template-columns:210px minmax(0,1fr)!important}
+  .design-apple.redesign-v2 .sidebar{width:210px!important}
+  .design-apple.redesign-v2 .content-grid{grid-template-columns:minmax(0,1fr)!important}
+  .design-apple.redesign-v2 .right-rail{display:none!important}
+}
+@media(max-width:790px){
+  .design-apple.redesign-v2 .app-layout{display:block!important}
+  .design-apple.redesign-v2 .sidebar{display:none!important}
+  .design-apple.redesign-v2 .comparison-nav{padding:7px 18px!important;justify-content:space-between!important;gap:6px}
+  .design-apple.redesign-v2 .comparison-title{display:none}
+  .design-apple.redesign-v2 .comparison-links a{font-size:12px!important;padding:7px 12px!important}
+  .design-apple.redesign-v2 .comparison-back{font-size:12px!important;white-space:nowrap}
+  .design-apple.redesign-v2 .topbar{padding:10px 16px!important;min-height:60px!important}
+  .design-apple.redesign-v2 .content-grid{display:grid!important;grid-template-columns:minmax(0,1fr)!important;padding:9px 15px 125px!important;gap:20px}
+  .design-apple.redesign-v2 .right-rail{display:block!important;max-width:none}
+  .design-apple.redesign-v2 .xy-cinema{border-radius:var(--xy-radius-hero)!important}
+  .design-apple.redesign-v2 .xy-feature{min-height:280px!important;padding:31px 24px 32px!important}
+  .design-apple.redesign-v2 .xy-feature h1{font-size:clamp(33px,7.5vw,46px)!important;line-height:1.22!important;max-width:95%;margin:12px 0 12px!important}
+  .design-apple.redesign-v2 .xy-feature p{font-size:16px!important;max-width:98%;line-height:1.6!important}
+  .design-apple.redesign-v2 .xy-floating-panels{gap:13px!important;margin-top:16px!important}
+  .design-apple.redesign-v2 .xy-floating-panels .panel{min-height:210px;padding:20px}
+  .design-apple.redesign-v2 .topbar .top-actions{flex:1;justify-content:space-between;gap:7px}
+  .design-apple.redesign-v2 .ai-global-indicator{min-height:46px}
+  .design-apple.redesign-v2 .mobile-tabs{
+    display:grid!important;position:fixed;left:12px!important;right:12px!important;
+    bottom:max(12px,env(safe-area-inset-bottom))!important;min-height:70px!important;
+    padding:6px 5px!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;
+    gap:0!important;border:1px solid #ffffffc9!important;border-radius:var(--xy-radius-dock)!important;
+    background:#eae9ee9c!important;box-shadow:0 12px 44px #342c3b33, inset 0 1px #fff8!important;
+    backdrop-filter:blur(19px) saturate(1.22)!important;-webkit-backdrop-filter:blur(19px) saturate(1.22)!important;
+    z-index:80!important;overflow:visible!important;isolation:isolate;
+  }
+  .design-apple.redesign-v2 .mobile-tabs .xy-glass-indicator{
+    position:absolute;left:0;top:0;width:15%;height:55px;
+    border-radius:var(--xy-radius-lens);background:#fff9!important;box-shadow:0 1px 7px #30293616, inset 0 1px #fff;
+    pointer-events:none;z-index:0;
+    transform:translate3d(0,0,0);
+    will-change:transform;transition:background .2s ease,opacity .23s ease;
+  }
+  .design-apple.redesign-v2 .mobile-tabs .xy-glass-indicator.is-pressed{background:#fffdf6da!important}
+  .design-apple.redesign-v2 .mobile-tabs button{
+    position:relative;z-index:2;min-height:55px!important;min-width:0!important;padding:5px 0!important;
+    display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;
+    color:#74717c!important;background:transparent!important;box-shadow:none!important;
+    border:0!important;border-radius:19px!important;font-size:11px!important;font-weight:530!important;gap:3px!important;
+    transform:none!important;transition:color .2s ease!important;
+  }
+  .design-apple.redesign-v2 .mobile-tabs button.active{color:#222027!important;font-weight:680!important;background:transparent!important}
+  .design-apple.redesign-v2 .mobile-tabs button svg{width:20px!important;height:20px!important}
+  .design-apple.redesign-v2 .mobile-tabs button:focus-visible{outline-offset:0!important}
+  .design-apple.redesign-v2 .mobile-pet{bottom:101px!important}
+}
+@media(max-width:640px){
+  .design-apple.redesign-v2 .xy-floating-panels{grid-template-columns:1fr!important}
+  .design-apple.redesign-v2 .xy-feature{min-height:0!important}
+  .design-apple.redesign-v2 .xy-feature h1{font-size:36px!important}
+  .design-apple.redesign-v2 .xy-feature .hero-actions{margin-top:23px!important}
+  .design-apple.redesign-v2 .topbar .mode-badge{display:none!important}
+}
+@media(max-width:360px){
+  .design-apple.redesign-v2 .comparison-links a{padding:7px 9px!important}
+  .design-apple.redesign-v2 .xy-feature{padding:25px 19px!important}
+  .design-apple.redesign-v2 .xy-feature h1{font-size:33px!important}
+  .design-apple.redesign-v2 .mobile-tabs{left:8px!important;right:8px!important}
+  .design-apple.redesign-v2 .mobile-tabs button{font-size:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .design-apple.redesign-v2 *, .design-apple.redesign-v2 *::before, .design-apple.redesign-v2 *::after{
+    animation-duration:0.01ms!important;transition-duration:0.01ms!important;scroll-behavior:auto!important}
+  .design-apple.redesign-v2 .mobile-tabs .xy-glass-indicator{will-change:auto}
+}
+@media(prefers-reduced-transparency:reduce){
+  .design-apple.redesign-v2 .mobile-tabs{background:#f5f5f7!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .design-apple.redesign-v2 .mobile-tabs .xy-glass-indicator{background:#fff!important}
+  .design-apple.redesign-v2 .comparison-nav{background:#fafafb!important;backdrop-filter:none!important}
+}
+
+/* Apple review: grouped settings cards, coherent nested corners and compact content.
+   Equivalent of iOS Settings grouping, without recreating system chrome. */
+body.design-apple .xy-redesign-intro,
+body.design-apple .xy-focus-marker{display:none!important}
+body.apple-next #view-settings .page-head .kicker,
+body.apple-next #view-schedule .page-head .kicker,
+body.apple-next #view-tasks .page-head .kicker,
+body.apple-next #view-review .page-head .kicker{display:none!important}
+body.apple-next #view-settings > .panel{
+  border-radius:var(--xy-radius-group)!important;
+  background:var(--xy-surface)!important;
+  border:1px solid var(--xy-hairline)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.015)!important;
+}
+body.apple-next #view-settings .settings-list{
+  padding:4px 22px!important;
+  overflow:hidden;
+}
+body.apple-next #view-settings .settings-list .toggle-row{
+  min-height:64px;
+  padding:14px 0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  border:0!important;
+}
+body.apple-next #view-settings .settings-list .toggle-row + .toggle-row{
+  border-top:1px solid var(--xy-hairline)!important;
+}
+body.apple-next #view-settings .field input:not([type=checkbox]),
+body.apple-next #view-settings .field select,
+body.apple-next #view-settings .field textarea{
+  border-radius:var(--xy-radius-control)!important;
+  background:#f5f5f7!important;
+  border:1px solid var(--xy-hairline)!important;
+  min-height:46px;
+}
+body.apple-next #view-settings .page-head h1{font-size:clamp(32px,5vw,42px)!important;line-height:1.2;letter-spacing:-.045em}
+body.apple-next #view-settings > .panel h3{font-size:18px!important;font-weight:650;letter-spacing:-.02em}
+body.apple-next .btn,
+body.apple-next .small-ghost,
+body.apple-next .icon-button{border-radius:var(--xy-radius-control)!important}
+body.apple-next .icon-button{border-radius:var(--xy-radius-pill)!important}
+body.apple-next .xy-cinema{
+  background:#fbf9fa!important;
+  border-radius:var(--xy-radius-hero)!important;
+}
+body.apple-next .xy-floating-panels .panel{border-radius:var(--xy-radius-card)!important}
+body.apple-next #xy-onboard.xy-shade{backdrop-filter:blur(11px)!important;-webkit-backdrop-filter:blur(11px)!important}
+body.apple-next #xy-onboard .xy-hero{background:#f5f5f7!important}
+body.apple-next #xy-onboard .xy-content{gap:14px!important}
+body.apple-next #xy-onboard .xy-content label{font-size:15px!important}
+body.apple-next #xy-onboard #xy-local,
+body.apple-next #xy-onboard .xy-dialog{box-shadow:0 2px 12px rgba(20,20,30,.04)}
+@supports (corner-shape:squircle){
+  body.apple-next .xy-cinema,body.apple-next .panel,
+  body.apple-next #xy-onboard .xy-dialog,
+  body.apple-next #xy-onboard #xy-local,
+  body.apple-next .mobile-tabs,body.apple-next .xy-glass-indicator{corner-shape:squircle}
+}
+@media(max-width:790px){
+  body.apple-next .xy-cinema{border-radius:var(--xy-radius-hero)!important}
+  body.apple-next .xy-floating-panels .panel{border-radius:var(--xy-radius-card)!important}
+  body.apple-next #view-settings > .panel{border-radius:var(--xy-radius-group)!important}
+  body.apple-next #view-settings .page-head{padding:4px 2px 3px}
+  body.apple-next #xy-onboard .xy-dialog{border-radius:var(--xy-radius-sheet)!important}
+}
+
+/* Post-screenshot optical and typographic refinement. */
+.design-apple.redesign-v2 .side-nav .nav-link svg,.design-apple.redesign-v2 .sidebar-bottom .nav-link svg{color:#69656c!important;opacity:1!important}
+.design-apple.redesign-v2 .side-nav .nav-link.is-active svg{color:#29252d!important}
+.design-apple.redesign-v2 .xy-feature .xy-hero-continuation{display:inline}
+.design-apple.redesign-v2 .topbar .judge-top-link{color:#5f5b64}
+@media(max-width:640px){.design-apple.redesign-v2 .xy-feature .xy-hero-continuation{display:block;white-space:nowrap}.design-apple.redesign-v2 .xy-feature h1{font-size:clamp(31px,8vw,36px)!important;letter-spacing:-.055em!important}}
+@media(max-width:360px){.design-apple.redesign-v2 .xy-feature h1{font-size:30px!important}}
+
+
+
+/* Welcome + companion are first-class Apple controls, not the inherited green theme.
+   Preserve all real permission, CORS, cost and local-storage warnings. */
+body.apple-next #xy-onboard.xy-shade{
+  background:rgba(32,30,40,.42)!important;
+  backdrop-filter:blur(8px) saturate(1.06)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(1.06)!important;
+  padding:24px!important;
+}
+body.apple-next #xy-onboard .xy-dialog{
+  width:min(795px,100%)!important;border-radius:var(--xy-radius-sheet)!important;
+  background:#fff!important;color:#25242b!important;border:1px solid #ffffffc7;
+  box-shadow:0 2px 8px #21202a12,0 30px 80px #21202a29!important;grid-template-columns: .88fr 1.12fr;
+}
+body.apple-next #xy-onboard .xy-hero{
+  padding:38px!important;background:#f5f5f7!important;
+  color:#2e2830!important;justify-content:flex-start!important;
+}
+body.apple-next #xy-onboard .xy-hero>.xy-intro-illustration{display:block;width:68px;height:68px;object-fit:contain;margin:0 0 18px}
+body.apple-next #xy-onboard .xy-hero h2{
+  font-size:clamp(29px,3vw,39px)!important;line-height:1.17!important;
+  font-weight:720!important;letter-spacing:-.05em!important;margin:0 0 14px!important;color:#252127!important;
+}
+body.apple-next #xy-onboard .xy-hero p{
+  font-size:16px!important;line-height:1.6!important;color:#696069!important;margin:0 0 20px!important;
+}
+body.apple-next #xy-onboard .xy-hero b{
+  font-size:13px!important;font-weight:600!important;background:#ffffff9e!important;color:#816e6a!important;
+  border:1px solid #eadfdb;border-radius:999px;padding:7px 13px!important;
+}
+body.apple-next #xy-onboard .xy-content{
+  padding:31px!important;gap:12px!important;color:#262329!important;background:#fff!important;
+}
+body.apple-next #xy-onboard .xy-content h3{
+  font-size:21px!important;font-weight:650!important;line-height:1.3;
+  letter-spacing:-.03em;color:#28262c!important;margin:12px 0 0!important;
+}
+body.apple-next #xy-onboard .xy-content p{
+  font-size:13px!important;line-height:1.55!important;color:#696770!important;
+}
+body.apple-next #xy-onboard .xy-content label{font-size:14px!important;font-weight:580!important;color:#49464e!important;gap:7px!important}
+body.apple-next #xy-onboard .xy-content input:not([type=checkbox]),
+body.apple-next #xy-onboard .xy-content select{
+  background:#f8f8fa!important;color:#28262d!important;border:1px solid #dddbe2!important;
+  border-radius:var(--xy-radius-control)!important;font-size:16px!important;padding:12px 13px!important;min-height:47px;
+}
+body.apple-next #xy-onboard .xy-content .xy-consent{
+  flex-direction:row!important;align-items:flex-start;gap:8px!important;line-height:1.55;
+  font-size:13px!important;font-weight:450!important;color:#514e57!important;
+}
+body.apple-next #xy-onboard .xy-content .xy-consent input{min-width:17px;min-height:17px;margin:2px 0!important}
+body.apple-next #xy-onboard .xy-storage-warning{color:#6d564d!important;font-size:13px!important;line-height:1.55!important}
+body.apple-next #xy-onboard #xy-local{
+  padding:19px!important;border-radius:var(--xy-radius-card)!important;background:#f5f5f7!important;
+  border:1px solid #e8e4e8!important;color:#29252d!important;gap:5px!important;min-height:90px;
+}
+body.apple-next #xy-onboard #xy-local strong{font-size:17px;font-weight:680}
+body.apple-next #xy-onboard #xy-local span{font-size:14px!important;color:#6c6871!important}
+body.apple-next #xy-onboard #xy-connect{
+  background:#26242b!important;color:#fff!important;border-radius:var(--xy-radius-control)!important;
+  min-height:48px;font-size:15px!important;font-weight:620!important;
+}
+body.apple-next #xy-onboard #xy-forget{
+  background:#f5f4f6!important;border:1px solid #e1dfe5!important;
+  color:#49464d!important;font-size:13px!important;border-radius:var(--xy-radius-control)!important;min-height:44px;
+}
+body.apple-next #xy-onboard #xy-skip{color:#4b4851!important;font-size:14px!important;min-height:44px}
+body.apple-next #xy-onboard button:focus-visible{outline:3px solid #987a88!important;outline-offset:3px}
+body.apple-next #xy-window{
+  background:#fff!important;border-color:#ece9ef!important;border-radius:var(--xy-radius-group)!important;
+  box-shadow:0 20px 65px #24212b2c!important;
+}
+body.apple-next #xy-window header{background:#f7f2f3!important;color:#25242a!important}
+body.apple-next #xy-window header button{background:#eae7ed!important;color:#39363c!important;min-width:44px;min-height:44px}
+body.apple-next #xy-window .xy-message{background:#f4f3f5!important;color:#3c3841!important}
+body.apple-next #xy-window .xy-message.user{background:#27242d!important;color:#fff!important}
+body.apple-next #xy-window .xy-chips button{background:#f2f0f3!important;border-color:#e4e1e6!important;color:#44414a!important}
+body.apple-next #xy-window #xy-form button{background:#28252c!important;color:white!important;min-height:44px}
+body.apple-next #xy-fab{
+  background:#f8f3ee!important;border:1px solid #fff!important;box-shadow:0 8px 24px #32222c23!important;
+}
+body.apple-next #xy-pet-actions{background:#fff!important;border-color:#e4e2e7!important;color:#28262b!important}
+body.apple-next #xy-pet-actions button{background:#f3f1f4!important;color:#353139!important}
+body.apple-next #xy-pet-bubble{background:#fffaf7!important;border-color:#e9ddd8!important;color:#61545b!important}
+@media(max-width:700px){
+  body.apple-next #xy-onboard.xy-shade{padding:13px!important}
+  body.apple-next #xy-onboard .xy-dialog{
+    grid-template-columns:1fr!important;max-height:calc(100dvh - 26px)!important;border-radius:var(--xy-radius-sheet)!important;
+  }
+  body.apple-next #xy-onboard .xy-hero{
+    padding:23px 23px 19px!important;display:block!important;
+  }
+  body.apple-next #xy-onboard .xy-hero>.xy-intro-illustration{width:48px;height:48px;float:right;margin:0!important}
+  body.apple-next #xy-onboard .xy-hero h2{font-size:25px!important;margin:0 0 7px!important}
+  body.apple-next #xy-onboard .xy-hero p{font-size:14px!important;margin:0 0 10px!important}
+  body.apple-next #xy-onboard .xy-content{padding:22px!important;gap:10px!important}
+  body.apple-next #xy-onboard .xy-content h3{font-size:19px!important}
+  body.apple-next #xy-onboard #xy-local{min-height:74px;padding:15px!important}
+  body.apple-next #xy-fab{right:9px!important;bottom:104px!important;width:60px!important;height:60px!important;min-width:60px!important;border-radius:19px!important}
+}
+@media(prefers-reduced-transparency:reduce){
+  body.apple-next #xy-onboard.xy-shade{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;background:rgba(32,30,40,.7)!important}
+}
+
+/* Final mobile topbar and dock legibility correction. */
+@media(max-width:790px){
+ body.apple-next .topbar{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important}
+ body.apple-next .topbar .breadcrumb{flex:1 1 auto;min-width:0;max-width:150px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+ body.apple-next .topbar .top-actions{flex:0 0 auto!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;width:auto!important}
+ body.apple-next .topbar .ai-global-indicator{flex:0 0 auto!important;min-width:0!important;max-width:150px;padding:7px 10px!important}
+ body.apple-next .topbar .icon-button[data-view="settings"]{flex:0 0 44px!important}
+}
+@media(max-width:390px){body.apple-next .topbar .breadcrumb{max-width:105px}}
+/* Audit remediation: preserve product-specific warm wash and native companion. */
+body.apple-next .breadcrumb span,body.apple-next .breadcrumb strong{color:#49464e!important}
+body.apple-next .xy-floating-panels .panel{min-height:unset!important}
+body.apple-next .sidebar .brand small{font-size:12px!important;color:#65616b!important}
+body.apple-next .xy-feature h1{font-size:clamp(28px,2.4vw,36px)!important}
+@media(max-width:640px){body.apple-next .xy-feature h1{font-size:clamp(27px,7.4vw,32px)!important}}
+body.apple-next .xy-floating-panels{align-items:start}
+/* Keep the companion away from task-card actions on first mobile launch. Explicitly dragged coordinates remain authoritative. */
+@media(max-width:790px){
+ body.apple-next #xy-fab:not([style*="left:"]){top:140px!important;bottom:auto!important;right:19px!important;width:53px!important;height:53px!important;min-width:53px!important;border-radius:18px!important}
+}
+
+/* Apple Next v2 optical/60fps pass: a visible lens over the actual canvas,
+   light compositing and touch-friendly motion, including WebKit fallback. */
+@media(max-width:790px){
+ body.apple-next .mobile-tabs{
+   background:rgba(242,241,247,.54)!important;
+   border:1px solid rgba(255,255,255,.88)!important;
+   box-shadow:0 9px 28px rgba(43,37,54,.18),0 1px 2px rgba(32,30,38,.07),inset 0 1px 0 rgba(255,255,255,.86)!important;
+   backdrop-filter:blur(11px) saturate(1.3)!important;
+   -webkit-backdrop-filter:blur(11px) saturate(1.3)!important;
+   transform:translateZ(0);
+   contain:layout style;
+ }
+ body.apple-next .mobile-tabs .xy-glass-indicator{
+   background:linear-gradient(156deg,rgba(255,255,255,.88) 0%,rgba(255,255,255,.38) 42%,rgba(240,237,248,.56) 100%)!important;
+   border:1px solid rgba(255,255,255,.98)!important;
+   box-shadow:inset 0 2px 1px rgba(255,255,255,.97),inset 1px 0 1px rgba(255,255,255,.62),inset -1px -2px 3px rgba(99,92,115,.16),0 4px 10px rgba(59,50,72,.19),0 1px 2px rgba(59,50,72,.13)!important;
+   -webkit-backdrop-filter:blur(6px) saturate(1.65) brightness(1.055);
+   backdrop-filter:blur(6px) saturate(1.65) brightness(1.055);
+   transform-origin:center;
+   overflow:hidden;
+   isolation:isolate;
+ }
+ body.apple-next .mobile-tabs .xy-glass-indicator::before{
+   content:"";position:absolute;inset:1px;border-radius:inherit;pointer-events:none;
+   background:linear-gradient(135deg,rgba(255,255,255,.72) 0,rgba(255,255,255,.05) 33%,transparent 56%,rgba(255,255,255,.29) 100%);
+ }
+ body.apple-next .mobile-tabs .xy-glass-indicator.is-pressed{
+   background:rgba(255,255,255,.81)!important;
+   box-shadow:inset 0 2px 4px rgba(255,255,255,.98),0 2px 8px rgba(54,47,71,.16)!important;
+ }
+ body.apple-next #xy-fab .xy-pet-art{
+   animation:none!important;
+   transition:transform .23s cubic-bezier(.2,.8,.2,1),background-position .2s ease!important;
+ }
+ body.apple-next #xy-fab[data-state="celebrate"] .xy-pet-art,
+ body.apple-next #xy-fab[data-state="thinking"] .xy-pet-art{
+   animation:xy-pet-idle 2s ease-in-out 2!important;
+ }
+ body.apple-next #xy-fab{transition:transform .18s ease,box-shadow .18s ease!important}
+ body.apple-next .xy-cinema:before{animation:none!important}
+}
+@media(max-width:790px) and (prefers-reduced-transparency:reduce){
+ body.apple-next .mobile-tabs{background:#f4f3f6!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ body.apple-next .mobile-tabs .xy-glass-indicator{background:#fff!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+}
+@media(max-width:790px) and (prefers-reduced-motion:reduce){
+ body.apple-next #xy-fab .xy-pet-art{animation:none!important;transition:none!important}
+}
+
+
+/* Higher-specificity overrides: old comparison.css and Apple V1 must not win. */
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs {
+   /* iOS-like glass should soften underlying text rather than let it collide with tab labels. */
+   background:rgba(250,250,253,.79)!important;
+   -webkit-backdrop-filter:blur(9px) saturate(1.28)!important;
+   backdrop-filter:blur(9px) saturate(1.28)!important;
+   box-shadow:0 11px 27px rgba(43,37,54,.19),inset 0 1px 0 #ffffffed!important;
+   border:1px solid rgba(255,255,255,.96)!important;
+ }
+ body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-glass-indicator {
+   background:linear-gradient(155deg,rgba(255,255,255,.93),rgba(255,255,255,.52) 45%,rgba(231,224,241,.64))!important;
+   border:1px solid #ffffffec!important;
+   box-shadow:inset 0 2px 2px #fff,inset -1px -2px 4px #75668028,0 4px 12px #3b324630!important;
+ }
+ body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-glass-indicator.is-pressed{
+   background:rgba(255,255,255,.9)!important;
+ }
+}
+@media(max-width:790px) and (prefers-reduced-transparency:reduce) {
+ body.design-apple.redesign-v2.apple-next .mobile-tabs{background:#f4f3f6!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+ body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-glass-indicator{background:white!important}
+}
+
+/* On compact screens the settings title needs a balanced break. The optional
+   floating pet must not obscure the primary heading or the account fields. */
+@media(max-width:390px){
+  body.apple-next #view-settings .page-head h1{
+    font-size:clamp(27px,8vw,31px)!important;
+    letter-spacing:-.045em!important;
+    text-wrap:balance;
+    line-height:1.23!important;
+  }
+}
+body.apple-next:has(#view-settings.view.active) #xy-fab,
+body.apple-next:has(#view-settings.view.active) #xy-pet-bubble,
+body.apple-next:has(#view-settings.view.active) #xy-pet-actions{
+  display:none!important;
+}
+/* Prevent bright content from showing through the dock as unblurred glyphs
+   (observed in real Playwright WebKit). Prefer opacity to costly giant blur. */
+@media(max-width:790px){
+  body.design-apple.redesign-v2.apple-next .mobile-tabs[data-glass-engine="webkit"],
+  body.design-apple.redesign-v2.apple-next .mobile-tabs[data-glass-engine="gecko"]{
+    background:#f8f7fb!important;
+    backdrop-filter:blur(6px) saturate(1.1)!important;
+    -webkit-backdrop-filter:blur(6px) saturate(1.1)!important;
+  }
+}
+/* The empty state has no decorative emoji tile: quiet iOS Settings hierarchy. */
+body.apple-next .empty-state{padding:28px 12px!important;color:#6e6e73!important}
+body.apple-next .empty-state .empty-art{display:none!important}
+body.apple-next .empty-state strong{font-size:15px!important;line-height:1.45!important;color:#424245!important;font-weight:600!important}
+body.apple-next .empty-state p{font-size:13px!important;line-height:1.55!important;color:#86868b!important;max-width:310px}
+
+/* Empty states: iOS-style typography rather than platform-dependent green emoji glyphs. */
+body.apple-next .empty-state{padding:28px 12px!important;color:#6e6e73!important}
+body.apple-next .empty-state .empty-art{display:none!important}
+body.apple-next .empty-state strong{font-size:16px!important;font-weight:640!important;color:#34343a!important;line-height:1.5}
+body.apple-next .empty-state p{font-size:13px!important;line-height:1.6!important;color:#77777f!important;margin-top:8px!important}
+
+/* Pattern B: a genuinely refracted copy of navigation art for WebKit/Gecko.
+   The real native controls remain topmost and receive all input. */
+@media(max-width:790px){
+  body.apple-next .mobile-tabs .xy-refract-copy{
+    position:absolute;left:5px;right:5px;top:6px;bottom:6px;z-index:1;
+    display:grid;grid-template-columns:repeat(6,minmax(0,1fr));
+    pointer-events:none;overflow:visible;color:#29272e;
+    visibility:hidden;will-change:auto;
+  }
+  body.apple-next .mobile-tabs .xy-refract-cell{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;min-width:0;min-height:55px;white-space:nowrap;
+    font-size:11px;font-weight:530;color:#6d6973;line-height:normal;visibility:hidden;
+  }
+  body.apple-next .mobile-tabs .xy-refract-cell.is-selected{color:#202027;font-weight:680;visibility:visible}
+  body.apple-next .mobile-tabs .xy-refract-cell svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  body.apple-next .mobile-tabs.has-content-refraction button.active{color:#222027!important}
+  body.apple-next .mobile-tabs.has-content-refraction button.active svg{opacity:1!important}
+  body.apple-next .mobile-tabs.has-content-refraction .xy-refract-copy{
+    visibility:visible;opacity:.16;
+    -webkit-backface-visibility:hidden;backface-visibility:hidden;
+  }
+}
+@media(max-width:790px) and (prefers-reduced-transparency:reduce){
+  body.apple-next .mobile-tabs .xy-refract-copy{display:none!important}
+  body.apple-next .mobile-tabs.has-content-refraction button.active{color:#222027!important}
+  body.apple-next .mobile-tabs.has-content-refraction button.active svg{opacity:1!important}
+}
+
+/* Optical legibility audit: stop live page copy crossing dock labels.
+   Content-copy SVG displacement remains active, never hides native buttons. */
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs{
+   background:rgba(249,248,252,.985)!important;
+   -webkit-backdrop-filter:blur(5px) saturate(1.15)!important;
+   backdrop-filter:blur(5px) saturate(1.15)!important;
+   box-shadow:0 9px 24px rgba(37,35,47,.12),inset 0 1px 0 #fff!important;
+ }
+ body.apple-next .mobile-tabs .xy-refract-copy{opacity:.28;mix-blend-mode:normal}
+ body.apple-next .mobile-tabs.has-content-refraction button.active{color:#222027!important}
+ body.apple-next .mobile-tabs.has-content-refraction button.active svg{opacity:1!important}
+ body.apple-next .mobile-tabs button{isolation:isolate}
+}
+
+
+/* WebKit content-refraction: suppress underlying scrolling text bleed while
+   keeping a soft optical surface and preserving native hit targets. */
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs.has-content-refraction{
+   background:rgba(249,249,252,.89)!important;
+   -webkit-backdrop-filter:blur(8px) saturate(1.12)!important;
+   backdrop-filter:blur(8px) saturate(1.12)!important;
+   box-shadow:0 8px 22px rgba(43,37,54,.14),inset 0 1px 0 rgba(255,255,255,.97)!important;
+ }
+ body.design-apple.redesign-v2.apple-next .mobile-tabs.has-content-refraction .xy-glass-indicator{
+   background:linear-gradient(160deg,rgba(255,255,255,.98),rgba(247,246,251,.85))!important;
+   box-shadow:inset 0 1px 0 white,0 2px 10px rgba(57,49,75,.13)!important;
+ }
+ body.apple-next .mobile-tabs.has-content-refraction .xy-refract-copy{color:#25232b}
+ body.apple-next .mobile-tabs.has-content-refraction button.active{color:#222027!important}
+}
+
+
+/* WebKit material correction: do not let scrolling content ghost through the
+   navigation dock. Optical displacement remains on selected copied label. */
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs.has-content-refraction{
+   background:#f5f4f8!important;
+   -webkit-backdrop-filter:blur(8px) saturate(1.14)!important;
+   backdrop-filter:blur(8px) saturate(1.14)!important;
+ }
+ body.apple-next .mobile-tabs.has-content-refraction .xy-refract-cell:not(.is-selected){
+   color:transparent!important;
+ }
+ body.apple-next .mobile-tabs.has-content-refraction .xy-refract-cell.is-selected{
+   color:#292630!important;font-weight:650!important;
+ }
+ body.apple-next .mobile-tabs.has-content-refraction button.active{
+   color:transparent!important;
+ }
+ body.apple-next .mobile-tabs.has-content-refraction button.active svg{
+   opacity:1!important;color:#292630!important;
+ }
+}
+
+/* On WebKit, an opaque navigation carrier protects legibility while the
+   clipped SVG refraction bends copied dock artwork inside the optical lens.
+   This does NOT claim arbitrary page-backdrop refraction. */
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs[data-glass-engine="webkit"]{
+   background:#f9f8fc!important;
+   -webkit-backdrop-filter:none!important;
+   backdrop-filter:none!important;
+ }
+}
+
+@media(max-width:790px){
+ body.apple-next .mobile-tabs.has-content-refraction button.active{color:#242128!important}
+ body.apple-next .mobile-tabs.has-content-refraction .xy-refract-cell.is-selected{opacity:.22}
+}
+
+/* WebKit: refraction of the selected navigation art remains active.
+   Avoid stacking a costly dock-wide blur over the per-item SVG displacement. */
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs[data-glass-engine="webkit"]{
+   -webkit-backdrop-filter:blur(4px) saturate(1.15)!important;
+   backdrop-filter:blur(4px) saturate(1.15)!important;
+   box-shadow:0 7px 20px rgba(43,37,54,.14),inset 0 1px 0 rgba(255,255,255,.88)!important;
+ }
+}
+
+
+/* iOS Settings review: system-scale hierarchy, not landing-page billboard type. */
+@media(max-width:790px){
+ body.apple-next #view-settings .page-head h1{
+   font-size:34px!important;line-height:1.18!important;
+   font-weight:690!important;letter-spacing:-.035em!important;
+ }
+ body.apple-next #view-settings .page-head p{
+   font-size:15px!important;line-height:1.5!important;color:#6e6e73!important;
+ }
+ body.apple-next #byok-settings .byok-head .kicker{display:none!important}
+ body.apple-next #view-settings>.panel{margin-block:18px 22px!important}
+}
+
+/* Tablet-sized floating dock: retain an Apple-like compact island, not a full-width strip. */
+@media(min-width:600px) and (max-width:790px){
+ body.design-apple.redesign-v2.apple-next .mobile-tabs{
+   left:50%!important;
+   right:auto!important;
+   width:min(552px,calc(100% - 28px))!important;
+   transform:translateX(-50%) translateZ(0)!important;
+ }
+}
+
+/* Apple Settings compact grouped form, scoped to the existing product.
+   Preserve safety disclosures and functionality; style information hierarchy. */
+body.apple-next #view-settings .page-head{margin-bottom:20px!important}
+body.apple-next #view-settings .page-head h1{font-size:clamp(30px,4vw,37px)!important;font-weight:680!important;letter-spacing:-.045em!important}
+body.apple-next #view-settings .page-head p{font-size:14px!important;line-height:1.45!important;max-width:42ch;color:#74747b!important}
+body.apple-next #view-settings > .panel{padding:23px 24px!important;margin-block:14px 20px!important;border:0!important;border-radius:26px!important;box-shadow:0 1px 2px #28222c08!important}
+body.apple-next #view-settings > .panel h3{font-size:19px!important;line-height:1.32!important;margin-bottom:11px!important;letter-spacing:-.025em}
+body.apple-next #view-settings > .panel .muted,
+body.apple-next #view-settings > .panel .hint,
+body.apple-next #view-settings > .panel p{line-height:1.55!important;color:#64646d!important;font-size:15px!important}
+body.apple-next #view-settings .field label{font-size:13px!important;font-weight:620!important;color:#686970!important;letter-spacing:0!important}
+body.apple-next #view-settings .field input:not([type="checkbox"]),
+body.apple-next #view-settings .field select,
+body.apple-next #view-settings .field textarea{
+ background:#f2f2f7!important;border:1px solid #e5e5eb!important;
+ border-radius:16px!important;min-height:44px!important;padding:10px 14px!important;
+ font-size:16px!important;line-height:1.25!important;box-shadow:none!important;
+}
+body.apple-next #view-settings .field input:focus-visible,
+body.apple-next #view-settings .field select:focus-visible{
+ outline:2px solid #578ce8!important;outline-offset:2px
+}
+body.apple-next #view-settings .btn{min-height:43px!important;padding:10px 17px!important;font-size:14px!important;font-weight:610!important;border-radius:16px!important}
+body.apple-next #view-settings .btn-dark{background:#0071e3!important;border:1px solid #0071e3!important;color:#fff!important;box-shadow:none!important}
+body.apple-next #view-settings .btn-soft,body.apple-next #view-settings .btn-plain{background:#f0f0f5!important;color:#373740!important;border:1px solid #e9e9ed!important}
+body.apple-next #view-settings .setting-buttons{gap:8px!important;align-items:center;flex-wrap:wrap}
+body.apple-next #view-settings .settings-list{padding:0 18px!important}
+body.apple-next #view-settings .settings-list .toggle-row{min-height:59px!important;padding:12px 0!important}
+body.apple-next #view-settings .settings-list .toggle-row strong{font-size:15px!important;font-weight:610!important}
+body.apple-next #view-settings .settings-list .toggle-row small{font-size:12px!important;line-height:1.35!important;color:#777780!important}
+body.apple-next #view-settings input[type="checkbox"]:not(.switch){accent-color:#34c759}
+body.apple-next #view-settings .panel button:active{transform:scale(.985);transition:transform 140ms ease}
+@media(max-width:790px){
+ body.apple-next #view-settings .page-head{margin-bottom:18px!important}
+ body.apple-next #view-settings>.panel{padding:22px 20px!important;margin-block:13px 19px!important;border-radius:26px!important}
+ body.apple-next #view-settings .page-head h1{font-size:33px!important}
+ body.apple-next #view-settings .form-fields{gap:11px!important}
+ body.apple-next #view-settings .form-fields>.field{min-width:0!important}
+ body.apple-next #view-settings .form-fields input{width:100%;min-width:0}
+}
+@media(max-width:390px){
+ body.apple-next #view-settings .page-head h1{font-size:30px!important}
+ body.apple-next #view-settings>.panel{padding:19px 17px!important;border-radius:26px!important}
+ body.apple-next #view-settings .setting-buttons .btn{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){body.apple-next #view-settings .panel button:active{transform:none!important}}
+
+body.apple-next #byok-settings .xy-ai-disclosure{margin-top:19px;padding:15px 17px;border-radius:16px;background:#f3f3f7;border:1px solid #eaeaef}
+body.apple-next #byok-settings .xy-ai-disclosure summary{cursor:pointer;list-style:none;color:#575865;font-size:14px;font-weight:640;display:flex;align-items:center;justify-content:space-between;min-height:26px}
+body.apple-next #byok-settings .xy-ai-disclosure summary::-webkit-details-marker{display:none}
+body.apple-next #byok-settings .xy-ai-disclosure summary::after{content:"⌄";font-size:20px;line-height:1;color:#747782;transition:transform .18s ease}
+body.apple-next #byok-settings .xy-ai-disclosure[open] summary::after{transform:rotate(180deg)}
+body.apple-next #byok-settings .xy-ai-disclosure p,body.apple-next #byok-settings .xy-ai-disclosure small{display:block;font-size:12px!important;line-height:1.6!important;color:#6e6d76!important;margin:14px 0 0!important}
+
+/* iOS Settings-inspired quiet-hours geometry and real switch control. */
+body.apple-next #view-settings #quiet-start,
+body.apple-next #view-settings #quiet-end{
+ min-width:0!important;max-width:100%!important;width:100%!important;
+ box-sizing:border-box!important;padding-inline:11px!important;
+ font-size:16px!important;
+}
+body.apple-next #view-settings #reminder-enabled{
+ appearance:none!important;-webkit-appearance:none!important;
+ width:49px!important;height:29px!important;min-height:29px!important;
+ border-radius:99px!important;border:0!important;flex:0 0 49px;
+ background:#e2e2e8!important;box-shadow:inset 0 0 0 1px #cfcfd52b;
+ position:relative;vertical-align:middle;cursor:pointer;margin:0!important;
+ transition:background-color .19s ease;
+}
+body.apple-next #view-settings #reminder-enabled::before{
+ content:"";position:absolute;left:2px;top:2px;width:25px;height:25px;
+ border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;
+ transition:transform .2s cubic-bezier(.22,.8,.26,1);
+}
+body.apple-next #view-settings #reminder-enabled:checked{background:#34c759!important}
+body.apple-next #view-settings #reminder-enabled:checked::before{transform:translateX(20px)}
+body.apple-next #view-settings #reminder-enabled:focus-visible{outline:3px solid #78aff2!important;outline-offset:3px}
+body.apple-next #view-settings label.field:has(#reminder-enabled){
+ display:flex!important;flex-direction:row!important;justify-content:space-between!important;
+ gap:12px!important;align-items:center!important;min-width:0!important;
+}
+@media(prefers-reduced-motion:reduce){
+ body.apple-next #view-settings #reminder-enabled,body.apple-next #view-settings #reminder-enabled::before{transition:none!important}
+}
+
+/* Group reminder enablement as one full-width iOS Settings row. */
+body.apple-next #view-settings .form-fields > label.field:has(#reminder-enabled){
+ grid-column:1/-1!important;width:100%;min-height:57px!important;
+ padding:10px 14px!important;border-radius:18px!important;
+ background:#f2f2f7!important;
+ flex-direction:row!important;
+ justify-content:space-between!important;align-items:center!important;
+ gap:15px!important;
+}
+body.apple-next #view-settings .form-fields > label.field:has(#reminder-enabled) > span{
+ flex:1 1 auto!important;min-width:0;font-size:15px!important;
+ color:#34343a!important;font-weight:580!important;
+}
+body.apple-next #view-settings input[type="number"]::-webkit-inner-spin-button,
+body.apple-next #view-settings input[type="number"]::-webkit-outer-spin-button{
+ -webkit-appearance:none!important;margin:0!important
+}
+body.apple-next #view-settings input[type="number"]{-moz-appearance:textfield;appearance:textfield}
+
+/* Apple first-launch sheet: one primary choice, optional AI setup on demand. */
+body.apple-next #xy-onboard .xy-content>.xy-onboard-optional{
+ display:block;width:100%;min-width:0;padding:0;border:1px solid #e5e5ea;
+ border-radius:18px;background:#f5f5f7;overflow:hidden;
+}
+body.apple-next #xy-onboard .xy-onboard-optional>summary{
+ display:flex;align-items:center;justify-content:space-between;
+ list-style:none;min-height:55px;padding:12px 17px;cursor:pointer;
+ font-size:15px;font-weight:610;color:#33343a;gap:10px;
+}
+body.apple-next #xy-onboard .xy-onboard-optional>summary::-webkit-details-marker{display:none}
+body.apple-next #xy-onboard .xy-onboard-optional>summary::after{
+ content:"⌄";color:#777880;font-size:21px;transition:transform .18s ease;
+}
+body.apple-next #xy-onboard .xy-onboard-optional[open]>summary::after{transform:rotate(180deg)}
+body.apple-next #xy-onboard .xy-onboard-optional[open]>summary{border-bottom:1px solid #dedee4}
+body.apple-next #xy-onboard .xy-onboard-optional> :not(summary){
+ margin:12px 16px!important;
+}
+body.apple-next #xy-onboard .xy-onboard-optional>label:not(.xy-consent){
+ display:flex!important;flex-direction:column!important;gap:7px!important
+}
+body.apple-next #xy-onboard .xy-onboard-optional>label.xy-consent{
+ display:flex!important;flex-direction:row!important;align-items:flex-start!important
+}
+body.apple-next #xy-onboard .xy-onboard-optional select{
+ appearance:none;-webkit-appearance:none;
+ background:#fff!important;border:1px solid #e5e5ea!important;
+ border-radius:16px!important;font-weight:480!important;
+ box-shadow:none!important;width:100%;min-width:0
+}
+body.apple-next #xy-onboard .xy-onboard-optional>button{width:calc(100% - 32px)}
+body.apple-next #xy-onboard .xy-onboard-optional>h3{font-size:18px!important;margin-top:18px!important}
+body.apple-next #xy-onboard .xy-onboard-optional>p{font-size:13px;line-height:1.55!important}
+body.apple-next #xy-onboard .xy-content>#xy-skip{
+ background:transparent!important;box-shadow:none!important;border:0!important;
+ border-radius:16px!important;color:#65666c!important;
+ font-weight:550!important;
+}
+body.apple-next #xy-onboard .xy-content>#xy-local{
+ border-radius:18px!important;min-height:90px!important;
+ background:#f5f5f7!important;box-shadow:none!important;
+}
+body.apple-next #xy-onboard .xy-hero b{color:#666770!important;background:white!important;border-color:#e5e5ea!important}
+@media(max-width:700px){
+ body.apple-next #xy-onboard .xy-hero{padding:20px 22px 18px!important}
+ body.apple-next #xy-onboard .xy-content{padding:20px 22px 18px!important}
+ body.apple-next #xy-onboard .xy-hero h2{font-size:27px!important}
+ body.apple-next #xy-onboard .xy-hero p{font-size:14px!important;line-height:1.5!important}
+}
+@media(prefers-reduced-motion:reduce){body.apple-next #xy-onboard .xy-onboard-optional>summary::after{transition:none!important}}
+
+body.apple-next #xy-onboard .xy-onboard-optional>label:has(select){position:relative}
+body.apple-next #xy-onboard .xy-onboard-optional>label:has(select)::after{
+ content:"⌄";position:absolute;right:17px;bottom:11px;pointer-events:none;
+ font-size:20px;color:#71717b;line-height:1
+}
+
+body.apple-next #view-settings .xy-semester-disclosure{
+ border-top:1px solid rgba(0,0,0,.07);margin-top:18px;padding:14px 0 0!important
+}
+body.apple-next #view-settings .xy-semester-disclosure>summary{
+ display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+ list-style:none;color:#606068;font-size:13px;font-weight:540;min-height:28px
+}
+body.apple-next #view-settings .xy-semester-disclosure>summary::-webkit-details-marker{display:none}
+body.apple-next #view-settings .xy-semester-disclosure>summary::after{
+ content:"⌄";font-size:19px;color:#777880;transition:transform .18s ease
+}
+body.apple-next #view-settings .xy-semester-disclosure[open]>summary::after{transform:rotate(180deg)}
+body.apple-next #view-settings .xy-semester-disclosure>p{color:#6e6e73!important;margin:9px 0 0!important;font-size:13px!important;line-height:1.55!important}
+@media(prefers-reduced-motion:reduce){body.apple-next #view-settings .xy-semester-disclosure>summary::after{transition:none!important}}
+
+/* App-screen typography audit: eliminate 10px functional text, keep calendar fitting. */
+body.apple-next .side-nav .nav-link span{font-size:13px!important}
+body.apple-next .agent-evidence-heading .kicker,
+body.apple-next .ai-today-copy .ai-micro-label,
+body.apple-next .ai-today-abilities .ai-ability-status,
+body.apple-next .ai-today-abilities .ai-ability-mark{
+ font-size:12px!important;letter-spacing:0!important;color:#66666d!important
+}
+body.apple-next .advice-card .overline,
+body.apple-next .advice-card .reason,
+body.apple-next .advice-actions button{font-size:12px!important;color:#64646d!important}
+body.apple-next #main .stat-tile small,
+body.apple-next #main .ai-ability small,
+body.apple-next #main .day-name small{font-size:12px!important;color:#66666d!important}
+body.apple-next .schedule-board .day-tabs button{font-size:12px!important}
+body.apple-next .schedule-board .day-blank{
+ font-size:11px!important;line-height:1.35!important;color:#707078!important;
+ overflow-wrap:anywhere
+}
+body.apple-next .ai-lab-link{font-size:12px!important;color:#565b70!important}
+body.apple-next #main .helper-tag{font-size:12px!important;color:#5e656d!important}
+body.apple-next #main .small-note{font-size:12px!important}
+
+/* Remove template microcopy; keep meaningful product state readable. */
+body.apple-next .ai-mode-grid .ai-mode-kicker{display:none!important}
+body.apple-next #pet-state-label,
+body.apple-next .pet-recheck,
+body.apple-next .rail-note .progress-copy,
+body.apple-next #xy-window footer{font-size:12px!important;line-height:1.45!important;color:#676870!important}
+
+/* Native app-screen proportion: greeting serves the day, not a marketing hero. */
+body.design-apple.redesign-v2.apple-next #view-today #hero-title{
+ font-size:clamp(26px,2.3vw,32px)!important;line-height:1.17!important;
+ letter-spacing:-.035em!important;font-weight:670!important;
+}
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next #view-today #hero-title{
+  font-size:clamp(26px,7.4vw,30px)!important
+ }
+ body.design-apple.redesign-v2.apple-next .content-grid{
+  padding-left:18px!important;padding-right:18px!important
+ }
+}
+
+/* Reuse the project's built-in SVG symbol vocabulary, not emoji glyphs. */
+body.apple-next .xy-inline-icon{
+ width:1.1em;height:1.1em;fill:none;stroke:currentColor;
+ stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;
+ display:inline-block;vertical-align:-.13em;flex:0 0 auto;
+}
+body.apple-next .ai-mode-ready,body.apple-next .pet-recheck{
+ display:inline-flex;align-items:center;gap:7px
+}
+body.apple-next .ai-mode-icon .xy-inline-icon,
+body.apple-next .stat-icon .xy-inline-icon,
+body.apple-next .advice-icon .xy-inline-icon,
+body.apple-next .goal-icon .xy-inline-icon{width:1.2em;height:1.2em}
+
+/* Tone audit: Apple-like functional icons, not multi-colour dashboard chips. */
+body.apple-next .ai-mode-card .ai-mode-icon,
+body.apple-next .ai-global-indicator .ai-indicator-icon{
+ background:transparent!important;border:0!important;
+ box-shadow:none!important;color:#61616b!important;
+ border-radius:0!important;
+}
+body.design-apple.redesign-v2.apple-next .sidebar .brand small{color:#55555d!important}
+body.apple-next #mode-switch{color:#555b66!important}
+body.apple-next .empty-state p,
+body.apple-next .empty-state small,
+body.apple-next .empty-state span{color:#61616b!important}
+
+/* Reduce blank hero billboard height: intrinsic content sets card height. */
+body.design-apple.redesign-v2.apple-next #view-today .xy-feature{
+ min-height:0!important;padding-top:32px!important;padding-bottom:30px!important;
+}
+@media(max-width:790px){
+ body.design-apple.redesign-v2.apple-next #view-today .xy-feature{
+  padding-top:28px!important;padding-bottom:26px!important
+ }
+}
+
+/* Weekly review: align comparable numeric columns, not dates or action text. */
+body.apple-next .rc-table th:nth-child(n+2):nth-child(-n+5),
+body.apple-next .rc-table td:nth-child(n+2):nth-child(-n+5){
+ text-align:right!important;font-variant-numeric:tabular-nums;
+}
+body.apple-next #ai-global-subtitle{font-size:12px!important;color:#62626a!important;line-height:1.35!important}
+
+/* Sidebar brand is the real XiaoYa companion, not an empty emoji tile. */
+body.design-apple.redesign-v2.apple-next .sidebar .brand-mark{
+ width:48px;height:48px;background:transparent!important;border:0!important;
+ box-shadow:none!important;overflow:hidden;border-radius:17px!important;
+}
+body.apple-next .sidebar .brand-mark .xy-brand-avatar{
+ display:block;width:48px;height:48px;object-fit:contain;border-radius:17px
+}
+
+/* Apple-like content editing: one primary action and concise supporting text. */
+body.apple-next .xy-secondary-info{margin:7px 0 14px!important;padding:0!important;background:transparent!important;border:0!important}
+body.apple-next .xy-secondary-info summary{display:inline-flex;align-items:center;gap:8px;cursor:pointer;list-style:none;font-size:13px!important;font-weight:560;color:#6e6e73!important;padding:8px 0}
+body.apple-next .xy-secondary-info summary::-webkit-details-marker{display:none}
+body.apple-next .xy-secondary-info summary::after{content:"⌄";font-size:18px;line-height:1}
+body.apple-next .xy-secondary-info[open] summary::after{transform:rotate(180deg)}
+body.apple-next .xy-secondary-info p{font-size:13px!important;line-height:1.56!important;color:#6e6e73!important;margin:8px 0 0!important}
+body.apple-next #view-settings .page-head{margin-bottom:17px!important}
+body.apple-next #view-settings .page-head .kicker{display:none!important}
+body.apple-next #view-settings .page-head h1{font-size:clamp(31px,8vw,36px)!important;margin-bottom:4px!important}
+body.apple-next #view-settings .page-head p{font-size:14px!important;line-height:1.4!important}
+body.apple-next #view-settings>.panel{margin-block:12px 18px!important}
+body.apple-next #view-settings .form-fields{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:13px!important;min-width:0!important}
+body.apple-next #view-settings .form-fields>.field{min-width:0!important;width:auto!important;max-width:100%!important;grid-column:auto!important}
+body.apple-next #view-settings .form-fields>.field.wide{grid-column:1/-1!important}
+body.apple-next #view-settings .form-fields input,
+body.apple-next #view-settings .form-fields select{box-sizing:border-box!important;min-width:0!important;max-width:100%!important;width:100%!important}
+body.apple-next #view-settings input[type="date"],
+body.apple-next #view-settings input[type="time"]{font-size:15px!important;padding-inline:10px!important;min-width:0!important}
+body.apple-next #view-settings .xy-consent-row{display:flex!important;align-items:flex-start!important;gap:10px!important;line-height:1.45!important;color:#515159!important}
+body.apple-next #view-settings .xy-consent-row input{width:20px!important;min-width:20px!important;height:20px!important;flex:0 0 20px!important;margin:2px 0 0!important}
+body.apple-next #view-settings .byok-head{display:flex!important;gap:10px!important;align-items:center!important;justify-content:space-between!important;flex-wrap:wrap!important}
+body.apple-next #view-settings .byok-head h3{font-size:19px!important}
+body.apple-next #view-settings .byok-state{max-width:100%!important;white-space:normal!important;font-size:12px!important;line-height:1.35!important;padding:7px 10px!important}
+body.apple-next #view-settings .byok-panel .btn{max-width:100%!important;white-space:normal!important;text-align:center!important}
+body.apple-next .xy-free-time-details{margin:8px 0 14px!important}
+body.apple-next .xy-free-time-details summary{list-style:none;font-size:13px!important;font-weight:570;color:#606871!important;cursor:pointer}
+body.apple-next .xy-free-time-details summary::-webkit-details-marker{display:none}
+body.apple-next .xy-free-time-details summary::after{content:"  ⌄"}
+body.apple-next .xy-free-time-details .free-time{font-size:13px!important;line-height:1.5!important;overflow-wrap:anywhere}
+body.apple-next #onboarding.xy-setup-compact{padding-block:21px!important}
+body.apple-next #onboarding.xy-setup-compact h3{font-size:20px!important;line-height:1.3!important}
+body.apple-next #onboarding.xy-setup-compact .setting-buttons{gap:8px!important}
+body.apple-next #onboarding.xy-setup-compact .btn{font-size:14px!important}
+body.apple-next #today-schedule .empty-state{padding-block:20px!important}
+body.apple-next .mobile-tabs{z-index:50!important}
+@media(max-width:790px){
+ body.apple-next .content-grid{padding-bottom:max(165px,calc(125px + env(safe-area-inset-bottom)))!important}
+ body.apple-next #view-settings{padding-bottom:95px!important}
+ body.apple-next #view-settings .form-fields{gap:11px!important}
+ body.apple-next #view-settings>.panel{padding:20px 18px!important}
+ body.apple-next #view-settings input[type="date"]{font-size:14px!important}
+ body.apple-next .setting-buttons{flex-wrap:wrap!important}
+}
+@media(max-width:350px){
+ body.apple-next #view-settings .form-fields>.field:has(input[type="date"]){grid-column:1/-1!important}
+}
+
+/* Apple hierarchy: one title per screen, not a page label plus a second hero. */
+@media(max-width:790px){
+ body.apple-next:has(#view-settings.view.active) .topbar .breadcrumb{visibility:hidden!important}
+ body.apple-next #view-settings .page-head{padding:0 0 3px!important;margin:0 0 18px!important}
+ body.apple-next #view-settings .page-head h1{
+  font-size:clamp(30px,8.3vw,35px)!important;line-height:1.13!important;
+  letter-spacing:-.045em!important;margin:0 0 5px!important
+ }
+ body.apple-next #view-settings .page-head p{font-size:13px!important;margin:0!important}
+ body.apple-next #view-settings>.panel{margin-top:13px!important}
+ body.apple-next #view-settings .byok-head{gap:4px!important}
+ body.apple-next #view-settings #byok-status{font-size:12px!important}
+}
+body.apple-next #byok-settings>p:not(.muted){font-size:14px!important;line-height:1.47!important;color:#62646c!important;margin:8px 0!important}
+body.apple-next #view-settings .form-fields label{font-size:13px!important}
+body.apple-next #view-settings .form-fields input[type="date"]{color:#292a31!important}
+body.apple-next #view-settings .form-fields input[type="date"]:invalid{color:#92939d!important}

@@ -1,0 +1,152 @@
+#xiaoya-layer{font-family:inherit}#xiaoya-layer *{box-sizing:border-box}#xiaoya-layer [hidden]{display:none!important}
+#xy-fab{position:fixed;z-index:980;bottom:25px;right:24px;border:1px solid #8eba9c;border-radius:999px;background:#215c3e;color:white;box-shadow:0 12px 36px #20402a55;padding:12px 16px;cursor:pointer;font-weight:800}#xy-fab small{margin-left:8px;font-size:11px;background:#ffffff30;border-radius:99px;padding:5px 8px}
+.xy-shade{position:fixed;z-index:2000;inset:0;background:#1c352a85;backdrop-filter:blur(9px);padding:20px;display:grid;place-items:center}
+.xy-dialog{width:min(790px,100%);max-height:calc(100dvh - 30px);overflow:auto;display:grid;grid-template-columns:.83fr 1.17fr;border-radius:25px;background:#fffdf7;box-shadow:0 25px 80px #142a2255}
+.xy-hero{padding:38px 30px;background:linear-gradient(150deg,#e6f5df,#a5cfb1);color:#245238;display:flex;justify-content:center;flex-direction:column}.xy-hero>span{font-size:70px}.xy-hero h2{font-size:27px;margin:13px 0 8px}.xy-hero p{font-size:13px;line-height:1.75}.xy-hero b{align-self:flex-start;background:#fff8;padding:8px 12px;border-radius:99px;font-size:12px}
+.xy-content{padding:27px;display:flex;flex-direction:column;gap:10px;color:#2b5239}.xy-content h3{font-size:18px;margin:10px 0 0}.xy-content p{font-size:12px;line-height:1.65;color:#58705f;margin:0}.xy-content label{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:700}.xy-content input:not([type=checkbox]),.xy-content select{width:100%;padding:11px 12px;font-size:14px;border:1px solid #c9dbc9;border-radius:11px;background:white;color:#294b35}.xy-content .xy-consent{display:flex;flex-direction:row;align-items:flex-start;font-weight:500;line-height:1.55}.xy-content .xy-consent input{margin:4px 5px 0 0;flex-shrink:0}
+#xy-connect{border:0;background:#246743;color:white;padding:13px;border-radius:11px;font-weight:800;cursor:pointer}#xy-local{border:1px solid #abceb4;border-radius:14px;padding:15px;text-align:left;background:#edf7eb;color:#225738;display:flex;flex-direction:column;gap:6px;cursor:pointer}#xy-local span{font-size:12px;color:#52755f}#xy-skip{border:0;background:transparent;color:#60816b;padding:10px;cursor:pointer}
+#xy-window{position:fixed;right:22px;bottom:87px;z-index:1500;width:min(390px,calc(100vw - 22px));height:min(590px,calc(100dvh - 115px));display:flex;flex-direction:column;background:#fffef9;border:1px solid #d5e7d5;border-radius:20px;box-shadow:0 17px 55px #102d2250;overflow:hidden}#xy-window header{display:flex;gap:10px;align-items:center;background:#edf7ec;padding:14px;color:#214e38}#xy-window header span{flex:1;font-weight:800}#xy-window header strong{font-size:11px}#xy-window header button{border:0;border-radius:8px;background:#ffffffb9;color:#295d42;padding:6px 9px;font-size:19px;cursor:pointer}
+#xy-messages{flex:1;overflow:auto;display:flex;flex-direction:column;gap:11px;padding:15px}.xy-message{max-width:88%;align-self:flex-start;background:#edf4eb;border-radius:13px;padding:11px 13px;font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;color:#2b4d39}.xy-message.user{align-self:flex-end;background:#28724a;color:#fff}
+.xy-chips{display:flex;gap:7px;padding:5px 11px;overflow:auto}.xy-chips button{white-space:nowrap;background:#f5faf3;border:1px solid #d8e8d8;color:#51765b;border-radius:99px;padding:8px 10px;font-size:11px;cursor:pointer}
+#xy-form{display:flex;gap:7px;padding:11px}#xy-input{min-width:0;flex:1;border:1px solid #cbdccf;border-radius:10px;padding:10px;font-size:13px}#xy-form button{border:0;background:#246b45;color:white;border-radius:10px;padding:0 14px;cursor:pointer}#xy-window footer{padding:0 11px 9px;color:#718a79;font-size:10px;line-height:1.4}
+@media(max-width:700px){input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=hidden]),textarea,select,#xy-input,.xy-content input:not([type=checkbox]),.xy-content select{font-size:16px!important;line-height:1.35;-webkit-text-size-adjust:100%}#xy-fab{left:12px;right:auto;bottom:75px;padding:9px 11px}.xy-dialog{grid-template-columns:1fr;border-radius:17px}.xy-hero{padding:14px 21px;display:block}.xy-hero>span{font-size:35px;float:right}.xy-hero h2{font-size:21px;margin:3px 0}.xy-hero p{margin:0}.xy-content{padding:16px;gap:8px}#xy-window{width:calc(100vw - 12px);right:6px;bottom:126px;height:calc(100dvh - 143px);border-radius:16px}}
+
+#xy-onboard .xy-storage-warning{font-size:12px;line-height:1.5;color:#785439;margin:.3rem 0 .65rem}
+#xy-forget{padding:.45rem .8rem;border:1px solid #b9c8b5;border-radius:10px;background:#fff;color:#34483d;cursor:pointer;font-size:12px}
+#xy-forget:hover{background:#f3f6ee}
+
+/* Floating web companion, replacing the obstructive fixed chat bar. */
+#xy-fab{
+ position:fixed;left:auto;top:auto;right:22px;bottom:98px;
+ width:88px;height:88px;min-width:88px;padding:5px;
+ border-radius:27px;background:rgba(245,250,239,.93);
+ border:1px solid #d0e1cd;box-shadow:0 12px 36px #264d3438;
+ display:flex;align-items:center;justify-content:center;touch-action:none;
+ user-select:none;-webkit-user-select:none;cursor:grab;z-index:980;
+ transition:box-shadow .15s,transform .15s;overflow:visible
+}
+#xy-fab .xy-pet-art{position:absolute;inset:0;display:block;pointer-events:none;background-image:url('./assets/brand/xiaoya_sprite_v1.webp');background-size:200% 200%;background-repeat:no-repeat;background-position:0 0;transform-origin:50% 82%;animation:xy-pet-idle 3.6s ease-in-out infinite;transition:background-position .22s ease,filter .22s ease}
+#xy-fab #xy-state{display:none!important}
+#xy-fab[data-state="celebrate"] .xy-pet-art{background-position:100% 0%;animation:xy-pet-celebrate .58s ease-in-out 2}
+#xy-fab[data-state="thinking"] .xy-pet-art{background-position:0% 100%;animation:xy-pet-thinking 1.8s ease-in-out infinite}
+#xy-fab[data-state="remind"] .xy-pet-art{background-position:0% 100%;animation:xy-pet-remind 1.3s ease-in-out 2}
+#xy-fab[data-state="care"] .xy-pet-art{background-position:100% 100%;animation:xy-pet-idle 4.2s ease-in-out infinite}
+#xy-fab[data-state="silent"] .xy-pet-art{background-position:100% 100%;filter:saturate(.58);animation:none}
+@keyframes xy-pet-idle{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-3px) rotate(-1deg)}}
+@keyframes xy-pet-thinking{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-2px) rotate(1.5deg)}}
+@keyframes xy-pet-remind{0%,100%{transform:scale(1)}50%{transform:scale(1.045)}}
+@keyframes xy-pet-celebrate{0%,100%{transform:translateY(0) scale(1)}40%{transform:translateY(-7px) scale(1.035)}}
+@media(prefers-reduced-motion:reduce){#xy-fab .xy-pet-art{animation:none!important;transition:none!important}}
+#xy-fab small{
+ position:absolute;top:-7px;right:-8px;white-space:nowrap;
+ padding:3px 6px;font-size:10px;font-weight:600;line-height:1.25;
+ color:#285a3e;background:#eaf5e9;border:1px solid #c6dec8;
+ box-shadow:0 3px 8px #142b2418;border-radius:10px;pointer-events:none;
+ max-width:95px;overflow:hidden;text-overflow:ellipsis
+}
+#xy-fab:hover{box-shadow:0 16px 38px #264d3450;transform:translateY(-2px)}
+#xy-fab.xy-dragging{cursor:grabbing;transition:none;transform:none}
+#xy-fab:focus-visible{outline:3px solid #4d9370;outline-offset:3px}
+#xy-window{right:22px;bottom:105px}
+@media(max-width:700px){
+ #xy-fab{left:auto;right:13px;bottom:100px;width:67px;height:67px;min-width:67px;padding:3px;border-radius:22px}
+ #xy-fab small{top:-5px;right:-7px;font-size:9px;padding:2px 5px}
+ #xy-window{right:6px;bottom:176px;height:min(570px,calc(100dvh - 190px));width:calc(100vw - 12px)}
+}
+
+/* One interactive companion: hide legacy right-rail and duplicate mobile sprite.
+   Keep their DOM elements for non-interactive rule/status rendering. */
+#pet-panel,#mobile-pet,#pet-popover{display:none!important}
+#xy-pet-actions{
+ position:fixed;z-index:982;display:flex;flex-direction:column;gap:7px;
+ background:#fffdf8;border:1px solid #d5e4d6;border-radius:16px;
+ padding:10px;box-shadow:0 13px 35px #27473527;
+ right:115px;bottom:114px;max-width:170px
+}
+#xy-pet-actions[hidden],#xy-pet-bubble[hidden]{display:none!important}
+#xy-pet-actions button{border:0;background:#edf6ec;color:#27553b;text-align:left;
+ padding:9px 12px;border-radius:10px;white-space:nowrap;cursor:pointer;font-size:13px}
+#xy-pet-actions button:hover{background:#d9ecdc}
+#xy-pet-bubble{position:fixed;z-index:981;right:115px;bottom:114px;
+ max-width:min(290px,calc(100vw - 116px));padding:11px 13px;border:1px solid #c6dec8;
+ border-radius:14px;background:#fffdf6;box-shadow:0 9px 25px #1e3c2527;
+ font-size:12px;line-height:1.55;color:#31583d;pointer-events:none}
+@media(max-width:700px){#xy-pet-actions,#xy-pet-bubble{right:91px;bottom:132px}}
+
+/* Reduced-chrome app navigation, one AI connection badge at top.
+   Existing functional panels remain, without repeated marketing cards. */
+#view-today .ai-today-abilities{display:none}
+#view-today .ai-capability-state{display:none}
+#view-today .ai-today-copy .ai-micro-label{font-size:10px;letter-spacing:.1em}
+#view-today .ai-today-copy h3{font-size:20px}
+#view-goals .ai-goals-banner{padding:16px 20px;min-height:unset}
+#view-goals .ai-goals-banner-orb{display:none}
+#view-goals .ai-goals-banner-copy span{display:none}
+#view-goals #ai-goals-banner-title{font-size:17px}
+#view-goals #ai-goals-banner-summary{font-size:12px;line-height:1.5}
+#view-goals #ai-goals-banner-action{white-space:nowrap}
+#xy-fab img{transform-origin:50% 80%;animation:xy-pet-breathe 3.8s ease-in-out infinite}
+#xy-fab[data-state=thinking]{background:#f1f5ff}
+#xy-fab[data-state=thinking] img{animation:xy-pet-thinking 1.4s ease-in-out infinite}
+#xy-fab[data-state=celebrate]{background:#fff4df}
+#xy-fab[data-state=celebrate] img{animation:xy-pet-happy .8s ease-in-out 3}
+#xy-fab[data-state=care],#xy-fab[data-state=remind]{background:#fff8e7}
+#xy-fab[data-state=care] img,#xy-fab[data-state=remind] img{animation:xy-pet-alert 2.7s ease-in-out infinite}
+#xy-fab[data-state=silent] img{animation:none;filter:saturate(.70);opacity:.84}
+#xy-fab[data-state=thinking]:after,#xy-fab[data-state=celebrate]:after,#xy-fab[data-state=care]:after,#xy-fab[data-state=remind]:after{
+ position:absolute;left:-6px;bottom:1px;z-index:2;border-radius:50%;
+ background:#fffdf9;border:1px solid #d5e2d2;padding:1px 4px;font-size:15px;
+}
+#xy-fab[data-state=thinking]:after{content:'…'}
+#xy-fab[data-state=celebrate]:after{content:'✦'}
+#xy-fab[data-state=care]:after{content:'!'}
+#xy-fab[data-state=remind]:after{content:'•'}
+#xy-fab.xy-dragging img{animation:none!important}
+@keyframes xy-pet-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.045) rotate(-1.1deg)}}
+@keyframes xy-pet-thinking{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes xy-pet-happy{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px) rotate(3deg)}}
+@keyframes xy-pet-alert{0%,100%{transform:rotate(0)}25%{transform:rotate(-3deg)}75%{transform:rotate(3deg)}}
+@media(prefers-reduced-motion:reduce){#xy-fab img{animation:none!important}#xy-fab{transition:none!important}}
+
+
+/* LifeLab UI cleanup v2: one global AI status, progressive disclosure elsewhere. */
+#ai-today-panel{display:none!important}
+#ai-goals-banner{display:none!important}
+#view-goals>.growth-tabs{display:none!important}
+#ai-mode-dashboard{display:none!important}
+#ai-mode-dashboard .ai-mode-overview{display:block!important;margin:0!important}
+#ai-mode-dashboard .ai-micro-label,#ai-mode-dashboard .ai-capability-state,
+#ai-mode-dashboard .ai-mode-grid,#ai-mode-dashboard .ai-mode-truth,
+#ai-mode-dashboard .ai-mode-grid,#ai-mode-truth{display:none!important}
+#ai-mode-headline{font-size:14px!important;line-height:1.4!important;margin:0!important;font-weight:650!important}
+#ai-mode-summary{font-size:12px!important;line-height:1.5!important;margin:4px 0 0!important;color:#69746b!important}
+#ai-mode-connect,#growth-ai-config-link{display:none!important}
+#growth-ai-status{display:block;font-size:12px;line-height:1.5;color:#6a756b;margin-top:6px}
+#view-goals .growth-page-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}
+#view-goals .growth-page-head h1{font-size:clamp(25px,3vw,34px);margin:0}
+#view-goals .growth-page-head .btn{white-space:nowrap}
+.agent-evidence{padding:0!important;overflow:hidden}
+.agent-evidence-summary{cursor:pointer;list-style:none;padding:14px 17px;color:#59665b;font-size:13px;font-weight:600}
+.agent-evidence-summary::-webkit-details-marker{display:none}
+.agent-evidence-summary:after{content:'＋';float:right;color:#8c998b}
+.agent-evidence[open]>.agent-evidence-summary:after{content:'−'}
+.agent-evidence>.agent-evidence-heading,.agent-evidence>#agent-inspection{margin-left:16px;margin-right:16px}
+.agent-evidence>#agent-inspection{margin-bottom:16px}
+.agent-evidence-heading h3{font-size:15px}
+.secondary-section .helper-tag{font-size:11px}
+@media(max-width:700px){
+ #view-goals .growth-page-head{margin-bottom:12px}
+ #view-goals .growth-page-head h1{font-size:25px}
+ .agent-evidence-summary{padding:12px 14px}
+}
+
+/* Final companion interaction: keep reading space usable. */
+#xy-fab{outline-offset:3px}
+#xy-fab:active{box-shadow:0 6px 15px #264d342e}
+#xy-pet-actions button:focus-visible{outline:2px solid #3b7657;outline-offset:2px}
+#xy-window{max-height:calc(100dvh - 22px)}
+@media (max-width:700px){
+ #xy-window{left:8px!important;right:8px!important;top:auto!important;bottom:max(90px,env(safe-area-inset-bottom))!important;width:auto!important;height:min(60dvh,530px)!important;max-height:calc(100dvh - 110px)}
+ #xy-window #xy-messages{overscroll-behavior:contain}
+ #xy-pet-bubble{max-width:min(245px,calc(100vw - 110px));font-size:12px}
+}

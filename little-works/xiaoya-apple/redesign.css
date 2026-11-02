@@ -1,0 +1,56 @@
+/* XiaoYa / Immersive redesign — different layout, not a recolor */
+body.design-apple.redesign-v2{background:#071821;color:#f2f7fb;--ink:#e8f1f6;--sub:#a5b9c3;--line:#294c57;--soft:#163b45;--white:#102b36;--sage:#b3dfd1;--sage-dark:#e4fbf3;--shadow:none}
+.design-apple.redesign-v2 .comparison-nav{background:#09232bda;color:#bfd8dd;border-color:#ffffff18}
+.design-apple.redesign-v2 .comparison-title,.design-apple.redesign-v2 .comparison-back{color:#d4e8e9}
+.design-apple.redesign-v2 .comparison-links{background:#ffffff12;border-color:#ffffff2a}
+.design-apple.redesign-v2 .comparison-links a{color:#b3cbd0}
+.design-apple.redesign-v2 .comparison-links a[aria-current=page]{background:#def7ed;color:#173d42}
+.design-apple.redesign-v2 .app-layout{background:transparent}
+.design-apple.redesign-v2 .sidebar{background:#163640d9;border-color:#ffffff27;color:#ebf9fa}
+.design-apple.redesign-v2 .sidebar .brand strong,.design-apple.redesign-v2 .sidebar .nav-link,.design-apple.redesign-v2 .sidebar .nav-link svg{color:#e8f6f6}
+.design-apple.redesign-v2 .sidebar .nav-link.is-active{background:#d5f3e7;color:#103a40}
+.design-apple.redesign-v2 .sidebar .nav-link.is-active svg{color:#103a40}
+.design-apple.redesign-v2 .topbar{color:#b4c9d1}
+.design-apple.redesign-v2 .breadcrumb strong,.design-apple.redesign-v2 .breadcrumb span{color:#b4c9d1}
+.design-apple.redesign-v2 .content-grid{grid-template-columns:minmax(0,1fr) 238px;gap:25px;padding-top:27px}
+.design-apple.redesign-v2 .xy-cinema{position:relative;isolation:isolate;overflow:hidden;border-radius:35px;padding:38px clamp(22px,4vw,65px) 40px;background:radial-gradient(ellipse 65% 52% at 83% 18%,#236575 0%,transparent 70%),radial-gradient(ellipse 90% 50% at 15% 100%,#143f49,transparent 68%),linear-gradient(155deg,#103544,#09242e);border:1px solid #c4ebec29;box-shadow:0 30px 80px #0005}
+.design-apple.redesign-v2 .xy-cinema:before{content:"";position:absolute;right:-135px;top:20px;width:450px;height:450px;border-radius:50%;background:conic-gradient(from 140deg,#9ee5dd22,#4bb8bf80,#82d2cf15,#9ee5dd22);filter:blur(65px);pointer-events:none;animation:xy-aurora 20s ease-in-out infinite alternate}
+@keyframes xy-aurora{to{transform:translate(-55px,45px) scale(1.22);opacity:.7}}
+.design-apple.redesign-v2 .xy-redesign-intro{position:relative;z-index:1}
+.design-apple.redesign-v2 .xy-topline{display:flex;align-items:center;gap:11px;font-size:12px;color:#b8d5d7;letter-spacing:.02em}
+.design-apple.redesign-v2 .xy-intro-number{margin-left:auto;font-size:10px;color:#98c3c8;letter-spacing:.2em}
+.design-apple.redesign-v2 .xy-live-dot{width:8px;height:8px;background:#a5ecd4;border-radius:50%;box-shadow:0 0 18px #a5ecd4}
+.design-apple.redesign-v2 .xy-intro-line{font-size:clamp(50px,6.2vw,96px);letter-spacing:-.07em;line-height:.99;font-weight:650;margin:43px 0 17px;color:#eefcfd;max-width:860px}
+.design-apple.redesign-v2 .xy-intro-line em{color:#a8dfd5;font-style:normal;font-family:Georgia,serif;font-weight:400}
+.design-apple.redesign-v2 .xy-feature{padding:12px 0 54px;background:none;min-height:0;border:0;border-radius:0;box-shadow:none;display:block;overflow:visible}
+.design-apple.redesign-v2 .xy-feature:before{display:none}
+.design-apple.redesign-v2 .xy-feature .hero-copy{max-width:680px}
+.design-apple.redesign-v2 .xy-feature h1{font-size:clamp(23px,3vw,36px);font-weight:460;color:#c8e9ed;letter-spacing:-.035em;margin:6px 0 12px}
+.design-apple.redesign-v2 .xy-feature p{font-size:14px;color:#b4cfd3;max-width:570px}
+.design-apple.redesign-v2 .xy-feature .eyebrow #today-date{color:#a8d2d4;font-size:12px}
+.design-apple.redesign-v2 .xy-feature .hero-decoration{right:2%;top:-130px;opacity:.48;filter:blur(.1px);transform:scale(1.42)}
+.design-apple.redesign-v2 .xy-feature .sun-disc{background:#8fc6c355;box-shadow:0 0 0 35px #c2efef12,0 0 0 72px #c2efef0b}
+.design-apple.redesign-v2 .xy-feature .btn-dark{background:#d6f5e9;color:#11343b;font-weight:700;box-shadow:0 8px 29px #99efe045}
+.design-apple.redesign-v2 .xy-feature .btn-plain{color:#d2e9e8;background:#ffffff12;border:1px solid #ffffff27}
+.design-apple.redesign-v2 .xy-focus-marker{display:flex;align-items:center;justify-content:space-between;border-top:1px solid #ffffff42;padding-top:21px;color:#bce4e3;font-size:12px;font-weight:600}
+.design-apple.redesign-v2 .xy-chevron{font-size:21px}
+.design-apple.redesign-v2 .xy-floating-panels{display:grid;grid-template-columns:1.2fr .8fr;gap:14px;margin-top:16px}
+.design-apple.redesign-v2 .xy-floating-panels .panel{border:1px solid #ffffff30;background:#ffffff13;color:#f5ffff;backdrop-filter:blur(23px);box-shadow:inset 0 1px #ffffff1c;border-radius:19px}
+.design-apple.redesign-v2 .xy-floating-panels .card-topline{border-color:#ffffff25}
+.design-apple.redesign-v2 .xy-floating-panels .overline,.design-apple.redesign-v2 .xy-floating-panels .task-title,.design-apple.redesign-v2 .xy-floating-panels .item-main button,.design-apple.redesign-v2 .xy-floating-panels .agenda-item strong{color:#eaf8f8}
+.design-apple.redesign-v2 .xy-floating-panels .subline,.design-apple.redesign-v2 .xy-floating-panels .agenda-item small,.design-apple.redesign-v2 .xy-floating-panels .text-link{color:#a7c7cb}
+.design-apple.redesign-v2 .xy-floating-panels .task-mini,.design-apple.redesign-v2 .xy-floating-panels .agenda-item{border-color:#ffffff26}
+.design-apple.redesign-v2 .xy-floating-panels .time-pill{background:#b8ebdf26;color:#c7f4e7}
+.design-apple.redesign-v2 #view-today>.panel,.design-apple.redesign-v2 #view-today>.advice-card,.design-apple.redesign-v2 #view-today>.section-heading,.design-apple.redesign-v2 #view-today #today-advice,.design-apple.redesign-v2 #view-today>.bottom-stats{margin-left:6px;margin-right:6px}
+.design-apple.redesign-v2 .panel{background:#102f39;border-color:#31515b;color:#ecf7f6}
+.design-apple.redesign-v2 .section-heading h2,.design-apple.redesign-v2 .panel h3,.design-apple.redesign-v2 .rail-date,.design-apple.redesign-v2 .right-rail .rail-date span{color:#d5eded}
+.design-apple.redesign-v2 .right-rail .pet-panel{background:#153640;border-color:#31535b}
+.design-apple.redesign-v2 .right-rail .pet-panel .overline,.design-apple.redesign-v2 .right-rail .pet-panel strong{color:#cae9e4}
+.design-apple.redesign-v2 .stat-tile{background:#153741}
+.design-apple.redesign-v2 .stat-tile strong{color:#d4f3e7}
+.design-apple.redesign-v2 .advice-card{background:#173943;border-color:#32525d}
+.design-apple.redesign-v2 .advice-body h3,.design-apple.redesign-v2 .advice-body p{color:#d6ecea}
+.design-apple.redesign-v2 .comparison-nav a:focus-visible{outline-color:#a5f1d5}
+@media(max-width:1000px){.design-apple.redesign-v2 .content-grid{grid-template-columns:1fr}.design-apple.redesign-v2 .right-rail{max-width:none}.design-apple.redesign-v2 .xy-cinema{padding:32px 26px}}
+@media(max-width:600px){.design-apple.redesign-v2 .content-grid{padding:13px 12px 100px}.design-apple.redesign-v2 .xy-cinema{border-radius:25px;padding:28px 21px 26px}.design-apple.redesign-v2 .xy-intro-line{font-size:clamp(47px,13vw,68px);margin:36px 0 15px}.design-apple.redesign-v2 .xy-feature{padding:10px 0 25px}.design-apple.redesign-v2 .xy-feature h1{font-size:22px}.design-apple.redesign-v2 .xy-feature .hero-decoration{right:-110px;top:-150px;opacity:.24}.design-apple.redesign-v2 .xy-floating-panels{grid-template-columns:1fr}.design-apple.redesign-v2 .xy-floating-panels .panel{padding:17px}.design-apple.redesign-v2 .xy-intro-number{display:none}.design-apple.redesign-v2 .xy-topline{font-size:11px}.design-apple.redesign-v2 .mobile-tabs{background:#b9d9d9e8;box-shadow:0 10px 32px #0008}.design-apple.redesign-v2 .mobile-tabs button{color:#264750}.design-apple.redesign-v2 .mobile-tabs button.active{color:#073e41}}
+@media(prefers-reduced-motion:reduce){.design-apple.redesign-v2 .xy-cinema:before{animation:none}}

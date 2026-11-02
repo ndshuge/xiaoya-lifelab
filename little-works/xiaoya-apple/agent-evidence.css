@@ -1,0 +1,16 @@
+.agent-evidence{margin-top:18px;padding:20px;background:linear-gradient(150deg,#fffefa 10%,#f6faf5 100%)}
+.agent-evidence-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.agent-evidence-heading h3{margin:4px 0;color:#315744;font-size:19px}
+.agent-evidence-heading .kicker{font-size:10px;letter-spacing:.15em;color:#77947c}
+.agent-inspection-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.agent-inspection-status strong{background:#e4eee2;border-radius:20px;padding:5px 10px;color:#326248;font-size:12px}
+.agent-inspection-status span{color:#6b786d;font-size:12px}
+.agent-inspection-list{display:grid;gap:12px;margin-top:14px}
+.agent-inspection-item{background:#fff;border:1px solid #e0e9dc;border-radius:16px;padding:16px;box-shadow:0 6px 18px #3b705108}
+.agent-inspection-item>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.agent-inspection-item strong{font-size:15px;color:#334d3a}
+.agent-kind{font-size:11px;color:#789078}
+.agent-inspection-item p{line-height:1.65;margin:8px 0 12px;font-size:13px}
+.agent-source-list{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.agent-source-list button{font-size:12px;min-height:33px}
+@media(max-width:520px){.agent-evidence{padding:15px}.agent-inspection-item{padding:13px}.agent-evidence-heading h3{font-size:17px}}

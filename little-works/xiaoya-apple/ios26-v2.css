@@ -1,0 +1,568 @@
+/* Xiaoya LifeLab · iOS-inspired native-shell v2 | 2026-10-28
+   Real app screens, not screenshot mockups. The business DOM IDs remain authoritative.
+   Material budget: glass is navigation/sheets ONLY; data lives on opaque calm surfaces. */
+:root {
+  --xy26-ground:#f4f5f2;
+  --xy26-surface:#fff;
+  --xy26-group:#f2f4f1;
+  --xy26-ink:#1c2925;
+  --xy26-muted:#66756f;
+  --xy26-accent:#187568;
+  --xy26-line:rgba(44,66,56,.095);
+  --xy26-r-1:14px;--xy26-r-2:20px;--xy26-r-3:26px;
+  --xy26-ease:cubic-bezier(.22,1,.36,1);
+}
+html { -webkit-text-size-adjust:100%; scrollbar-gutter:auto; }
+body.design-apple.redesign-v2.apple-next {
+  --xy-accent:var(--xy26-accent);
+  background:var(--xy26-ground)!important;
+  color:var(--xy26-ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue","PingFang SC",sans-serif;
+  font-synthesis:none;
+}
+body.design-apple.redesign-v2.apple-next button,
+body.design-apple.redesign-v2.apple-next input,
+body.design-apple.redesign-v2.apple-next select {
+  -webkit-tap-highlight-color:transparent;
+}
+body.design-apple.redesign-v2.apple-next button:focus-visible,
+body.design-apple.redesign-v2.apple-next input:focus-visible,
+body.design-apple.redesign-v2.apple-next select:focus-visible {
+  outline:2px solid #308a7f!important;outline-offset:2px;
+}
+body.design-apple.redesign-v2.apple-next .topbar,
+body.design-apple.redesign-v2.apple-next .sidebar {
+  background:#f8faf8!important;
+  border-color:var(--xy26-line)!important;
+}
+body.design-apple.redesign-v2.apple-next .center-wrap {min-width:0}
+body.design-apple.redesign-v2.apple-next #main{min-width:0}
+body.design-apple.redesign-v2.apple-next #main .view{min-width:0}
+body.design-apple.redesign-v2.apple-next .hero,
+body.design-apple.redesign-v2.apple-next .xy-cinema,
+body.design-apple.redesign-v2.apple-next .panel,
+body.design-apple.redesign-v2.apple-next .review-panel{
+  border:1px solid var(--xy26-line)!important;
+  box-shadow:0 2px 16px rgba(27,54,42,.025)!important;
+}
+body.design-apple.redesign-v2.apple-next .btn-dark {background:var(--xy26-accent)!important;color:white!important}
+body.design-apple.redesign-v2.apple-next .page-head .kicker,
+body.design-apple.redesign-v2.apple-next .section-heading .kicker{display:none!important}
+body.design-apple.redesign-v2.apple-next .page-head p{
+  font-size:15px!important;line-height:1.65!important;color:var(--xy26-muted)!important;max-width:50ch;
+}
+body.design-apple.redesign-v2.apple-next .page-head h1{
+  font-size:clamp(30px,3vw,40px)!important;font-weight:730!important;
+  color:var(--xy26-ink)!important;letter-spacing:-.06em!important;line-height:1.19!important;
+}
+body.design-apple.redesign-v2.apple-next .section-heading h2{
+  color:var(--xy26-ink);font-weight:700!important;letter-spacing:-.045em;
+}
+body.design-apple.redesign-v2.apple-next .bottom-stats{
+  border:none!important;background:none!important;box-shadow:none!important;
+}
+body.design-apple.redesign-v2.apple-next .bottom-stats > *{
+  border:none!important;background:rgba(255,255,255,.65)!important;box-shadow:none!important;
+}
+body.design-apple.redesign-v2.apple-next .ai-today-panel{
+  border:1px solid var(--xy26-line)!important;background:#fff!important;
+}
+body.design-apple.redesign-v2.apple-next .ai-today-panel .ai-micro-label{letter-spacing:.08em}
+body.design-apple.redesign-v2.apple-next .growth-simulator-panel,
+body.design-apple.redesign-v2.apple-next .review-panel{
+  border-radius:var(--xy26-r-3)!important;
+}
+body.design-apple.redesign-v2.apple-next .xy-organized-details,
+body.design-apple.redesign-v2.apple-next .xy-settings-menu {
+  box-shadow:0 2px 12px rgba(20,50,40,.02)!important;
+}
+body.design-apple.redesign-v2.apple-next .list-item,
+body.design-apple.redesign-v2.apple-next .task-mini,
+body.design-apple.redesign-v2.apple-next .agenda-item {
+  transition:background-color .18s ease,opacity .18s ease;
+}
+body.design-apple.redesign-v2.apple-next .list-item:active,
+body.design-apple.redesign-v2.apple-next .task-mini:active,
+body.design-apple.redesign-v2.apple-next .agenda-item:active {background:#f1f7f3}
+body.design-apple.redesign-v2.apple-next .list-item.done .mini-check,
+body.design-apple.redesign-v2.apple-next .task-mini .mini-check.done{
+  background:#2f977a!important;color:#fff!important;
+}
+body.design-apple.redesign-v2.apple-next #view-review .rc-table {
+  font-variant-numeric:tabular-nums;min-width:0;
+}
+body.design-apple.redesign-v2.apple-next .xy-long-held{
+  background-color:#e5f1eb!important;
+}
+body.design-apple.redesign-v2.apple-next #view-settings .xy-settings-item {
+  min-height:65px!important;padding:16px 20px!important;
+}
+body.design-apple.redesign-v2.apple-next #view-settings .xy-settings-group-label {
+  color:#7c8b84!important;letter-spacing:.02em!important;
+}
+/* Sidebar: stable application furniture, one current item, no colored panel stack. */
+@media(min-width:791px){
+  body.design-apple.redesign-v2.apple-next .sidebar {
+    border-right:1px solid var(--xy26-line)!important;
+  }
+  body.design-apple.redesign-v2.apple-next .side-nav .nav-link,
+  body.design-apple.redesign-v2.apple-next .sidebar-bottom .nav-link {
+    border-radius:13px!important;min-height:47px!important;
+    margin:2px 8px!important;color:#5e6a65!important;transition:background-color .18s ease;
+  }
+  body.design-apple.redesign-v2.apple-next .side-nav .nav-link.is-active,
+  body.design-apple.redesign-v2.apple-next .sidebar-bottom .nav-link.is-active {
+    background:#e7eee9!important;color:#164f42!important;
+  }
+  body.design-apple.redesign-v2.apple-next .content-grid {
+    padding-top:28px!important;padding-bottom:65px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .overview-grid {
+    gap:14px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .overview-grid>.panel {
+    border-radius:23px!important;min-height:190px!important;padding:21px 22px!important;
+  }
+}
+/* ========= Phone / small tablet: app navigation owns the bottom chrome ========= */
+@media(max-width:790px){
+  html,body {overflow-x:clip!important;max-width:100%}
+  body.design-apple.redesign-v2.apple-next {
+    --xy26-dock-visible:81px;
+    --xy26-dock-space:calc(116px + env(safe-area-inset-bottom,0px));
+    background:#f4f5f3!important;
+  }
+  body.design-apple.redesign-v2.apple-next .center-wrap,
+  body.design-apple.redesign-v2.apple-next .app-layout {width:100%!important;max-width:100%!important}
+  body.design-apple.redesign-v2.apple-next .topbar {
+    min-height:54px!important;height:54px!important;
+    position:sticky!important;top:0!important;z-index:38!important;
+    padding:0 16px!important;
+    display:flex!important;align-items:center!important;justify-content:space-between!important;
+    background:rgba(249,251,249,.98)!important;
+    backdrop-filter:blur(18px) saturate(1.35)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.35)!important;
+    border-bottom:1px solid rgba(43,62,51,.08)!important;
+  }
+  body.design-apple.redesign-v2.apple-next .topbar .breadcrumb{
+    display:flex!important;visibility:visible!important;
+    gap:7px!important;align-items:center!important;min-width:0!important;
+    font-size:13px!important;font-weight:650!important;color:#3d5c4c!important;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  body.design-apple.redesign-v2.apple-next .topbar .breadcrumb>span,
+  body.design-apple.redesign-v2.apple-next .topbar .breadcrumb>svg{display:none!important}
+  body.design-apple.redesign-v2.apple-next .topbar .breadcrumb strong{font-weight:690!important}
+  body.design-apple.redesign-v2.apple-next .topbar .top-actions {
+    display:flex!important;align-items:center!important;gap:9px!important;
+    flex:none!important;margin:0!important;
+  }
+  body.design-apple.redesign-v2.apple-next .topbar #ai-global-entry {
+    min-height:38px!important;height:38px!important;max-width:140px!important;
+    border-radius:22px!important;padding:5px 11px!important;
+    background:white!important;border:1px solid #e7eee9!important;
+    box-shadow:0 2px 5px rgba(30,60,44,.035)!important;
+  }
+  body.design-apple.redesign-v2.apple-next .topbar #ai-global-entry .ai-indicator-copy small,
+  body.design-apple.redesign-v2.apple-next .topbar #ai-global-entry .ai-indicator-chevron{display:none!important}
+  body.design-apple.redesign-v2.apple-next .topbar #ai-global-entry .ai-indicator-copy strong{
+    font-size:12px!important;white-space:nowrap!important;line-height:1.3!important;
+  }
+  body.design-apple.redesign-v2.apple-next .topbar .top-actions>.icon-button[data-view="settings"]{
+    display:grid!important;place-items:center!important;width:39px!important;height:39px!important;
+    border:1px solid #e5eae6!important;border-radius:50%!important;
+    background:#fff!important;box-shadow:none!important;color:#435e52!important;
+    position:static!important;min-width:0!important;
+  }
+  body.design-apple.redesign-v2.apple-next .topbar :is(.judge-top-link,#mode-badge,#mode-switch){display:none!important}
+  body.design-apple.redesign-v2.apple-next .content-grid{
+    padding:15px 16px calc(94px + env(safe-area-inset-bottom,0px))!important;
+    padding-left:max(16px,env(safe-area-inset-left,0px))!important;
+    padding-right:max(16px,env(safe-area-inset-right,0px))!important;
+    margin:0!important;min-height:calc(100dvh - 54px)!important;
+    display:block!important;
+  }
+  body.design-apple.redesign-v2.apple-next .content-grid::after{
+    display:none!important;content:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next #main>.view {
+    padding:0!important;
+    overflow:visible!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-settings{
+    padding-bottom:0!important;
+  }
+  /* Dock is exactly at visual viewport bottom + safe-area, NOT 76px above it.
+     5 core tabs; Settings always available through the top-right gear. */
+  body.design-apple.redesign-v2.apple-next .mobile-tabs{
+    position:fixed!important;
+    display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    left:12px!important;right:12px!important;top:auto!important;
+    bottom:calc(8px + env(safe-area-inset-bottom,0px))!important;
+    width:auto!important;max-width:520px!important;margin-inline:auto!important;
+    transform:none!important;
+    height:68px!important;min-height:68px!important;max-height:68px!important;
+    padding:5px!important;gap:0!important;
+    border-radius:25px!important;
+    background:rgba(250,252,250,.84)!important;
+    border:1px solid rgba(255,255,255,.94)!important;
+    box-shadow:0 2px 7px rgba(33,54,46,.065),0 10px 27px rgba(31,54,42,.095)!important;
+    -webkit-backdrop-filter:blur(18px) saturate(1.6)!important;
+    backdrop-filter:blur(18px) saturate(1.6)!important;
+    z-index:50!important;
+    touch-action:pan-y!important;
+    contain:layout style!important;
+    transition:opacity .22s ease,transform .32s var(--xy26-ease),box-shadow .24s ease!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs>button[data-view]{
+    min-height:56px!important;min-width:0!important;height:56px!important;
+    border:0!important;border-radius:20px!important;padding:6px 0 5px!important;
+    display:flex!important;flex-direction:column!important;
+    justify-content:center!important;align-items:center!important;gap:4px!important;
+    font-size:10px!important;font-weight:550!important;line-height:1!important;
+    color:#65716b!important;background:transparent!important;
+    box-shadow:none!important;
+    position:relative!important;z-index:3!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs>button[data-view] svg{
+    width:22px!important;height:22px!important;flex:none!important;
+    stroke-width:1.8!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs>button[data-view].active{
+    color:#184f45!important;font-weight:720!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs>button[data-view="settings"]{
+    display:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-glass-indicator{
+    height:56px!important;top:5px!important;
+    border-radius:20px!important;
+    background:rgba(255,255,255,.84)!important;
+    box-shadow:0 2px 9px rgba(30,52,42,.075),inset 0 1px 1px rgba(255,255,255,.88)!important;
+    z-index:2!important;pointer-events:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-refract-copy{
+    display:none!important;pointer-events:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-refract-cell:nth-child(6){
+    display:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs:has(>button[data-view="settings"].active) .xy-glass-indicator{
+    opacity:0!important;
+  }
+  body.design-apple.redesign-v2.apple-next .xy-dock-minibutton{
+    position:fixed;right:calc(13px + env(safe-area-inset-right,0px));
+    bottom:calc(8px + env(safe-area-inset-bottom,0px));
+    z-index:51!important;
+    display:grid;align-items:center;justify-items:center;gap:1px;
+    width:63px;height:62px;border-radius:24px;
+    background:rgba(250,252,250,.93);border:1px solid rgba(255,255,255,.96);
+    box-shadow:0 5px 19px rgba(30,49,39,.14);
+    color:#1e6559;font-size:11px;font-weight:700;
+    -webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);
+    opacity:0;transform:translate3d(0,10px,0) scale(.85);
+    pointer-events:none;transition:opacity .23s ease,transform .29s var(--xy26-ease);
+  }
+  body.design-apple.redesign-v2.apple-next .xy-dock-minibutton svg{
+    width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7;
+  }
+  body.design-apple.redesign-v2.apple-next.xy-dock-condensed .mobile-tabs{
+    transform:translate3d(0,calc(100% + 26px + env(safe-area-inset-bottom,0px)),0)!important;
+    opacity:0!important;pointer-events:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next.xy-dock-condensed .xy-dock-minibutton{
+    opacity:1;transform:translate3d(0,0,0) scale(1);pointer-events:auto;
+  }
+  body.design-apple.redesign-v2.apple-next.xy-keyboard-open .mobile-tabs,
+  body.design-apple.redesign-v2.apple-next.xy-keyboard-open .xy-dock-minibutton{
+    visibility:hidden!important;pointer-events:none!important;
+  }
+  /* Main home. No oversized fake marketing hero; calendar and tasks are grouped.
+     The user can edit each row, and all existing render IDs remain live. */
+  body.design-apple.redesign-v2.apple-next #view-today .xy-cinema,
+  body.design-apple.redesign-v2.apple-next #view-today .hero{
+    border:none!important;border-radius:23px!important;
+    background:#fff!important;box-shadow:none!important;
+    padding:22px 21px 20px!important;
+    min-height:0!important;height:auto!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .hero h1,
+  body.design-apple.redesign-v2.apple-next #hero-title {
+    font-size:clamp(30px,8.5vw,41px)!important;
+    font-weight:750!important;letter-spacing:-.068em!important;
+    line-height:1.11!important;max-width:12ch!important;
+    text-wrap:balance!important;color:#1c2c25!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .hero .eyebrow{
+    font-size:12px!important;font-weight:600!important;color:#769284!important;
+    margin-bottom:13px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #hero-description{
+    margin-top:13px!important;font-size:14px!important;line-height:1.6!important;
+    max-width:32ch!important;color:#53695d!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .hero-actions{
+    gap:10px!important;margin-top:21px!important;flex-wrap:wrap!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .hero-actions .btn{
+    min-height:45px!important;border-radius:15px!important;
+    font-size:14px!important;padding:10px 14px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .hero-decoration{
+    opacity:.86!important;transform:scale(.78)!important;transform-origin:top right!important;
+    pointer-events:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .section-heading{
+    margin:24px 4px 12px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .section-heading h2{
+    font-size:22px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .overview-grid{
+    display:block!important;border-radius:23px!important;overflow:hidden!important;
+    background:#fff!important;border:1px solid var(--xy26-line)!important;
+    box-shadow:none!important;
+    margin:0!important;padding:0!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .overview-grid>.panel{
+    border:0!important;background:#fff!important;box-shadow:none!important;
+    padding:17px 18px!important;margin:0!important;
+    min-height:0!important;border-radius:0!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .overview-grid>.panel+.panel{
+    border-top:1px solid var(--xy26-line)!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .card-topline{
+    margin:0 0 8px!important;min-height:22px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .card-topline .overline{
+    font-size:13px!important;font-weight:700!important;color:#345247!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #today-tasks .empty-state,
+  body.design-apple.redesign-v2.apple-next #view-today #today-schedule .empty-state{
+    padding:12px 0 16px!important;min-height:85px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #today-tasks .empty-state .empty-art,
+  body.design-apple.redesign-v2.apple-next #view-today #today-schedule .empty-state .empty-art{
+    display:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #today-tasks .empty-state strong,
+  body.design-apple.redesign-v2.apple-next #view-today #today-schedule .empty-state strong{
+    font-size:15px!important;color:#526d5d!important;line-height:1.5;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #today-tasks .empty-state p,
+  body.design-apple.redesign-v2.apple-next #view-today #today-schedule .empty-state p{
+    font-size:12px!important;line-height:1.5!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #onboarding{
+    margin:19px 0 12px!important;border-radius:22px!important;padding:20px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today .ai-today-panel {
+    border-radius:23px!important;padding:19px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-today #today-advice>.advice-card {
+    border-radius:22px!important;
+  }
+  /* Each detail page shares the same native title rhythm. */
+  body.design-apple.redesign-v2.apple-next #main .page-head{
+    margin:3px 0 20px!important;padding:4px 0!important;
+  }
+  body.design-apple.redesign-v2.apple-next #main .page-head h1{
+    font-size:clamp(29px,8vw,36px)!important;font-weight:745!important;
+    letter-spacing:-.064em!important;line-height:1.14!important;
+    margin:0 0 7px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #main .page-head p{
+    font-size:13px!important;line-height:1.58!important;
+    color:#758179!important;margin:0 0 14px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #main .page-head>.btn{
+    min-height:41px!important;padding:10px 15px!important;
+    border-radius:15px!important;font-size:13px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .quick-entry,
+  body.design-apple.redesign-v2.apple-next #view-goals .growth-simulator-panel,
+  body.design-apple.redesign-v2.apple-next #view-review .review-panel,
+  body.design-apple.redesign-v2.apple-next #view-schedule .schedule-board {
+    border-radius:23px!important;background:#fff!important;
+    box-shadow:none!important;border:1px solid var(--xy26-line)!important;
+    padding:18px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .quick-entry{
+    gap:9px!important;display:grid!important;
+    grid-template-columns:1fr!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .quick-entry label{
+    font-size:14px!important;font-weight:700!important;color:#364f42;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .quick-entry input{
+    width:100%!important;min-width:0!important;border-radius:13px!important;
+    background:#f4f6f3!important;border:1px solid #dfe8e1!important;
+    min-height:45px!important;font-size:16px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .quick-entry button{
+    width:100%!important;border-radius:13px!important;min-height:44px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks #all-tasks{
+    background:#fff!important;border-radius:23px!important;overflow:hidden!important;
+    padding:8px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .list-item{
+    padding:13px 10px!important;border-radius:14px!important;min-height:66px;
+  }
+  body.design-apple.redesign-v2.apple-next #view-tasks .list-item .details small{
+    color:#758178!important;font-size:12px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-schedule .week-toolbar {
+    display:flex!important;flex-wrap:wrap!important;align-items:center!important;
+    justify-content:space-between!important;gap:7px!important;
+    background:transparent!important;border:0!important;padding:0 0 16px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-schedule #week-label{
+    flex:1 0 100%!important;order:-1!important;
+    padding:0 4px!important;font-variant-numeric:tabular-nums;
+    font-size:13px!important;color:#697d72!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-schedule .week-toolbar .btn{
+    min-height:41px!important;border-radius:13px!important;
+    padding:9px 12px!important;font-size:12px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-schedule .day-tabs{
+    display:grid!important;grid-template-columns:repeat(7,minmax(0,1fr))!important;
+    gap:3px!important;width:100%!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-schedule .day-tabs button{
+    min-width:0!important;min-height:46px!important;
+    border-radius:13px!important;padding:7px 0!important;
+    font-size:12px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-schedule .schedule-board .board-head{
+    margin-bottom:12px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-goals .ai-goals-banner{
+    border-radius:22px!important;padding:19px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-goals .growth-simulator-panel h3,
+  body.design-apple.redesign-v2.apple-next #view-review .review-panel h3{
+    font-size:20px!important;letter-spacing:-.04em;
+  }
+  body.design-apple.redesign-v2.apple-next #view-review #review-overview{
+    margin-bottom:16px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-review .rc-table{
+    font-size:12px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-settings .xy-settings-menu{
+    border-radius:22px!important;margin:0 0 16px!important;
+    background:#fff!important;
+  }
+  body.design-apple.redesign-v2.apple-next #view-settings .xy-settings-sections>.xy-organized-details>.panel {
+    border-radius:21px!important;
+  }
+  /* Sheets are presented over content. The header drag handle is real, not decoration. */
+  body.design-apple.redesign-v2.apple-next #modal-root{
+    z-index:1000!important;
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root:not([hidden]){
+    display:flex!important;align-items:flex-end!important;justify-content:center!important;
+    padding:0!important;
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root .modal-card{
+    position:relative!important;width:100%!important;
+    max-width:100%!important;max-height:min(90dvh,calc(100dvh - env(safe-area-inset-top,0px) - 12px))!important;
+    border-radius:29px 29px 0 0!important;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))!important;
+    background:#fbfcfb!important;border:1px solid rgba(255,255,255,.94)!important;
+    box-shadow:0 -12px 45px rgba(20,42,30,.14)!important;
+    overflow:auto!important;overscroll-behavior:contain!important;
+    will-change:auto!important;
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root .modal-header{
+    position:sticky!important;top:0!important;z-index:2!important;
+    background:#fbfcfb!important;
+    padding-top:31px!important;min-height:77px!important;
+    touch-action:none;
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root .modal-header::before{
+    content:"";width:38px;height:5px;border-radius:6px;
+    background:#d4d9d6;position:absolute;top:12px;left:calc(50% - 19px);
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root #modal-title{
+    font-size:22px!important;font-weight:730!important;letter-spacing:-.05em!important;
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root #modal-eyebrow{
+    display:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next #modal-root .modal-scrim{
+    background:rgba(18,39,30,.30)!important;backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+  }
+  /* Floating pet should never overlap the page's core navigation. */
+  body.design-apple.redesign-v2.apple-next #xy-fab{
+    bottom:calc(103px + env(safe-area-inset-bottom,0px))!important;
+    max-width:53px!important;max-height:53px!important;
+  }
+  body.design-apple.redesign-v2.apple-next #xy-window {
+    bottom:calc(89px + env(safe-area-inset-bottom,0px))!important;
+    max-height:calc(100dvh - 118px - env(safe-area-inset-bottom,0px))!important;
+  }
+}
+@media(max-width:359px){
+  body.design-apple.redesign-v2.apple-next .mobile-tabs {left:7px!important;right:7px!important;padding:4px!important}
+  body.design-apple.redesign-v2.apple-next .mobile-tabs>button[data-view] svg {width:20px!important;height:20px!important}
+  body.design-apple.redesign-v2.apple-next .mobile-tabs>button[data-view]{font-size:9.5px!important}
+  body.design-apple.redesign-v2.apple-next #view-today .hero{padding:19px 17px!important}
+}
+
+/* Secondary native-style disclosure surfaces: existing live forms are moved, never recreated. */
+body.design-apple.redesign-v2.apple-next .xy26-disclosure{
+  border:1px solid var(--xy26-line)!important;background:#fff!important;
+  border-radius:20px!important;overflow:hidden!important;
+  margin:0 0 15px!important;
+  box-shadow:0 2px 12px rgba(30,56,42,.025)!important;
+}
+body.design-apple.redesign-v2.apple-next .xy26-disclosure>summary{
+  list-style:none;min-height:66px;padding:14px 17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  font-size:15px;color:#284239;
+}
+body.design-apple.redesign-v2.apple-next .xy26-disclosure>summary::-webkit-details-marker{display:none}
+body.design-apple.redesign-v2.apple-next .xy26-disclosure>summary strong{font-weight:700;letter-spacing:-.025em}
+body.design-apple.redesign-v2.apple-next .xy26-disclosure>summary span{color:#7c8980;font-size:12px;text-align:right}
+body.design-apple.redesign-v2.apple-next .xy26-disclosure>summary b{font-size:19px;font-weight:400;color:#3c8b70;padding-left:7px}
+body.design-apple.redesign-v2.apple-next .xy26-disclosure[open]>summary{
+  border-bottom:1px solid var(--xy26-line)!important;
+}
+body.design-apple.redesign-v2.apple-next #xy26-quick-panel #quick-task-form{
+  margin:0!important;border:0!important;border-radius:0!important;
+  padding:18px!important;box-shadow:none!important;background:#fff!important;
+}
+body.design-apple.redesign-v2.apple-next #xy26-ai-options #ai-mode-dashboard{
+  display:block!important;
+  border:0!important;margin:0!important;box-shadow:none!important;
+  padding:15px 18px 20px!important;background:#fff!important;
+}
+@media(min-width:791px){
+ body.design-apple.redesign-v2.apple-next #xy26-quick-panel>summary{display:none!important}
+ body.design-apple.redesign-v2.apple-next #xy26-quick-panel{border:none!important;background:transparent!important}
+ body.design-apple.redesign-v2.apple-next #xy26-quick-panel #quick-task-form{
+  border:1px solid var(--xy26-line)!important;border-radius:20px!important;
+ }
+}
+
+/* Outside browser tabs often provide insufficient contrast. Never rely on blur only. */
+@media(prefers-reduced-transparency:reduce){
+  body.design-apple.redesign-v2.apple-next .mobile-tabs,
+  body.design-apple.redesign-v2.apple-next .topbar {
+    background:#fafcfa!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+  }
+  body.design-apple.redesign-v2.apple-next .mobile-tabs .xy-glass-indicator{
+    background:#eaf1ec!important;filter:none!important;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.design-apple.redesign-v2.apple-next .mobile-tabs,
+  body.design-apple.redesign-v2.apple-next .xy-dock-minibutton,
+  body.design-apple.redesign-v2.apple-next .view,
+  body.design-apple.redesign-v2.apple-next .list-item{transition:none!important}
+}
