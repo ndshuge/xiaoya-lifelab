@@ -1,0 +1,215 @@
+/* Xiaoya V4 system-dark support. Content stays opaque (L0); floating controls may frost (L1).
+   No shader, fake refraction, or changes to the established light appearance. */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme:dark;
+    --ground:#111713;--surface:#202a23;--ink:#ecf5ee;
+    --secondary:#b7c6ba;--subtle:#98a99c;--line:#35463a;
+    --accent:#85d8aa;--accent-dark:#6ac997;--mint:#243c2d;
+    --shadow:0 14px 40px rgba(0,0,0,.28);
+    --v4-ink:#ecf5ee;--v4-sub:#b0c1b3;
+    --v4-stroke:rgba(205,233,213,.16);
+    --v4-surface:#202a23;--v4-ground:#111713;
+    --dayflow-ink:#edf5ee;--dayflow-subtle:#b7c4ba;--dayflow-stroke:#35463a;
+    --xy-ui-ink:#e8f4ea;--xy-ui-soft:#b0c3b3;--xy-ui-quiet:#1c3023;
+  }
+  body{background:var(--ground);color:var(--ink)}
+  .sidebar{background:#171e19;border-color:#2c3b30}
+  .side-caption,.side-privacy,.brandline small,.v4-sidebar-title small,
+  .topbar #date-compact,.page-heading p,.v4-subtitle,.dayflow-lead,
+  .dayflow-header-period,.page-heading .eyebrow{color:#b0c1b4!important}
+  .nav-item{color:#c2d1c6}
+  .nav-item svg{color:#96aa9b}
+  .nav-item.is-active{background:#2b4031;color:#e9faee}
+  .nav-item:hover:not(.is-active){background:#243429}
+  .side-divider{background:#344239}
+  .topbar{background:linear-gradient(to bottom,rgba(17,23,19,.99),rgba(17,23,19,.94) 75%,rgba(17,23,19,.06))}
+  .page-heading h1,.dayflow-heading h1,.v4-page-heading h1,
+  .dayflow-section-head h2,.v4-section-title h2,.v4-development-intro h2,
+  .section-head h2,.dayflow-advice-content strong,.dayflow-advice-head h2,
+  .v4-goal-name,.v4-task-name{color:#ecf5ee}
+  .xiaoya-avatar{background:rgba(49,69,53,.95);border-color:#4b6452;box-shadow:0 2px 12px #0005}
+  .glass-btn{color:#e2f2e6;background:rgba(42,60,47,.8);border-color:#506955;box-shadow:0 1px 9px #0003}
+  .glass-btn:hover{background:#344a39}
+  .topbar .toolbar-actions .glass-btn.is-detail-done{color:#9fe2b8}
+  .group,.settings-group,.calendar-day,.v4-items-calendar .calendar-day,
+  .week-rail,.v4-week-rail,.v4-unified-list,.v4-archive-list,
+  .dayflow-timeline-empty,.dayflow-timeline-list,.dayflow-task-list,
+  .progress-tile,.review-intro,.companion-inner,
+  .v4-journal-paper,.v4-goals-list,.v4-history-list,
+  .v4-mood-option,.v4-mood-picker{background:#202a23;border-color:#35473b}
+  .settings-row,.row,.v4-task-row{color:#e3f0e7}
+  .settings-row+.settings-row:before,.row+.row:before,
+  .v4-task-row+.v4-task-row:before{background:#35473b}
+  .settings-row .label,.settings-group .label,
+  .row-title,.row-time,.dayflow-time-name,
+  .v4-no-schedule strong,.v4-intro-day{color:#e5f2e8}
+  .row-sub,.v4-task-copy small,.v4-task-status,.v4-list-empty,
+  .v4-no-schedule p,.v4-development-intro>p:last-child,
+  .dayflow-advice-content p,.dayflow-focus-body p,.dayflow-time-content small,
+  .dayflow-task-copy small,.v4-week-tools>span,.setting-warning,
+  .v4-journal-section p,.v4-goal-description,.v4-history-section small,
+  .v4-goal-progress,.v4-semantic-note{color:#b4c5b8}
+  .dayflow-focus,.dayflow-focus-complete,
+  #workspace .dayflow-focus-complete{background:linear-gradient(145deg,#223d2b,#1e3025);border:1px solid #42614b;box-shadow:0 8px 25px #0002}
+  .dayflow-rail,.dayflow-focus-title,.dayflow-focus-bottom button,
+  #workspace .dayflow-complete-row strong,
+  #workspace .dayflow-complete-row button{color:#b7ebc9}
+  .dayflow-focus-bottom{border-color:#42614b}
+  .dayflow-focus-bottom>span,.dayflow-focus-body .dayflow-future-label,
+  #workspace .dayflow-complete-next{color:#b7cfbf}
+  .dayflow-focus-icon,.dayflow-sprout,.dayflow-timeline-empty>span,
+  #workspace .dayflow-complete-icon,.v4-no-schedule>span{background:#2a4934;color:#b2ebc5}
+  .dayflow-advice{background:transparent}
+  .dayflow-approve,.dayflow-demo-tag{background:#2c4a36;color:#b1eac4}
+  .dayflow-reject{background:#29332b;color:#c1ccc3}
+  .dayflow-time-row:not(:last-child):after{background:#35473b}
+  .dayflow-dot{border-color:#294735}
+  .dayflow-task-row+.dayflow-task-row:before{background:#35473b}
+  .v4-item-segments,.v4-develop-segments{background:#26362b;border-color:#3e5143}
+  .v4-item-segments button,.v4-develop-segments button{color:#b3c7b8}
+  .v4-item-segments button.is-active,.v4-develop-segments button.is-active{background:#38533e;color:#d7f9e1;box-shadow:none}
+  .v4-item-segments button span{color:#b4d4bf}
+  .v4-section-title button,.v4-calendar-import button,
+  #workspace .v4-section-title button[data-add=task],
+  #workspace .v4-section-title button[data-add=goal],
+  #workspace .v4-section-title button[data-due-date]{color:#9ce2b6}
+  .v4-week-rail .day-pill,.day-pill{color:#c1d4c6}
+  .day-pill small{color:#aebfb1}
+  .day-pill.is-selected,.v4-week-rail .day-pill.is-selected{background:#34513b}
+  .day-pill.is-selected strong,.week-rail .day-pill.is-selected strong{background:#70cd9c;color:#102417}
+  .v4-calendar-actions button,.calendar-arrow button{background:#2b3b30;color:#cce8d5}
+  .v4-no-schedule{color:#d2e6d7}
+  .v4-task-status.overdue,.v4-task-status.urgent{color:#ffb28c}
+  .v4-task-copy small,.v4-task-name{overflow-wrap:anywhere}
+  .circle-check,.v4-done-row>button{background:#203126;border-color:#73917c}
+  .circle-check.checked{background:#4ba975;border-color:#4ba975}
+  .v4-archive-list summary,.v4-done-row{color:#becfc1}
+  .v4-archive-list .v4-done-row{border-color:#34473a}
+  .v4-mood-option{color:#c2d3c6}
+  .v4-mood-option.is-active{background:#2b4934;color:#e0f7e7;border-color:#64aa7d}
+  .v4-mood-picker{box-shadow:none}
+  .v4-journal-paper textarea,.v4-journal-paper input,
+  .field input,.field select,.field textarea,
+  .settings-row input[type=date],.settings-row input[type=time],
+  .settings-row input[type=text],.settings-row input[type=number],
+  .searchbar input{background:#18251d;color:#f1f8f2;border-color:#46604b}
+  .field label,.v4-journal-paper label{color:#becfc2}
+  .field input::placeholder,.field textarea::placeholder,
+  .searchbar input::placeholder{color:#99af9e}
+  .settings-row .small-action,.small-action,.secondary,.quiet-button,
+  .page-heading-right .primary{background:#2d3f32;color:#d4eedc;border-color:#45614c}
+  .settings-row lg-switch[data-setting]{--lg-surface:#223227;--lg-track-off:#56645b;--lg-on:#54b783;--lg-text:#e5efe8}
+  .searchbar{background:#26342a;color:#dae9dd}
+  .searchbar svg{color:#b1c8b7}
+  .assistant-panel{background:rgba(30,41,33,.97);border-color:#49604d;color:#e8f4ec}
+  .assistant-config{background:#1a291e;border-color:#384f3b;color:#e8f4ec}
+  .assistant-config label:not(.assistant-consent),.assistant-config p,
+  .assistant-consent,.assistant-private,.assistant-panel>footer{color:#bcd0c0}
+  .assistant-compose input,.assistant-config label:not(.assistant-consent)>input,
+  .assistant-config select{background:#132118;border-color:#4e6d55;color:#f0f8f1}
+  .assistant-message{background:#2b4434;color:#e6f3e9}
+  .assistant-message.user{background:#377b55;color:#f6fff7}
+  .assistant-icon,.assistant-shortcuts button,
+  .assistant-config-actions button{background:#2c4031;border-color:#4b654f;color:#d3eeda}
+  .assistant-top,.assistant-compose{border-color:#3e5543}
+  .sheet-frame{background:#1d2821;color:#e8f3ea}
+  .sheet-head{color:#edf5ef}
+  .sheet-handle{background:#6c8070}
+  .sheet-cancel,.sheet-save{color:#9be1b4}
+  #task-advanced,#task-advanced .task-advanced-fields{border-color:#455f4c}
+  #task-advanced summary{color:#a8e5bf}
+  .toast{background:#d8f0e0;color:#152a1c}
+  .bottom-nav{background:rgba(32,48,37,.82);border-color:#688672;color:#dcece0;box-shadow:0 4px 24px #0004;backdrop-filter:blur(24px) saturate(1.12);-webkit-backdrop-filter:blur(24px) saturate(1.12)}
+  .bottom-nav .tab{color:#b9cabc}
+  .bottom-nav .tab.is-active{color:#a9f0bf}
+  .app-frame::after{background:linear-gradient(to top,rgba(17,23,19,.92),rgba(17,23,19,0))}
+  #workspace .xy-first-paint{background:transparent}
+  #workspace .xy-boot-error{background:#202a23;color:#e6f4e8}
+}
+@media (prefers-color-scheme: dark) and (prefers-reduced-transparency: reduce),
+       (prefers-color-scheme: dark) and (prefers-contrast: more) {
+  .bottom-nav,.glass-btn,.assistant-panel{
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important;
+    background:#25382b!important;border-color:#66846e!important
+  }
+  .bottom-nav::before{background:#3b5b43!important;box-shadow:none!important}
+  .app-frame::after{
+    background:linear-gradient(to bottom,transparent 0%,#111713 88%)!important;
+    mask-image:none!important;-webkit-mask-image:none!important;
+    backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+  }
+}
+/* Specificity repairs found in real 390px and 1440px screenshots:
+   V4 uses #workspace-qualified labels, plus animated selection pseudo-elements. */
+@media (prefers-color-scheme: dark) {
+  #workspace .settings-row .label{color:#e1efe4}
+  #workspace .settings-row .value{color:#c3d5c7}
+  #workspace .v4-mood-picker{background:#223027;border-color:#425a46;box-shadow:none}
+  #workspace .v4-mood-picker::before{background:#385d43;box-shadow:inset 0 0 0 1px #679d73}
+  #workspace .v4-mood-option,
+  #workspace .v4-mood-option.is-active{color:#c8ddcd}
+  #workspace .v4-mood-option.is-active{color:#ecfff0}
+  #workspace .v4-mood-option:hover:not(.is-active){background:#304436}
+  #workspace .v4-journal-paper textarea{color:#e4f3e8;background:#1b2b20}
+  #workspace .v4-journal-paper textarea::placeholder{color:#aec4b3}
+  .v4-develop-segments::before{background:#3b5942;box-shadow:0 1px 8px #0003}
+  .bottom-nav::before{background:#375640;box-shadow:0 1px 12px #0004}
+  .bottom-nav .tab.is-active{color:#f0fff3}
+  .bottom-nav .tab:not(.is-active){color:#bbcebf}
+  .side-nav .nav-item.is-active{background:#314a37;color:#e9faee;box-shadow:none}
+  .side-nav .nav-item.is-active svg{color:#9aebba}
+  #workspace .dayflow-task-name,
+  #workspace .dayflow-task-title,
+  #workspace .dayflow-time-name{color:#e4f2e7}
+  #workspace .dayflow-task-row button,
+  #workspace .v4-task-name{color:#e2f0e5}
+  #workspace .dayflow-task-row small{color:#b5c8b9}
+  #workspace .v4-journal-paper,
+  #workspace .v4-history-section .group,
+  #workspace .v4-goals-section .group{background:#202d24;border-color:#415645}
+  #workspace .v4-goal-checkin{background:#2f4936;color:#c0eccd}
+  #workspace .v4-goal-caption,
+  #workspace .v4-goal-content>small{color:#b3c9b9}
+  #workspace .v4-goal-progress{background:#415648}
+  #workspace .v4-calendar-actions button{border:1px solid #3f5947;border-radius:11px;padding:0 10px;min-height:44px}
+  #workspace .native-timeline-scroll .native-event.course{background:#314e39;color:#e1f5e7}
+  #workspace .native-timeline-scroll .native-event.event{background:#584333;color:#ffead6}
+  #workspace .native-timeline-scroll .native-event-title{color:inherit}
+  #workspace .native-timeline-scroll .native-event-detail{color:#d1e6d5}
+  #workspace .native-timeline-scroll .hour-label{color:#b9cbbe}
+  #workspace .native-timeline-scroll .hour-line{background:#3c5343}
+  .settings-row .setting-icon{background:#2e4b37;color:#c0eacf}
+  #workspace .dayflow-timeline-empty,
+  #workspace .dayflow-task-list,
+  #workspace .dayflow-timeline-list,
+  #workspace .v4-unified-list{background:#202a23;color:#dceae0}
+  .v4-mood-face{color:#c2ddc8}
+  @media(max-width:700px){
+    .app-frame::after{background:linear-gradient(to bottom,transparent 0%,rgba(17,23,19,.025) 30%,rgba(17,23,19,.18) 58%,rgba(17,23,19,.42) 82%,rgba(17,23,19,.58) 100%)}
+  }
+}
+/* Journal history, stats and conditional empty states are distinct from the editor. */
+@media (prefers-color-scheme: dark) {
+  .v4-record-empty,.v4-journal-history,.v4-stats-section{background:#202a23;border-color:#3a5040;color:#b8ccbd}
+  .v4-journal-row{color:#e6f4e9}
+  .v4-journal-row:hover,.v4-journal-row.is-selected{background:#2d4233}
+  .v4-journal-row-date{color:#e1f0e5}
+  .v4-journal-row-preview,.v4-stats-line small,
+  .v4-stats-note,.v4-ai-disclaimer{color:#b5c7b9}
+  .v4-journal-row>span:last-child svg{color:#a9c4b2}
+  .v4-journal-save{background:#355b42;color:#d6f6e0;min-height:44px}
+  .v4-journal-toolbar>span{color:#aebfb1}
+  .v4-stats-line{border-color:#3e5144}
+  .v4-ask-companion{color:#9dddb5}
+  .v4-completed-goal-row button{color:#deefe2}
+  .v4-completed-goal-row button:last-child{color:#a1e6b9}
+}
+@media (forced-colors: active) {
+  .bottom-nav,.glass-btn,.assistant-panel,.dayflow-focus,.v4-develop-segments,
+  .v4-item-segments,.settings-group,.v4-unified-list{forced-color-adjust:auto}
+  .bottom-nav .tab.is-active,.v4-item-segments button.is-active,
+  .v4-develop-segments button.is-active{outline:2px solid Highlight;outline-offset:-3px}
+  button:focus-visible,a:focus-visible,input:focus-visible,
+  textarea:focus-visible,select:focus-visible{outline:3px solid Highlight;outline-offset:3px}
+}

@@ -172,3 +172,13 @@
 - **完整回归：** 新施工分支重新跑 19 个 V4/旧功能专项和 5 个仓库级测试，**24/24 组 PASS**，进程 exit 0。逐项输出 `E:/CHATGPT/work/xiaoya-v4-stage2-qa-20261103.{json,log}`。
 - **长中文与缩放近似检查：** 在 320px、390px 移动宽度和 720px 桌面有效 CSS 宽度，用真实 Edge 创建长中文任务并检查完整文本换行、无横向溢出、保存后仍可导航；**9/9 PASS**。720px 只近似对应 1440px 视口的 200% 浏览器重排，**不能宣称完成真实操作系统文字放大、VoiceOver 或 iPhone Safari 真机验收**。
 - **剩余人工关口：** 真机 Safari 动态地址栏/键盘和 120Hz 手感、实际 200% 字体/VoiceOver、完整暗色及高对比度、用户审美确认和跨内核任意背景 L2 折射仍待独立验证；不可因上述模拟通过就宣称 Apple 原生或全量完成。
+
+## K. 2026-11-04｜已发布最新版后，系统深色与对比度适配
+
+- **先确认发布**：从 `96ad937` 安全快进推送到 `d93acd3`（无强推），GitHub Actions run `41674474156` 结论 success；公共固定评委地址 `https://ndshuge.github.io/xiaoya-lifelab/?judge=1` 在独立浏览器新会话最终 **5/5 PASS**，真实加载 `app.mjs?v=4.5.5`、`assistant.css?v=20261103.1`，导航/输入框行为生效。初次公网检查曾命中旧缓存，发布状态不以 Git push 代替浏览器加载事实。
+- **新独立工作树**：`E:/CHATGPT/projects/_xiaoya_v4_a11y_20261104`，基线 `origin/main@d93acd3`。没有改动评委固定地址、旧版 V3、个人数据存储格式或其他会话的脏工作树。
+- **实际 RED**：原 V4 将 `:root color-scheme` 固定 light，Edge/WebKit 系统 dark 下仍是白底；基础主题审计 12/20，通过浅色但深色页面/设置/表单 8 条失败。后续截图还发现设置行文案过暗、心情组白底、历史空态白底、桌面选中项和移动 Dock 选中层白底。
+- **实现**：新增最后加载的 `native-v4/theme-accessibility.css`，尊重 `prefers-color-scheme: dark` 的中性墨绿内容层和分层导航，仅在媒体查询下覆盖；设置、任务、日记、统计、情绪、AI 对话、编辑 Sheet、时间轴、主导航按语义适配；不使用照片蒙版或假 L2。浏览器工具栏 `theme-color` 分别指定亮/暗，浅色版保持原有样式。
+- **高对比度兼容**：实际用 Chromium CDP 模拟 dark + `prefers-reduced-transparency: reduce` / dark + `prefers-contrast: more`，旧 CSS 会让 Dock pill 和底部 edge 重返浅白（定向测试 39/41）；修正最后优先级规则后专项 **41/41 PASS**，强制颜色键盘焦点也可用。
+- **新鲜全量回归**：在合并前的同一独立施工工作树运行 **25/25 组 PASS**，含 24 组 V4/V3/AI/评委入口/版本既有套件及新 `qa-v4-theme-a11y.cjs`，进程 exit 0；日志在 `E:/CHATGPT/work/xiaoya-v4-a11y-qa-20261104.{json,log}`。记录 Edge/WebKit 320/390 暗亮与桌面深色实际截图：`E:/CHATGPT/work/xiaoya-v4-theme-review-20261104/`，曾先目检再修正设置/心情/历史/导航层并重新取图。桌面 CSS `zoom=2` 仅是浏览器重排近似验收，不等同完整操作系统字体放大。
+- **验证边界/下一步**：真实 iPhone Safari 地址栏、第三方输入法、VoiceOver、OS 200% 字体、实际帧率及用户视觉认可仍 **UNVERIFIED**；真实跨浏览器 L2 折射不是本次 CSS L1。必须先完成设备人工验收，再评估可退回的局部 L2 试验。
