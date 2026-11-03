@@ -1,11 +1,11 @@
-/* Contest entry contract: original QR stays fixed, while Native V3 lives inside this repo. */
+/* Contest entry contract: original QR stays fixed, while Native V4 lives inside this repo. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const target = 'https://ndshuge.github.io/xiaoya-lifelab/little-works/xiaoya-apple/native-v3/';
+const target = 'https://ndshuge.github.io/xiaoya-lifelab/little-works/xiaoya-apple/native-v4/';
 
 function redirect(source) {
   const url = new URL(source);
@@ -27,7 +27,7 @@ function redirect(source) {
   return destination;
 }
 
-test('submitted judge link opens bundled Apple Native V3 from the original repository', () => {
+test('submitted judge link opens bundled Apple Native V4 from the original repository', () => {
   assert.equal(redirect('https://ndshuge.github.io/xiaoya-lifelab/?judge=1'), target + '?judge=1');
 });
 
@@ -58,5 +58,5 @@ test('original edition direct link stays present', () => {
 });
 
 test('without JavaScript, HTML fallback links to Apple edition', () => {
-  assert.match(html, /<noscript>.*?url=\.\/little-works\/xiaoya-apple\/native-v3\//s);
+  assert.match(html, /<noscript>.*?url=\.\/little-works\/xiaoya-apple\/native-v4\//s);
 });

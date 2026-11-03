@@ -1,31 +1,32 @@
 # 小芽 · 正式主仓库与版本切换说明
 
-更新：2026-11-02
+更新：2026-11-03
 
 ## 唯一比赛入口
 
 - 正式 URL：`https://ndshuge.github.io/xiaoya-lifelab/?judge=1`（**保持不变**）。
 - URL 属于原独立仓库 `https://github.com/ndshuge/xiaoya-lifelab`。
-- 仓库根 `index.html` 现在**只在仓库内部跳转**到 `little-works/xiaoya-apple/native-v3/`。以前会跳到另一个仓库 `ndshuge-galaxy`；现在不再需要另一仓库参与网站运行。
-- `judge=1` 会透传到 Native V3，按已有规则进入标明的合成演示数据；用户选择私人模式后仍按既有存储逻辑隔离。
+- 仓库根 `index.html` 现在**只在仓库内部跳转**到 `little-works/xiaoya-apple/native-v4/`。以前会跳到另一个仓库 `ndshuge-galaxy`；现在不再需要另一仓库参与网站运行。
+- `judge=1` 会透传到 Native V4，按已有规则进入标明的合成演示数据；用户选择私人模式后仍按既有存储逻辑隔离。
 - 2026-10-22–24 的参赛 ZIP 文件是提交时的**不可变历史源码快照**，与后来在线网站更新并不是同一个东西。在线升级不会悄悄修改已上传 ZIP。
 
-## 同一 GitHub 仓库内的四个版本
+## 同一 GitHub 仓库内的五个版本
 
 | 版本 | 在线路径 | 说明 |
 | --- | --- | --- |
-| Apple Native V3（正式） | `/little-works/xiaoya-apple/native-v3/` | 当前评委可见版，使用 2026-11-02 的已验证 Apple 源码，包含已恢复的桌宠对话、可选真实模型连接、本地规则建议与成长规划 |
+| Apple Native V4（正式） | `/little-works/xiaoya-apple/native-v4/` | 三主导航「今天 / 事项 / 发展」，真实时间线与可选择截止时间的独立待办池，保留对话与成长规划，减轻按压抖动并增加底部渐变玻璃 |
+| Apple Native V3（历史） | `/little-works/xiaoya-apple/native-v3/` | 2026-11-02 已验证的 Apple 版本，供历史对比和回退，不随 V4 修改 |
 | 经典 LifeLab | `/original.html` | 旧版成熟功能及源码文件仍留在仓库根目录 |
 | Apple 早期版 | `/little-works/xiaoya-apple/` | Apple 视觉迭代存档 |
 | Pro · DAYLINE | `/pro/` | 独立试验预览，不代替评委正式版 |
 
-访问 `/versions/` 可浏览全部版本；四个页面自身也提供左下角的「版本」切换控件。版本导航不读取、上传或修改个人记录。旧版与新版的数据结构相近，但切换版本前仍建议先导出备份。
+访问 `/versions/` 可浏览全部版本；各版本页面也提供左下角的「版本」切换控件。版本导航不读取、上传或修改个人记录。旧版与新版的数据结构相近，但切换版本前仍建议先导出备份。
 
 ## 源码来源与更新
 
 - 正式仓库唯一发布来源：`ndshuge/xiaoya-lifelab`，GitHub Pages `main`。
 - Apple 研发原仓库：`ndshuge/ndshuge-galaxy`。
-- 当前同步源提交：`4091273a87e0a9d3039a24833604169085946d16`，已复制 76 个 **Git 已跟踪**源文件，未复制 screenshots、工作缓存或其他开发者的未提交文件。
+- V3 的同步源提交（历史基线）：`4091273a87e0a9d3039a24833604169085946d16`，已复制 76 个 **Git 已跟踪**源文件，未复制 screenshots、工作缓存或其他开发者的未提交文件。
 - 详细元数据：`APPLE_SOURCE_PROVENANCE.json`。
 - 同步脚本：`scripts/sync_apple_from_galaxy.py`。默认仅预览；`--apply` 会在正式仓库内部的 `little-works/xiaoya-apple/` 更新镜像，并自动重新注入版本切换脚本。若目标已有未提交的已跟踪源码改动，则拒绝覆盖。
 

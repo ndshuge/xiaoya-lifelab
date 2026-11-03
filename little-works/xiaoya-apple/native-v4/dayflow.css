@@ -1,0 +1,161 @@
+/* DAYFLOW V4 · quiet content-first surfaces and purposeful motion.
+   Original Native V3 and shared Liquid Glass engines stay untouched. */
+:root{--dayflow-ink:#203127;--dayflow-subtle:#708278;--dayflow-stroke:#e4ebe5}
+.dayflow-home{color:var(--dayflow-ink)}
+.dayflow-heading{padding:14px 1px 21px;align-items:flex-end}
+.dayflow-heading .eyebrow{color:#698071;font-size:13px;line-height:1.65}
+.dayflow-heading h1{font-size:43px;letter-spacing:-2.5px;margin:8px 0 0}
+.dayflow-header-period{font-size:.52em;letter-spacing:-.7px;font-weight:480;color:#8a9b90;vertical-align:baseline}
+.dayflow-lead{color:#7a8a80!important;margin:8px 0 0!important;font-size:13px!important}
+.dayflow-demo-tag{display:inline-flex;vertical-align:middle;padding:3px 7px;margin-left:8px;border-radius:7px;background:#e6efe8;color:#3f8063;font-size:10px;letter-spacing:0}
+.dayflow-heading .primary{border-radius:14px;background:#197c56;min-height:42px}
+.dayflow-overview{display:grid;grid-template-columns:minmax(0,1.06fr) minmax(0,.94fr);gap:15px;margin:0 0 33px;align-items:stretch}
+.dayflow-overview>*{min-width:0}
+.dayflow-focus,.dayflow-advice{min-height:226px;border-radius:25px;padding:21px 23px;display:flex;flex-direction:column;overflow:hidden}
+.dayflow-focus{background:linear-gradient(135deg,#e0f0e5 0%,#e8f5eb 58%,#eff8f0 100%);border:1px solid rgba(69,127,92,.1)}
+.dayflow-rail{display:flex;gap:9px;align-items:center;color:#276e4e;font-size:12px;font-weight:690;white-space:nowrap}
+.dayflow-rail-mark{width:7px;height:7px;border-radius:50%;background:#25845d;flex-shrink:0}
+.dayflow-rail-time{margin-left:auto;font-size:11px;font-weight:580;color:#58806c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dayflow-focus-main{display:flex;align-items:center;gap:14px;margin:18px 0 17px}
+.dayflow-focus-icon{width:51px;height:51px;flex:0 0 51px;display:grid;place-items:center;border-radius:17px;background:rgba(255,255,255,.75);color:#287a58;box-shadow:0 1px 4px rgba(44,112,73,.035)}
+.dayflow-focus-icon svg{width:26px;height:26px}
+.dayflow-focus-body{min-width:0;flex:1}
+.dayflow-focus-title{font-size:22px;line-height:1.4;letter-spacing:-.6px;font-weight:725;display:block;color:#1c583d;text-align:left;border:0;background:none;padding:0;max-width:100%;overflow-wrap:anywhere}
+.dayflow-focus-body p{margin:7px 0 0;font-size:12px;color:#6b8976;line-height:1.65}
+.dayflow-focus-open .dayflow-focus-title{font-size:17px;letter-spacing:-.35px}
+.dayflow-focus-body .dayflow-future-label{font-size:10px;color:#48765b;display:inline-block;margin-top:10px;font-weight:650}
+.dayflow-focus-body p.dayflow-future{color:#557b68;font-size:11.5px;line-height:1.62;margin:3px 0 0}
+.dayflow-focus-bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid rgba(47,125,84,.13)}
+.dayflow-focus-bottom>span{font-size:11px;color:#6c8d7a}
+.dayflow-focus-bottom button{display:inline-flex;align-items:center;gap:4px;border:0;background:transparent;color:#256d4c;font-size:12px;font-weight:680;padding:7px 0 7px 9px;white-space:nowrap}
+.dayflow-focus-bottom svg,.dayflow-section-head button svg,.dayflow-approve svg{width:15px;height:15px}
+.dayflow-advice{background:#fff;border:1px solid #edf1ec}
+.dayflow-advice-head{display:flex;align-items:center;gap:10px}
+.dayflow-sprout{height:38px;width:38px;border-radius:13px;background:#eaf5ee;display:grid;place-items:center;color:#37845e;flex:0 0 38px}
+.dayflow-sprout svg{width:22px;height:22px}
+.dayflow-advice-head small{font-size:10px;color:#819287;display:block;line-height:1.5}
+.dayflow-advice-head h2{margin:2px 0 0;letter-spacing:-.3px;font-size:14px;font-weight:705}
+.dayflow-advice-content{margin:18px 0 15px}
+.dayflow-advice-content strong{font-size:18px;line-height:1.43;letter-spacing:-.4px;display:block;overflow-wrap:anywhere}
+.dayflow-advice-content p{font-size:12px;line-height:1.65;color:#718077;margin:7px 0 0;overflow-wrap:anywhere}
+.dayflow-advice-actions{display:flex;align-items:center;gap:7px;margin-top:auto;flex-wrap:wrap}
+.dayflow-advice-actions button{min-height:34px;padding:7px 12px;display:flex;align-items:center;gap:4px;font-size:12px;border-radius:11px;border:0;font-weight:630}
+.dayflow-approve{background:#edf6f0;color:#257552}.dayflow-reject{background:#f6f6f5;color:#879189}
+.dayflow-section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:13px}
+.dayflow-section-head>div small{display:block;font-size:10px;letter-spacing:.13em;color:#94a59a;font-weight:680}
+.dayflow-section-head h2{margin:5px 0 0;font-size:19px;letter-spacing:-.45px;font-weight:745}
+.dayflow-section-head button{display:flex;gap:4px;align-items:center;border:0;background:transparent;color:#387b58;font-size:12px;font-weight:640;padding:8px 2px}
+.dayflow-timeline{margin-bottom:32px}
+.dayflow-timeline-list{margin:0;list-style:none;padding:8px 20px 8px 18px;background:#fff;border-radius:22px}
+.dayflow-time-row{display:grid;grid-template-columns:48px 13px minmax(0,1fr);gap:12px;align-items:flex-start;position:relative;min-height:79px;padding:13px 0 9px}
+.dayflow-time-row:not(:last-child):after{content:"";position:absolute;left:66px;top:29px;bottom:-14px;width:1px;background:#e3eee7}
+.dayflow-hour{color:#6a8172;font-size:12px;font-weight:650;font-variant-numeric:tabular-nums;padding-top:5px;white-space:nowrap}
+.dayflow-dot{position:relative;z-index:1;width:11px;height:11px;border-radius:50%;background:#5cab7e;border:3px solid #e7f3eb;margin-top:6px;box-sizing:content-box}
+.dayflow-time-row.is-finished{opacity:.52}
+.dayflow-time-row.is-current .dayflow-dot{background:#208357;box-shadow:0 0 0 3px rgba(46,137,86,.13)}
+.dayflow-time-content{min-width:0;text-align:left;border:0;background:transparent;padding:0 0 7px}
+.dayflow-time-name{display:block;font-weight:700;font-size:15px;color:#28392e;line-height:1.45;overflow-wrap:anywhere}
+.dayflow-time-content small{display:block;margin-top:4px;color:#86948b;font-size:12px;line-height:1.48}
+.dayflow-timeline-empty{display:flex;align-items:center;gap:13px;background:#fff;border:1px solid #f0f2ef;border-radius:21px;padding:23px 22px}
+.dayflow-timeline-empty>span{flex:0 0 45px;width:45px;height:45px;border-radius:14px;background:#f0f6f1;color:#5c9e76;display:grid;place-items:center}
+.dayflow-timeline-empty>span svg{width:22px;height:22px}
+.dayflow-timeline-empty strong{font-size:14px;font-weight:690}
+.dayflow-timeline-empty p{margin:5px 0 0;color:#8b968d;font-size:12px;line-height:1.65}
+.dayflow-tasks{margin-bottom:75px}
+.dayflow-task-count{margin-left:5px;color:#63987a;font-size:12px;font-weight:660}
+.dayflow-task-list{border-radius:20px;background:#fff;overflow:hidden}
+.dayflow-task-row{display:flex;gap:13px;align-items:center;padding:14px 18px;min-height:72px;position:relative}
+.dayflow-task-row+.dayflow-task-row:before{content:"";position:absolute;top:0;left:58px;right:0;height:1px;background:#edf0ec}
+.dayflow-task-main{min-width:0;flex:1}
+.dayflow-task-main>button{display:block;max-width:100%;text-align:left;color:#27392d;font-size:14px;font-weight:660;background:none;border:0;padding:0;overflow-wrap:anywhere}
+.dayflow-task-main small{display:block;margin-top:5px;color:#8a978c;font-size:11.5px;line-height:1.4}
+.dayflow-task-due{font-size:11px;white-space:nowrap;color:#718478;margin-left:5px}
+.dayflow-task-due.urgent,.dayflow-task-due.overdue{color:#ca7256}
+.dayflow-tasks-empty{background:#fff;border-radius:19px;padding:23px;font-size:13px;color:#839286}
+.dayflow-tasks-empty button{color:#29815a;border:0;background:none;font-size:13px;font-weight:650;padding:8px}
+.dayflow-plan-tabs{display:flex;gap:5px;margin:0 0 19px;padding:4px;background:#e9eeea;border-radius:13px;width:max-content}
+.dayflow-plan-tabs button{min-height:35px;border:0;background:transparent;border-radius:10px;padding:8px 16px;color:#678071;font-size:13px;font-weight:640}
+.dayflow-plan-tabs button.is-active{background:#fff;color:#2e694b;box-shadow:0 2px 8px #182f2310}
+.dayflow-plan-inbox-preview{margin-top:22px}
+.dayflow-plan-inbox-preview .row{min-height:64px}
+.dayflow-plan-summary{font-size:12px;color:#728478;margin:0 0 18px}
+body[data-view="today"] .companion-inner{background:linear-gradient(165deg,#f9faf8,#f2f7f1);border-color:#e9efe8}
+body[data-view="today"] .companion-stats{display:none}
+body[data-view="today"] .pet-illustration img{max-height:148px}
+@media (max-width:1180px){.dayflow-overview{grid-template-columns:1fr}.dayflow-focus,.dayflow-advice{min-height:190px}.dayflow-focus-main{margin:16px 0}}
+@media (min-width:1181px){.dayflow-overview{grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr)}}
+@media (max-width:700px){
+ .dayflow-heading{padding:8px 0 20px;align-items:flex-end}
+ .dayflow-heading h1{font-size:37px;letter-spacing:-1.65px}
+ .dayflow-header-period{display:none}
+ .dayflow-lead{font-size:12px!important;margin:8px 0 0!important}
+ .dayflow-demo-tag{font-size:10px;margin-left:4px}
+ .dayflow-heading .primary{min-height:35px;padding:6px 9px;font-size:12px;border-radius:11px}
+ .dayflow-heading .primary svg{height:15px;width:15px}
+ .dayflow-overview{gap:12px;margin-bottom:26px}
+ .dayflow-focus,.dayflow-advice{min-height:0;border-radius:22px;padding:18px 17px}
+ .dayflow-rail{font-size:12px}
+ .dayflow-focus-main{margin:15px 0}
+ .dayflow-focus-title{font-size:20px}
+ .dayflow-focus-open .dayflow-focus-title{font-size:16px}
+ .dayflow-focus-icon{width:44px;height:44px;flex-basis:44px;border-radius:14px}
+ .dayflow-advice-content{margin:12px 0}
+ .dayflow-advice-content strong{font-size:17px}
+ .dayflow-advice-content p{margin-top:5px}
+ .dayflow-advice-actions{padding-top:3px}
+ .dayflow-timeline-empty{padding:18px 15px;align-items:flex-start}
+ .dayflow-timeline-empty>span{height:39px;width:39px;flex-basis:39px}
+ .dayflow-timeline-list{padding:7px 13px}
+ .dayflow-time-row{grid-template-columns:43px 12px 1fr;gap:10px;min-height:70px}
+ .dayflow-time-row:not(:last-child):after{left:59px}
+ .dayflow-task-row{padding:13px 12px;gap:10px}
+ .dayflow-task-row+.dayflow-task-row:before{left:45px}
+ .dayflow-task-due{font-size:10.5px}
+ .dayflow-tasks{margin-bottom:115px}
+ .dayflow-plan-tabs{width:100%;display:grid;grid-template-columns:1fr 1fr}
+ .dayflow-plan-tabs button{padding:8px 5px}
+ .bottom-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;position:fixed;isolation:isolate}
+ .bottom-nav::before{content:"";position:absolute;z-index:-1;left:7px;top:6px;bottom:5px;width:calc((100% - 14px)/3);background:rgba(255,255,255,.87);border-radius:19px;box-shadow:0 3px 12px #182f2110;transform:translateX(calc(var(--dayflow-tab-index,0) * 100%));transition:transform .42s var(--spring)}
+ .bottom-nav .tab{min-width:0;z-index:1;position:relative;min-height:49px}
+ .bottom-nav .tab.is-active{background:none;box-shadow:none}
+ .bottom-nav .tab:active{transform:scale(.985)}
+}
+/* V4 assistant motion is driven by interruptible WAAPI, not the old page-in fade. */
+.assistant-panel{animation:none!important}
+.page{animation:none}.page.page--enter{animation:dayflow-page-enter .24s cubic-bezier(.2,.8,.3,1) both}
+@keyframes dayflow-page-enter{from{opacity:.83;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){
+ .bottom-nav::before{transition:none!important}
+ .dayflow-focus,.dayflow-advice,.dayflow-timeline,.dayflow-task-row{animation:none!important;transition:none!important}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+ .dayflow-focus{background:#e5f1e9}
+ .dayflow-advice{background:#fff}
+}
+
+/* V4 Apple: contextual blur fades the scrolling content above the floating dock.
+ * The overlay must never intercept touch, scroll, keyboard or text selection. */
+@media(max-width:700px){
+  .bottom-nav { overflow:visible; isolation:isolate; }
+  .bottom-nav::after{
+    content:"";position:absolute;pointer-events:none;z-index:-2;
+    left:-12px;right:-12px;bottom:100%;height:89px;
+    backdrop-filter:blur(10px) saturate(1.13);
+    -webkit-backdrop-filter:blur(10px) saturate(1.13);
+    background:linear-gradient(to bottom,rgba(245,245,247,0),rgba(245,245,247,.5) 60%,rgba(245,245,247,.87));
+    mask-image:linear-gradient(to bottom,transparent,black 58%);
+    -webkit-mask-image:linear-gradient(to bottom,transparent,black 58%);
+  }
+  .bottom-nav .tab:active{transform:scale(.985)}
+  .topbar .topbrand img{display:none}
+  .topbar .topbrand strong{font-size:15px;font-weight:630;letter-spacing:-.04em;color:#60726a}
+  .toolbar-actions #toolbar-chat-trigger{overflow:hidden;padding:0}
+  .toolbar-actions #toolbar-chat-trigger img{width:100%;height:100%;display:block;object-fit:cover;border-radius:50%}
+  .workspace-grid{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more){
+  .bottom-nav::after{backdrop-filter:none;-webkit-backdrop-filter:none;background:linear-gradient(to bottom,transparent,#f5f5f7)}
+}
+@media (prefers-reduced-motion:reduce){
+  .bottom-nav .tab{transition:none!important}
+}

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f5f7"><meta name="description" content="小芽 · 让每一天更有条理">
+<title>小芽 · DAYFLOW</title>
+<link rel="icon" href="../assets/brand/xiaoya_sprite_v1.svg" type="image/svg+xml">
+<link rel="stylesheet" href="./style.css?v=3.1.1">
+<link rel="stylesheet" href="./assistant.css?v=20261102">
+<link rel="stylesheet" href="./growth-panel.css?v=20261102">
+<link rel="stylesheet" href="./dayflow.css?v=4.0.0">
+<script type="module" src="./app.mjs?v=4.0.0"></script>
+</head>
+<body>
+<svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+<symbol id="ic-chat" viewBox="0 0 24 24"><path d="M5 5.5h14a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-7l-5 3v-3H5a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z"/><path d="M8 10.5h8M8 13.5h5"/></symbol>
+<symbol id="ic-today" viewBox="0 0 24 24"><rect x="3.5" y="4.2" width="17" height="16" rx="4"/><path d="M7.8 2.8v4M16.2 2.8v4M3.5 9h17"/><path d="m8.5 14 2.2 2.2 4.8-5"/></symbol>
+<symbol id="ic-calendar" viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M7.5 2.5v4m9-4v4M3 10h18"/></symbol>
+<symbol id="ic-list" viewBox="0 0 24 24"><circle cx="5" cy="7" r="1.4"/><circle cx="5" cy="12" r="1.4"/><circle cx="5" cy="17" r="1.4"/><path d="M9 7h11M9 12h11M9 17h11"/></symbol>
+<symbol id="ic-growth" viewBox="0 0 24 24"><path d="M12 21v-9M12 14c-6 0-8-4-8-9 6 .2 8 3.5 8 9ZM12 12c0-5 3.2-8 8-8 0 5-2.7 8-8 8Z"/></symbol>
+<symbol id="ic-review" viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></symbol>
+<symbol id="ic-settings" viewBox="0 0 24 24"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="2.5"/><circle cx="15" cy="17" r="2.5"/></symbol>
+<symbol id="ic-plus" viewBox="0 0 24 24"><path d="M12 4v16M4 12h16"/></symbol>
+<symbol id="ic-left" viewBox="0 0 24 24"><path d="m14.5 4-8 8 8 8"/></symbol>
+<symbol id="ic-right" viewBox="0 0 24 24"><path d="m9.5 4 8 8-8 8"/></symbol>
+<symbol id="ic-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="19" cy="12" r="1.4"/></symbol>
+<symbol id="ic-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+<symbol id="ic-check" viewBox="0 0 24 24"><path d="m5 12 4.5 4.5L19 7"/></symbol>
+<symbol id="ic-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.7 2.3"/></symbol>
+<symbol id="ic-archive" viewBox="0 0 24 24"><path d="M4 4h16v4H4zM5 8v12h14V8M9 13h6"/></symbol>
+<symbol id="ic-edit" viewBox="0 0 24 24"><path d="m4 20 4-1 11-11-3-3L5 16l-1 4ZM14.5 6.5l3 3"/></symbol>
+<symbol id="ic-export" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M5 17v4h14v-4"/></symbol>
+</svg>
+<div class="app-frame">
+  <aside class="sidebar" aria-label="应用侧边栏">
+    <div class="brandline"><img src="../assets/brand/xiaoya_hero_v1.webp" width="42" height="42" alt=""><div><strong>小芽</strong><small>你的日常</small></div></div>
+    <div class="side-caption">个人空间</div>
+    <nav id="main-nav" class="side-nav" aria-label="主导航">
+      <button class="nav-item is-active" data-view="today"><svg><use href="#ic-today"/></svg>今天<span class="side-counter" id="nav-count"></span></button>
+      <button class="nav-item" data-view="schedule"><svg><use href="#ic-calendar"/></svg>事项</button>
+      <button class="nav-item" data-view="goals"><svg><use href="#ic-growth"/></svg>发展</button>
+    </nav>
+    <div class="side-bottom"><div class="side-divider"></div><button class="nav-item" data-view="settings"><svg><use href="#ic-settings"/></svg>设置</button><div class="side-privacy">仅保存在当前浏览器</div></div>
+  </aside>
+  <div class="main-wrap">
+    <header class="topbar"><div class="topbrand"><strong>我的日常</strong></div><span id="date-compact"></span>
+      <div class="toolbar-actions"><button class="glass-btn" id="toolbar-chat-trigger" data-action="pet" title="与小芽对话" aria-label="与小芽对话"><img src="../assets/brand/xiaoya_hero_v1.webp" width="34" height="34" alt=""></button><button class="glass-btn" data-action="search" title="搜索" aria-label="搜索"><svg><use href="#ic-search"/></svg></button><button class="glass-btn" data-view="settings" title="设置" aria-label="设置"><svg><use href="#ic-settings"/></svg></button><button class="glass-btn add-top" data-action="add" title="添加记录" aria-label="添加记录"><svg><use href="#ic-plus"/></svg></button></div>
+    </header>
+    <div class="workspace-grid">
+      <main id="workspace" class="workspace" tabindex="-1" aria-live="polite"></main>
+      <aside class="companion" aria-label="小芽陪伴"><div class="companion-inner">
+        <div class="companion-head"><span>小芽在这里</span><button class="link-button" data-action="pet" aria-label="与小芽对话">开始对话</button></div>
+        <button class="pet-illustration" type="button" data-action="pet" aria-label="点击小芽开始对话"><img src="../assets/brand/xiaoya_hero_v1.webp" alt="小芽角色" width="190" height="190"></button>
+        <div class="pet-note"><strong id="pet-title">先从一件小事开始</strong><p id="pet-note">把重要的事放在心上，也给喜欢的事留时间。</p></div>
+        <div class="companion-quick-actions"><button type="button" data-view="goals">成长规划</button><button type="button" data-view="review">查看复盘</button></div><div class="companion-rule"></div>
+        <div class="companion-stats" id="aside-stats"></div>
+      </div></aside>
+    </div>
+  </div>
+  <nav class="bottom-nav" id="bottom-nav" aria-label="底部导航">
+    <button data-view="today" class="tab is-active"><svg><use href="#ic-today"/></svg><span>今天</span></button>
+    <button data-view="schedule" class="tab"><svg><use href="#ic-calendar"/></svg><span>事项</span></button>
+    <button data-view="goals" class="tab"><svg><use href="#ic-growth"/></svg><span>发展</span></button>
+  </nav>
+  <button class="floating-add" data-action="add" aria-label="新增任务"><svg><use href="#ic-plus"/></svg></button>
+</div>
+<dialog id="editor" class="sheet" aria-labelledby="sheet-title">
+  <form method="dialog" class="sheet-frame" id="sheet-body"><div class="sheet-handle" aria-hidden="true"></div><header class="sheet-head"><button type="button" class="sheet-cancel" data-action="close">取消</button><h2 id="sheet-title">添加事项</h2><button type="submit" class="sheet-save" id="sheet-save">保存</button></header><div id="sheet-fields"></div></form>
+</dialog>
+<input type="file" id="import-file" accept=".json,application/json" hidden>
+<input type="file" id="calendar-file" accept=".csv,.ics,text/calendar,text/csv" hidden>
+<div class="toast" role="status" aria-live="polite" id="toast"></div>
+<script src="../../../version-switcher.js?v=20261102"></script>
+</body>
+</html>

@@ -1,8 +1,8 @@
-## 当前正式版本与入口（2026-11-02）
+## 当前正式版本与入口（2026-11-03）
 
-**`ndshuge/xiaoya-lifelab` 已是小芽固定比赛 URL 的正式主仓库，Apple 最新版源码也在此仓库内部。** 评委原链接 `https://ndshuge.github.io/xiaoya-lifelab/?judge=1` 保持不变，默认打开 `little-works/xiaoya-apple/native-v3/`，不再跳往 `ndshuge-galaxy`。
+**`ndshuge/xiaoya-lifelab` 已是小芽固定比赛 URL 的正式主仓库，Apple 最新版源码也在此仓库内部。** 评委原链接 `https://ndshuge.github.io/xiaoya-lifelab/?judge=1` 保持不变，默认打开 `little-works/xiaoya-apple/native-v4/`，不再跳往 `ndshuge-galaxy`。
 
-- [打开 Apple Native V3 正式版](little-works/xiaoya-apple/native-v3/) · [评委入口](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)
+- [打开 Apple Native V4 正式版](little-works/xiaoya-apple/native-v4/) · [评委入口](https://ndshuge.github.io/xiaoya-lifelab/?judge=1) · [保留 Native V3](little-works/xiaoya-apple/native-v3/)
 - [版本档案与切换](versions/) · [经典 LifeLab](original.html) · [Apple 早期版](little-works/xiaoya-apple/) · [Pro · DAYLINE](pro/)
 - [版本与迁移说明](VERSIONS.md) · [Apple 源码来源与提交哈希](APPLE_SOURCE_PROVENANCE.json)
 

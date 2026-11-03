@@ -1,4 +1,4 @@
-// End-to-end verification of the original contest Pages URL and all four editions.
+// End-to-end verification of the original contest Pages URL and all five editions.
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
@@ -24,9 +24,9 @@ const server=http.createServer((req,res)=>{
   const page=await ctx.newPage(),bad=[],failedResources=[];
   page.on('pageerror',e=>bad.push(e.message));
   page.on('response',r=>{if(r.status()===404)failedResources.push(r.url())});
-  await check('contest URL opens the bundled native V3, not the galaxy repository',async()=>{
+  await check('contest URL opens the bundled native V4, not the galaxy repository',async()=>{
    await page.goto(base+'?judge=1',{waitUntil:'networkidle'});
-   assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/native-v3\/\?judge=1/);
+   assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/native-v4\/\?judge=1/);
    assert.equal(await page.evaluate(()=>window.__XY_NATIVE_V3.getMode()),'demo');
    assert.ok(await page.evaluate(()=>window.__XY_NATIVE_V3.getData().tasks.length)>=2);
   });
@@ -35,7 +35,7 @@ const server=http.createServer((req,res)=>{
    await trigger.click();
    assert.equal(await trigger.getAttribute('aria-expanded'),'true');
    assert.equal(await page.locator('#xiaoya-version-list').isVisible(),true);
-   assert.equal(await page.locator('#xiaoya-version-list nav a').count(),4);
+   assert.equal(await page.locator('#xiaoya-version-list nav a').count(),5);
    assert.ok(await page.locator('#xiaoya-version-list [aria-current=page]').count()===1);
    if(process.env.XIAOYA_SCREENSHOT_DIR){fs.mkdirSync(process.env.XIAOYA_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-menu-mobile.png')})}
   });
@@ -58,9 +58,9 @@ const server=http.createServer((req,res)=>{
   });
   await check('version library has four working entry points',async()=>{
    await page.goto(base+'versions/',{waitUntil:'networkidle'});
-   assert.equal(await page.locator('.version-card').count(),4);
+   assert.equal(await page.locator('.version-card').count(),5);
    await page.locator('#version-native').click();
-   assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/native-v3\//);
+   assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/native-v4\//);
   });
   await check('original direct entry still supported with edition=original',async()=>{
    await page.goto(base+'?edition=original&judge=1',{waitUntil:'networkidle'});

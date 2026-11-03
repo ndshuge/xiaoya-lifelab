@@ -8,7 +8,8 @@
   document.head.append(css);
 
   const versions=[
-    {id:'native',name:'Apple 最新版',label:'正式 · Native V3',path:'little-works/xiaoya-apple/native-v3/'},
+    {id:'native',name:'Apple 最新版',label:'正式 · Native V4 DAYFLOW',path:'little-works/xiaoya-apple/native-v4/'},
+    {id:'v3',name:'Apple V3 · 已存档',label:'2026-11-02 · 稳定原版',path:'little-works/xiaoya-apple/native-v3/'},
     {id:'apple',name:'Apple 早期版',label:'UI · 经典 Apple 迭代',path:'little-works/xiaoya-apple/'},
     {id:'classic',name:'经典原版',label:'完整功能 · LifeLab',path:'original.html'},
     {id:'pro',name:'小芽 Pro',label:'独立预览 · DAYLINE',path:'pro/'}

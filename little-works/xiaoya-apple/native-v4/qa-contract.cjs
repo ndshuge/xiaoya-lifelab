@@ -1,0 +1,7 @@
+const {test}=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const read=(p)=>fs.readFileSync(path.join(__dirname,p),'utf8');
+test('native v3 is a new document, not an old CSS override',()=>{const h=read('index.html');assert.match(h,/<main\b[^>]*id="workspace"/);assert.match(h,/<nav\b[^>]*id="main-nav"/);assert.match(h,/<nav\b[^>]*id="bottom-nav"/);assert.doesNotMatch(h,/styles\.css|apple-next\.css|native-rebuild\.css|app\.js\?v=/);});
+test('actual existing schema/domain are reused, no second local data silo',()=>{const a=read('app.mjs'),s=read('store.mjs');assert.match(a,/\.\.\/core\.js/);assert.match(a,/\.\.\/domain\.js/);assert.match(s,/xiaoya-comparison:xiaoya-apple:personal:v1/);assert.match(s,/validateStore/);assert.match(s,/revision/);});
+test('responsiveness and accessible sheets are first-class',()=>{const h=read('index.html'),c=read('style.css');assert.match(h,/aria-label="主导航"/);assert.match(h,/<dialog\b[^>]*id="editor"/);assert.match(c,/@media\s*\(max-width:\s*700px\)/);assert.match(c, /prefers-reduced-motion/);});
+test('no decorative star or emoji AI motifs in UI',()=>{let s=read('index.html')+read('app.mjs');assert.doesNotMatch(s,/[✳✦✧⭐🌟]/);});
+test('original optical switch engine is used in actual settings',()=>{const a=read('app.mjs');assert.match(a,/import ['\"]\.\.\/glass\/components\.js['\"]/);assert.match(a,/lg-switch/);});
