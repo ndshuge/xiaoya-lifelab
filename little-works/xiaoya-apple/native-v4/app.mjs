@@ -97,7 +97,7 @@ function reviewView(d){
  (d.transactions.some(x=>x.status==='executed')?'<section class="section"><div class="section-head"><h2>可撤销的最近操作</h2></div><div class="group">'+d.transactions.filter(t=>t.status==='executed').slice(-3).reverse().map(t=>'<div class="settings-row"><span class="setting-icon">'+icon('archive')+'</span><span class="label">'+esc(t.title)+'</span><button class="small-action" data-undo="'+esc(t.id)+'">撤销</button></div>').join('')+'</div></section>':'');
 }
 function settingsRow(iconName,label,after){return '<div class="settings-row"><span class="setting-icon">'+icon(iconName)+'</span><span class="label">'+esc(label)+'</span>'+after+'</div>'}
-function switchRow(name,label,checked){return settingsRow('settings',label,'<lg-switch aria-label="'+esc(label)+'" data-setting="'+name+'" '+(checked?'checked':'')+'></lg-switch>')}
+function switchRow(name,label,checked){return '<div class="settings-row settings-toggle-row"><span class="label">'+esc(label)+'</span><lg-switch aria-label="'+esc(label)+'" data-setting="'+name+'" '+(checked?'checked':'')+'></lg-switch></div>'}
 function settingsView(d){
  const s=d.settings,mode=store.mode();
  return head('设置','')+

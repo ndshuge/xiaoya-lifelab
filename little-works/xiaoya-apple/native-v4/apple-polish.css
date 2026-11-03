@@ -172,3 +172,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","H
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
   .assistant-panel{background:#fff}
 }
+
+
+/* 2026-11-03 whole-app audit: touch accessibility for modal and optical switch.
+   Keep the visual switch track at 64 x 28, enlarge only the native input hit-area.
+   Do not scale or move button text during touch; no jitter. */
+#editor .sheet-cancel,
+#editor .sheet-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  min-height: 44px;
+  padding: 10px 4px;
+}
+.settings-row lg-switch .lg-switch__control .lg-switch__input {
+  top: -8px;
+  bottom: auto;
+  height: 44px;
+  min-height: 44px;
+}
