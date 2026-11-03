@@ -9,7 +9,8 @@
 <link rel="stylesheet" href="./assistant.css?v=20261102">
 <link rel="stylesheet" href="./growth-panel.css?v=20261102">
 <link rel="stylesheet" href="./dayflow.css?v=4.0.0">
-<script type="module" src="./app.mjs?v=4.0.0"></script>
+<link rel="stylesheet" href="./v4-polish.css?v=4.2.0">
+<script type="module" src="./app.mjs?v=4.2.0"></script>
 </head>
 <body>
 <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -33,36 +34,33 @@
 </svg>
 <div class="app-frame">
   <aside class="sidebar" aria-label="应用侧边栏">
-    <div class="brandline"><img src="../assets/brand/xiaoya_hero_v1.webp" width="42" height="42" alt=""><div><strong>小芽</strong><small>你的日常</small></div></div>
+    <div class="v4-sidebar-title"><small>小芽 LifeLab</small><strong>你的空间</strong></div>
     <div class="side-caption">个人空间</div>
     <nav id="main-nav" class="side-nav" aria-label="主导航">
       <button class="nav-item is-active" data-view="today"><svg><use href="#ic-today"/></svg>今天<span class="side-counter" id="nav-count"></span></button>
-      <button class="nav-item" data-view="schedule"><svg><use href="#ic-calendar"/></svg>事项</button>
-      <button class="nav-item" data-view="goals"><svg><use href="#ic-growth"/></svg>发展</button>
+      <button class="nav-item" data-view="items"><svg><use href="#ic-list"/></svg>事项</button>
+      <button class="nav-item" data-view="develop"><svg><use href="#ic-growth"/></svg>发展</button>
     </nav>
     <div class="side-bottom"><div class="side-divider"></div><button class="nav-item" data-view="settings"><svg><use href="#ic-settings"/></svg>设置</button><div class="side-privacy">仅保存在当前浏览器</div></div>
   </aside>
   <div class="main-wrap">
-    <header class="topbar"><div class="topbrand"><strong>我的日常</strong></div><span id="date-compact"></span>
-      <div class="toolbar-actions"><button class="glass-btn" id="toolbar-chat-trigger" data-action="pet" title="与小芽对话" aria-label="与小芽对话"><img src="../assets/brand/xiaoya_hero_v1.webp" width="34" height="34" alt=""></button><button class="glass-btn" data-action="search" title="搜索" aria-label="搜索"><svg><use href="#ic-search"/></svg></button><button class="glass-btn" data-view="settings" title="设置" aria-label="设置"><svg><use href="#ic-settings"/></svg></button><button class="glass-btn add-top" data-action="add" title="添加记录" aria-label="添加记录"><svg><use href="#ic-plus"/></svg></button></div>
+    <header class="topbar"><button class="xiaoya-avatar" id="xiaoya-avatar" data-action="pet" title="和小芽对话" aria-label="和小芽对话"><img src="../assets/brand/xiaoya_hero_v1.webp" alt="" width="44" height="44"></button>
+      <span id="date-compact" aria-live="off"></span>
+      <div class="toolbar-actions">
+        <button class="glass-btn add-top" data-action="add" title="新建记录" aria-label="新建记录"><svg><use href="#ic-plus"/></svg></button>
+        <button class="glass-btn" data-view="settings" title="更多与设置" aria-label="更多与设置"><svg><use href="#ic-more"/></svg></button>
+      </div>
     </header>
     <div class="workspace-grid">
       <main id="workspace" class="workspace" tabindex="-1" aria-live="polite"></main>
-      <aside class="companion" aria-label="小芽陪伴"><div class="companion-inner">
-        <div class="companion-head"><span>小芽在这里</span><button class="link-button" data-action="pet" aria-label="与小芽对话">开始对话</button></div>
-        <button class="pet-illustration" type="button" data-action="pet" aria-label="点击小芽开始对话"><img src="../assets/brand/xiaoya_hero_v1.webp" alt="小芽角色" width="190" height="190"></button>
-        <div class="pet-note"><strong id="pet-title">先从一件小事开始</strong><p id="pet-note">把重要的事放在心上，也给喜欢的事留时间。</p></div>
-        <div class="companion-quick-actions"><button type="button" data-view="goals">成长规划</button><button type="button" data-view="review">查看复盘</button></div><div class="companion-rule"></div>
-        <div class="companion-stats" id="aside-stats"></div>
-      </div></aside>
+
     </div>
   </div>
   <nav class="bottom-nav" id="bottom-nav" aria-label="底部导航">
     <button data-view="today" class="tab is-active"><svg><use href="#ic-today"/></svg><span>今天</span></button>
-    <button data-view="schedule" class="tab"><svg><use href="#ic-calendar"/></svg><span>事项</span></button>
-    <button data-view="goals" class="tab"><svg><use href="#ic-growth"/></svg><span>发展</span></button>
+    <button data-view="items" class="tab"><svg><use href="#ic-list"/></svg><span>事项</span></button>
+    <button data-view="develop" class="tab"><svg><use href="#ic-growth"/></svg><span>发展</span></button>
   </nav>
-  <button class="floating-add" data-action="add" aria-label="新增任务"><svg><use href="#ic-plus"/></svg></button>
 </div>
 <dialog id="editor" class="sheet" aria-labelledby="sheet-title">
   <form method="dialog" class="sheet-frame" id="sheet-body"><div class="sheet-handle" aria-hidden="true"></div><header class="sheet-head"><button type="button" class="sheet-cancel" data-action="close">取消</button><h2 id="sheet-title">添加事项</h2><button type="submit" class="sheet-save" id="sheet-save">保存</button></header><div id="sheet-fields"></div></form>

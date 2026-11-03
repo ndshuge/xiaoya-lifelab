@@ -30,19 +30,19 @@ const server=http.createServer((req,res)=>{
    assert.equal(await page.evaluate(()=>window.__XY_NATIVE_V3.getMode()),'demo');
    assert.ok(await page.evaluate(()=>window.__XY_NATIVE_V3.getData().tasks.length)>=2);
   });
-  await check('small version menu opens on iPhone-sized viewport',async()=>{
-   const trigger=page.locator('#xiaoya-version-trigger');
-   await trigger.click();
-   assert.equal(await trigger.getAttribute('aria-expanded'),'true');
-   assert.equal(await page.locator('#xiaoya-version-list').isVisible(),true);
-   assert.equal(await page.locator('#xiaoya-version-list nav a').count(),5);
-   assert.ok(await page.locator('#xiaoya-version-list [aria-current=page]').count()===1);
-   if(process.env.XIAOYA_SCREENSHOT_DIR){fs.mkdirSync(process.env.XIAOYA_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-menu-mobile.png')})}
+  await check('V4 version library lives in Settings without overlapping the Dock',async()=>{
+   assert.equal(await page.locator('#xiaoya-version-trigger').isVisible(),false);
+   await page.locator('.topbar [data-view=settings]').click();
+   assert.equal(await page.locator('#v4-version-library').isVisible(),true);
+   if(process.env.XIAOYA_SCREENSHOT_DIR){fs.mkdirSync(process.env.XIAOYA_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-settings-mobile.png')})}
+   await page.locator('#v4-version-library').click();
+   assert.match(page.url(),/\/versions\//);
+   assert.equal(await page.locator('.version-card').count(),5);
   });
   await check('switch to classic edition keeps original source accessible',async()=>{
-   await page.locator('#xiaoya-version-list nav a').filter({hasText:'经典原版'}).click();
+   await page.locator('#version-classic').click();
    await page.waitForLoadState('networkidle');
-   assert.match(page.url(),/\/xiaoya-lifelab\/original\.html\?judge=1/);
+   assert.ok(page.url().endsWith('/original.html'));
    assert.equal(await page.locator('#xiaoya-version-trigger').isVisible(),true);
    assert.ok((await page.locator('body').innerText()).includes('小芽'));
   });
@@ -56,7 +56,7 @@ const server=http.createServer((req,res)=>{
    assert.equal(await page.locator('#xiaoya-version-trigger').isVisible(),true);
    assert.match(page.url(),/\/xiaoya-lifelab\/pro\//);
   });
-  await check('version library has four working entry points',async()=>{
+  await check('version library has five working entry points',async()=>{
    await page.goto(base+'versions/',{waitUntil:'networkidle'});
    assert.equal(await page.locator('.version-card').count(),5);
    await page.locator('#version-native').click();
@@ -78,8 +78,8 @@ const server=http.createServer((req,res)=>{
    await wp.goto(base+'versions/',{waitUntil:'networkidle'});
    await wp.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'versions-desktop.png'),fullPage:true});
    await wp.goto(base+'?judge=1',{waitUntil:'networkidle'});
-   await wp.locator('#xiaoya-version-trigger').click();
-   await wp.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-menu-desktop.png')});
+   await wp.locator('.topbar [data-view=settings]').click();
+   await wp.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-settings-desktop.png')});
    await wide.close();
   }
  }finally{await browser.close();await new Promise(r=>server.close(r))}

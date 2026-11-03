@@ -7,18 +7,22 @@ import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
+import {renderItemsView} from './items-view.mjs?v=4.2.0';
+import {renderDevelopment} from './development-view.mjs?v=4.2.0';
+import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const icon=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
-const routeLabels={today:'今天',schedule:'事项',tasks:'待办',goals:'发展',review:'记录',settings:'设置'};
+const routeLabels={today:'今天',items:'事项',develop:'发展',schedule:'日程',tasks:'待办',goals:'目标',review:'复盘',settings:'设置'};
 const now=()=>new Date();
 const dateFor=(d)=>new Date(d+'T00:00');
 const shortDate=(d)=>new Date(d).toLocaleDateString('zh-CN',{month:'short',day:'numeric'});
 const humanDate=(d)=>d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 const timePart=s=>s?.includes('T')?s.slice(11,16):s||'';
-let store,view='today',filter='all',query='',selectedDate=dateKey(now()),weekStart=monday(now()),modal=null,preview=null,toastTimeout=null;
+let store,view='today',itemsTab='schedule',filter='all',query='',selectedDate=dateKey(now()),weekStart=monday(now()),journalDate=dateKey(now()),moodDraft=null,modal=null,preview=null,toastTimeout=null;
 try{store=createStore({preferDemoOnFreshSession:new URLSearchParams(location.search).get('judge')==='1'})}catch(e){$('#workspace').innerHTML='<div class="page-heading"><h1>档案需要处理</h1></div><div class="group"><div class="empty-group"><strong>为了保护你的记录，小芽不会覆盖无法读取的数据</strong><p>'+esc(e.message)+'</p><a href="../index.html">打开原有完整界面以导出备份</a></div></div>';throw e}
 const state=()=>store.current();
+const journal=createJournalStore({getMode:()=>store.mode()});
 const assistant=createAssistant({getData:state,getMode:()=>store.mode(),navigate});
 const growthPanel=createGrowthPanel({getData:state,getMode:()=>store.mode(),replace:next=>store.replace(next),refresh:render,openSheet,closeSheet,notify,esc});
 
@@ -37,13 +41,18 @@ function renderSuggestion(d){
  return '<section class="section"><div class="section-head"><h2>小芽的建议</h2><small>基于你的实际记录</small></div><div class="suggestion"><span class="sprout">'+icon('growth')+'</span><div class="grow"><strong>'+esc(s.title)+'</strong><p>'+esc(s.description)+'</p><div class="actions">'+(s.action?'<button data-suggest="'+esc(s.id)+'">预览安排</button>':'')+'<button class="secondary-action" data-reject="'+esc(s.id)+'">暂时不需要</button></div></div></div></section>'
 }
 function todayView(d){return renderDayflowToday(d,now(),{isDemo:store.mode()==='demo'});}
+function itemsView(d){return renderItemsView(d,{selectedDate,weekStart,active:itemsTab,at:now()})}
+function developView(d){
+ try{return renderDevelopment(d,journal.all(),{selectedDate:journalDate,at:now(),growthPlanner:growthPanel.render()})}
+ catch(e){return head('发展','本地记录读取失败')+'<div class="group"><p class="sheet-note">'+esc(e.message)+'</p><p>为了保护日记，请勿清空浏览器数据。可先前往设置导出主档案。</p></div>'}
+}
 function tasksView(d){
  let list=sortedTasks(d,true),today=dateKey(now());
  if(filter==='open')list=list.filter(t=>!t.done);if(filter==='today')list=list.filter(t=>!t.done&&t.due&&t.due.slice(0,10)<=today);
  if(filter==='upcoming')list=list.filter(t=>!t.done&&t.due&&t.due.slice(0,10)>today);
  if(filter==='completed')list=list.filter(t=>t.done);
  const chips=[['all','全部'],['today','今天'],['upcoming','即将到期'],['open','未完成'],['completed','已完成']];
- return head('事项',d.tasks.filter(t=>!t.done).length+' 项待完成','<button class="primary" data-add="task">'+icon('plus')+'新建提醒</button>')+
+ return head('计划',d.tasks.filter(t=>!t.done).length+' 项待完成','<button class="primary" data-add="task">'+icon('plus')+'新建提醒</button>')+
  '<div class="dayflow-plan-tabs" aria-label="计划视图"><button data-view="schedule">日程</button><button class="is-active" data-view="tasks">任务箱</button></div>'+
  '<div class="filterbar">'+chips.map(([id,label])=>'<button class="seg '+(filter===id?'active':'')+'" data-filter="'+id+'">'+label+'</button>').join('')+'</div>'+
  '<section class="section"><div class="group">'+(list.length?list.map(taskRow).join(''):empty('这里还没有事项','新建提醒，或选择其他分类查看','添加事项','add-task'))+'</div></section>';
@@ -53,16 +62,11 @@ function weekDays(){return Array.from({length:7},(_,i)=>plusDays(weekStart,i))}
 function scheduleView(d){
  const days=weekDays(),selected=dateFor(selectedDate),day=visibleOn(d);
  const first=shortDate(days[0]),last=shortDate(days[6]),conflictCount=0;
- const pending=sortedTasks(d),deadlines=pending.filter(t=>t.due).slice(0,3),inbox=pending.filter(t=>!t.due).slice(0,4);
- const duePreview=deadlines.length?section('近期截止 · 不占用日程时间',deadlines.map(taskRow).join(''),'tasks'):'';
- const inboxPreview=section('待办池 · 尚未安排日期',inbox.length?inbox.map(taskRow).join(''):empty('暂时没有无日期待办','在事项中创建不带截止时间的任务即可放入这里','新增待办','add-task'),'tasks');
- return head('事项',d.semester?.start?'第 '+(teachingWeek(d,selected)||'—')+' 教学周':'课程与活动', '<button class="primary" data-add="course">'+icon('plus')+'添加日程</button>')+
+ return head('计划',d.semester?.start?'第 '+(teachingWeek(d,selected)||'—')+' 教学周':'课程与活动', '<button class="primary" data-add="course">'+icon('plus')+'添加日程</button>')+
  '<div class="dayflow-plan-tabs" aria-label="计划视图"><button class="is-active" data-view="schedule">日程</button><button data-view="tasks">任务箱</button></div>'+
  '<div class="calendar-toolbar"><div class="calendar-arrow"><button data-action="prev-week" aria-label="上一周">'+icon('left')+'</button><button data-action="next-week" aria-label="下一周">'+icon('right')+'</button><button data-action="now-week" aria-label="回到本周" style="width:auto;padding:0 13px;font-size:12px">今天</button></div><b>'+esc(first)+' — '+esc(last)+'</b></div>'+
  '<div class="week-rail">'+days.map(x=>{const dayKey=dateKey(x);return '<button class="day-pill '+(dayKey===selectedDate?'is-selected ':'')+(dayKey===dateKey(now())?'is-today':'')+'" data-day="'+dayKey+'"><small>'+DAYS[weekday(x)]+'</small><strong>'+x.getDate()+'</strong></button>'}).join('')+'</div>'+
- duePreview+
  '<section class="section"><div class="section-head"><h2>'+esc(selected.toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'}))+'</h2><div class="calendar-add-actions"><button class="mini-link" data-add="course">添加课程</button><button class="mini-link" data-add="event">添加活动</button></div></div><div class="calendar-day calendar-day-timeline">'+buildDayTimeline(day,{date:selectedDate,nowDate:now()})+(day.length?'<div class="calendar-caption">'+day.length+' 个课程或活动 · 点击时间块可编辑</div>':'<div class="calendar-caption">当前没有安排 · 点击「添加活动」创建日程</div>')+'</div></section>'+
- inboxPreview+
  '<div class="filterbar"><button class="secondary" data-action="calendar-import">'+icon('archive')+'导入课表</button><button class="quiet-button" data-action="export-ics">'+icon('export')+'导出日历</button></div>';
 }
 function goalsView(d){
@@ -72,8 +76,7 @@ function goalsView(d){
   return '<div class="row" data-item="'+esc(g.id)+'"><button class="circle-check '+(g.done?'checked':'')+'" data-toggle="goal" data-id="'+esc(g.id)+'" aria-label="'+(g.done?'重新进行':'完成')+esc(g.title)+'">'+(g.done?icon('check'):'')+'</button><div class="row-main"><button class="row-title '+(g.done?'is-done':'')+'" data-edit="goal" data-id="'+esc(g.id)+'" style="padding:0;border:0;background:none;text-align:left">'+esc(g.title)+'</button><div class="row-sub">'+esc(g.target||g.category||'成长')+' · '+count+' 次行动记录</div><div class="goal-progress"><span style="width:'+pct+'%"></span></div></div><div class="row-tail"><button class="small-action" data-checkin="'+esc(g.id)+'">记录行动</button><button class="icon-button" data-edit="goal" data-id="'+esc(g.id)+'" aria-label="编辑目标">'+icon('right')+'</button></div></div>'
  }).join('');
  const pct=d.goals.length?Math.round(completed.length/d.goals.length*100):0;
- return head('发展','为喜欢的事情留一点时间','<button class="primary" data-add="goal">'+icon('plus')+'新建目标</button>')+
- '<div class="dayflow-plan-tabs" aria-label="发展视图"><button class="is-active" data-view="goals">目标与习惯</button><button data-view="review">记录与复盘</button></div>'+
+ return head('成长目标','为喜欢的事情留一点时间','<button class="primary" data-add="goal">'+icon('plus')+'新建目标</button>')+
  '<div class="goal-summary"><div><strong>'+open.length+' 项正在坚持</strong><p>进度来自你记录的真实行动，不自动打卡。</p></div><div class="goal-ring" style="--pct:'+pct+'"><span>'+pct+'%</span></div></div>'+
  section('进行中的目标',open.length?goalsSection(open):empty('还没有进行中的目标','音乐、运动、研究，都可以是一件值得长期做的事','新建目标','add-goal'))+
  growthPanel.render()+
@@ -83,8 +86,7 @@ function reviewView(d){
  const result=growth(d),week=result.current;const weeks=result.weeks;
  const max=Math.max(2,...weeks.map(w=>w.done+w.checkins));
  const recent=d.checkins.slice().sort((a,b)=>new Date(b.at)-new Date(a.at)).slice(0,7);
- return head('发展','回顾确实发生过的事情')+
- '<div class="dayflow-plan-tabs" aria-label="发展视图"><button data-view="goals">目标与习惯</button><button class="is-active" data-view="review">记录与复盘</button></div>'+
+ return head('手记与复盘','回顾确实发生过的事情')+
  '<div class="review-intro"><h2>这周，你留下了 '+(week.done+week.checkins)+' 次行动</h2><p>已完成 '+week.done+' 项提醒 · '+week.checkins+' 次目标行动 · '+week.minutes+' 分钟。数字仅来自保存的记录。</p><div class="review-bars">'+weeks.map((w,i)=>'<div class="review-bar"><span class="fill" style="height:'+Math.max(6,(w.done+w.checkins)/max*94)+'px"></span><small>'+esc(shortDate(w.start))+'</small></div>').join('')+'</div></div>'+
  '<div class="progress-metrics section"><div class="progress-tile"><strong>'+week.done+'</strong><small>本周完成</small></div><div class="progress-tile"><strong>'+week.checkins+'</strong><small>行动记录</small></div><div class="progress-tile"><strong>'+week.minutes+'</strong><small>累计分钟</small></div></div>'+
  section('最近的成长记录',recent.length?recent.map(c=>{const g=d.goals.find(g=>g.id===c.goalId);return '<div class="row"><span class="row-icon">'+icon('review')+'</span><div class="row-main"><p class="row-title">'+esc(c.note||g?.title||'成长行动')+'</p><div class="row-sub">'+esc(g?.title||'已删除的目标')+' · '+c.minutes+' 分钟</div></div><span class="row-time">'+esc(shortDate(c.at))+'</span></div>'}).join(''):empty('还没有记录','在成长目标中记录一次真实行动，这里就会出现你的足迹'))+
@@ -122,17 +124,19 @@ function searchView(d){
  '<div class="searchbar">'+icon('search')+'<input id="search-input" type="search" placeholder="搜索任务、日程或目标" value="'+esc(query)+'" autocomplete="off"></div>'+
  '<section class="section"><div class="group">'+(matches.length?matches.map(x=>'<div class="row"><span class="row-icon">'+icon({task:'list',goal:'growth',course:'calendar',event:'calendar'}[x.kind])+'</span><div class="row-main"><button class="row-title" data-edit="'+esc(x.kind)+'" data-id="'+esc(x.id)+'" style="background:none;border:0;padding:0;text-align:left">'+esc(x.name)+'</button><div class="row-sub">'+esc(x.subtitle)+'</div></div>'+icon('right')+'</div>').join(''):empty('找不到符合的记录','尝试使用不同的关键词'))+'</div></section>';
 }
-function render({enter=false}={}){
+function render(){
+ const preserveGrowthOpen=view==='develop'&&!!$('#v4-growth-planner')?.open;
  const d=state();
- $$('.nav-item,.tab').forEach(b=>{const active=b.dataset.view===view||(view==='tasks'&&b.dataset.view==='schedule')||(view==='review'&&b.dataset.view==='goals');b.classList.toggle('is-active',active);b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+ $$('.nav-item,.tab').forEach(b=>{const active=b.dataset.view===view;b.classList.toggle('is-active',active);b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
  $('#date-compact').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
  $('#nav-count').textContent=d.tasks.filter(t=>!t.done).length||'';
- $('#workspace').innerHTML='<div class="page'+(enter?' page--enter':'')+'" id="page-'+view+'">'+({today:todayView,schedule:scheduleView,tasks:tasksView,goals:goalsView,review:reviewView,settings:settingsView,search:searchView}[view]||todayView)(d)+'</div>';
+ $('#workspace').innerHTML='<div class="page" id="page-'+view+'">'+({today:todayView,items:itemsView,develop:developView,schedule:scheduleView,tasks:tasksView,goals:goalsView,review:reviewView,settings:d=>settingsView(d)+'<div class="v4-settings-extra"><a id="v4-version-library" href="../../../versions/">浏览历史版本 '+icon('right')+'</a></div>',search:searchView}[view]||todayView)(d)+'</div>';
+ if(view==='develop'&&preserveGrowthOpen)$('#v4-growth-planner').open=true;
  if(view==='schedule'){const scroller=$('.hourly-scroll');if(scroller){const entries=visibleOn(d);const starts=entries.map(e=>Number((e.start||'08').slice(0,2))).filter(Number.isFinite);const hour=Math.max(0,Math.min(7,...starts.map(h=>Math.max(0,h-1))));scroller.scrollTop=hour*60}}
  const pending=d.tasks.filter(t=>!t.done).length;
- $('#pet-title').textContent=pending?'你有 '+pending+' 件事可以慢慢来':'今天也要照顾好自己';
- $('#pet-note').textContent=pending?'先完成最重要的一件，再给自己留点时间。':'享受没有待办的片刻，也欢迎记录一个新目标。';
- $('#aside-stats').innerHTML='<div class="aside-stat"><span>待办事项</span><strong>'+pending+' 件</strong></div><div class="aside-stat"><span>进行中的目标</span><strong>'+d.goals.filter(g=>!g.done).length+' 项</strong></div><div class="aside-stat"><span>保存位置</span><strong>本机浏览器</strong></div>';
+ // V4 has a single avatar trigger; no duplicate pet panel.
+
+
  if(view==='schedule')requestAnimationFrame(()=>{
    const pane=$('.native-timeline-scroll');
    if(pane){const entry=visibleOn(state())[0];const begin=entry?.start?Number(entry.start.split(':')[0]):8;pane.scrollTop=Math.max(0,(Math.min(8,begin)-1)*60);}
@@ -140,16 +144,19 @@ function render({enter=false}={}){
  document.body.classList.toggle('reduce-motion',!!d.settings.reducedMotion);
  document.body.dataset.view=view;
  const mobileNav=$('#bottom-nav');if(mobileNav){const tabs=$$('.bottom-nav .tab');mobileNav.style.setProperty('--dayflow-tab-index',String(Math.max(0,tabs.findIndex(b=>b.classList.contains('is-active')))))}
- document.querySelector('.companion').hidden=!!d.settings.hidePet;
- document.querySelector('.floating-add').hidden=view==='settings';
- document.querySelector('.glass-btn.add-top').hidden=view==='settings';
+
+
+ const addTop=document.querySelector('.glass-btn.add-top');if(addTop)addTop.hidden=view==='settings';
  if(view==='search'){$('#search-input')?.focus()}
 }
-function navigate(next){
- if(next===view)return;
- // Move the viewport once before swapping the page; avoid two visible layout jumps.
- if(window.scrollY>0)window.scrollTo(0,0);
- view=next;if(next!=='search')query='';render({enter:true});
+function navigate(target){
+ const from=target;let next=target;
+ if(target==='schedule'||target==='tasks'){itemsTab=target==='tasks'?'inbox':'schedule';next='items'}
+ if(target==='goals'||target==='review'){next='develop'}
+ if(next===view&&from===view)return;
+ view=next;if(next!=='search')query='';render();
+ if(from==='goals')requestAnimationFrame(()=>document.getElementById('development-goals')?.scrollIntoView({block:'start',behavior:'instant'}));
+ else if(next!=='search')window.scrollTo(0,0);
 }
 function input(label,name,value='',type='text',extra=''){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><input id="fld-'+name+'" name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+extra+'></div>'}
 function select(label,name,value,items){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><select name="'+name+'" id="fld-'+name+'">'+items.map(([v,l])=>'<option value="'+esc(v)+'" '+(String(v)===String(value)?'selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div>'}
@@ -163,7 +170,7 @@ function editForm(kind,id=''){
  let fields='';
  if(kind==='task'){
   fields=input('提醒事项','title',obj.title||'','text','required maxlength="160"')+select('类别','type',obj.type||'assignment',[['assignment','作业'],['exam','考试'],['task','其他事项']])+
-   input('关联课程（可选）','course',obj.course||'')+input('截止时间（可选）','due',obj.due||'','datetime-local')+
+   input('关联课程（可选）','course',obj.course||'')+input('截止时间（可选；留空进入独立待办）','due',obj.due||'','datetime-local')+
    input('预计用时（分钟）','minutes',obj.minutes||30,'number','min="1" max="1200"')+select('网页提醒','remind',obj.remind===false?'false':'true',[['true','开启'],['false','关闭']]);
  }else if(kind==='goal'){
   fields=input('目标名称','title',obj.title||'','text','required maxlength="160"')+input('类别','category',obj.category||'兴趣')+
@@ -238,7 +245,7 @@ function rejectSuggestion(id){const s=suggestions(state()).find(x=>x.id===id);if
 function blobDownload(text,mime,name){const a=document.createElement('a'),href=URL.createObjectURL(new Blob([text],{type:mime}));a.href=href;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),2000)}
 function runAction(action,source){
  switch(action){
- case 'add':editForm(view==='goals'?'goal':view==='schedule'?'event':'task');break;
+ case 'add':editForm(view==='develop'?'goal':view==='items'&&itemsTab==='schedule'?'event':'task');break;
  case 'add-task':editForm('task');break;
  case 'go-schedule':navigate('schedule');break;
  case 'add-event':editForm('event');break;
@@ -246,19 +253,40 @@ function runAction(action,source){
  case 'next-week':weekStart=plusDays(weekStart,7);selectedDate=dateKey(weekStart);render();break;
  case 'now-week':weekStart=monday(now());selectedDate=dateKey(now());render();break;
  case 'search':navigate('search');break;
+ case 'open-goals-archive':notify('已完成的目标保留在原版成长记录中。');break;
  case 'close':closeSheet();break;
  case 'pet':assistant.open(source);break;
  case 'mode':store.setMode(store.mode()==='demo'?'personal':'demo');navigate('today');notify(store.mode()==='demo'?'已切换到合成演示档案':'已返回私人档案');break;
- case 'export-json':blobDownload(JSON.stringify({...state(),exportedAt:now().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(now())+'.json');notify('已导出当前档案');break;
+ case 'export-json':blobDownload(JSON.stringify({...state(),journalV1:journal.all(),exportedAt:now().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(now())+'.json');notify('已导出当前档案');break;
  case 'import-json':$('#import-file').click();break;
  case 'export-ics':blobDownload(exportCalendar(state()),'text/calendar','xiaoya-calendar.ics');notify('已导出日历');break;
  case 'calendar-import':$('#calendar-file').click();break;
- case 'clear':if(confirm('确定清空当前档案？建议先导出备份。')&&confirm('再次确认：清空后不能撤销。')){store.replace(emptyStore());navigate('today');notify('已清空当前档案')}break;
+ case 'clear':if(confirm('确定清空当前档案和日记？建议先导出备份。')&&confirm('再次确认：清空后不能撤销。')){store.replace(emptyStore());journal.clear();navigate('today');notify('已清空当前档案和日记')}break;
  }
 }
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;
  if(growthPanel.handle(t))return;
+ if(t.dataset.itemsTab){itemsTab=t.dataset.itemsTab;view='items';render();return}
+ if(t.dataset.mood){
+   moodDraft=Number(t.dataset.mood);
+   $$('.v4-mood-option').forEach(b=>{const active=Number(b.dataset.mood)===moodDraft;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active))});
+   return;
+ }
+ if(t.dataset.journalDate){journalDate=t.dataset.journalDate;moodDraft=null;render();document.getElementById('development-mood')?.scrollIntoView({block:'start'});return}
+ if(t.id==='journal-save'){
+   try{
+    const current=journal.all().find(e=>e.date===journalDate);
+    journal.save({date:journalDate,mood:moodDraft??current?.mood??null,note:$('#journal-note').value,tags:current?.tags||[]});
+    moodDraft=null;render();$('#journal-status').textContent='已保存到当前浏览器';notify('日记已保存');
+   }catch(e){notify(e.message)}
+   return;
+ }
+ if(t.id==='journal-delete'){
+   if(!confirm('删除这一天的心情与日记记录？'))return;
+   try{journal.remove(journalDate);moodDraft=null;render();notify('记录已删除')}catch(e){notify(e.message)}
+   return;
+ }
  if(t.dataset.view)return navigate(t.dataset.view);
  if(t.dataset.add)return editForm(t.dataset.add);
  if(t.dataset.edit)return editForm(t.dataset.edit,t.dataset.id);
@@ -286,18 +314,20 @@ document.addEventListener('change',e=>{
 });
 $('#import-file').addEventListener('change',async e=>{
  const file=e.target.files[0];e.target.value='';if(!file)return;
- try{const next=validateStore(JSON.parse(await file.text()));if(!confirm('导入将覆盖当前'+(store.mode()==='demo'?'演示':'私人')+'档案。已备份当前数据吗？'))return;store.replace(next);navigate('today');notify('已恢复档案')}catch(err){notify('导入失败：'+err.message)}
+ try{const incoming=JSON.parse(await file.text()),next=validateStore(incoming),journals=incoming.journalV1===undefined?null:validateJournalArchive(incoming.journalV1);if(!confirm('导入将覆盖当前'+(store.mode()==='demo'?'演示':'私人')+'档案。已备份当前数据吗？'))return;store.replace(next);if(journals)journal.replace(journals);navigate('today');notify('已恢复档案'+(journals?'和日记':'；原文件不含日记'))}catch(err){notify('导入失败：'+err.message)}
 });
 $('#calendar-file').addEventListener('change',async e=>{
  const file=e.target.files[0];e.target.value='';if(!file)return;
  try{const candidate=parseSchedule(await file.text(),file.name,state());if(!candidate.items?.length)return notify('没有新的课表记录');if(!confirm('确认导入 '+candidate.items.length+' 条课表记录？'))return;store.replace(applyImport(state(),candidate).next);navigate('schedule');notify('导入成功')}catch(err){notify('导入失败：'+err.message)}
 });
 window.addEventListener('storage',e=>{if(e.key===store.key()){try{store.refresh();render();notify('已读取另一标签页更新的记录')}catch(err){notify(err.message)}}});
-window.__XY_NATIVE_V3={version:'4.0',getMode:()=>store.mode(),getData:()=>state(),navigate,render,store};
-for(const btn of $$('.bottom-nav button,.floating-add,.glass-btn')){
- const spring=createSpring(0,v=>{btn.style.transform='scale('+(1-.02*v)+')'},{stiffness:420,damping:35});
+window.__XY_NATIVE_V3={version:'4.2',getMode:()=>store.mode(),getData:()=>state(),navigate,render,store};
+window.__XY_NATIVE_V4=window.__XY_NATIVE_V3;
+// Preserve the original spring engine only for the avatar; navigation hitboxes must never move on press.
+for(const btn of $$('#xiaoya-avatar')){
+ const spring=createSpring(0,v=>{btn.style.setProperty('--avatar-scale',String(1-.045*v))},{stiffness:460,damping:36});
  const release=()=>spring.set(0);
- btn.addEventListener('pointerdown',e=>{if(e.button!==0)return; if(!matchMedia('(prefers-reduced-motion:reduce)').matches&&!state().settings.reducedMotion)spring.set(1)});
+ btn.addEventListener('pointerdown',e=>{if(e.button===0&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&!state().settings.reducedMotion)spring.set(1)});
  for(const n of ['pointerup','pointercancel','lostpointercapture','blur'])btn.addEventListener(n,release);
 }
 render();

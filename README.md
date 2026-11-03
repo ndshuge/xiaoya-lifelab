@@ -1,12 +1,18 @@
 ## 当前正式版本与入口（2026-11-03）
 
-**`ndshuge/xiaoya-lifelab` 已是小芽固定比赛 URL 的正式主仓库，Apple 最新版源码也在此仓库内部。** 评委原链接 `https://ndshuge.github.io/xiaoya-lifelab/?judge=1` 保持不变，默认打开 `little-works/xiaoya-apple/native-v4/`，不再跳往 `ndshuge-galaxy`。
+小芽的**正式主仓库**是 `ndshuge/xiaoya-lifelab`。评委仍使用原先提交的
+`https://ndshuge.github.io/xiaoya-lifelab/?judge=1`；根入口 `index.html`
+现从**同一个仓库内**打开 `little-works/xiaoya-apple/native-v4/`。
 
-- [打开 Apple Native V4 正式版](little-works/xiaoya-apple/native-v4/) · [评委入口](https://ndshuge.github.io/xiaoya-lifelab/?judge=1) · [保留 Native V3](little-works/xiaoya-apple/native-v3/)
-- [版本档案与切换](versions/) · [经典 LifeLab](original.html) · [Apple 早期版](little-works/xiaoya-apple/) · [Pro · DAYLINE](pro/)
-- [版本与迁移说明](VERSIONS.md) · [Apple 源码来源与提交哈希](APPLE_SOURCE_PROVENANCE.json)
+- [Apple Native V4 · DAYFLOW（正式版）](little-works/xiaoya-apple/native-v4/) · [固定评委演示入口](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)
+- [Apple Native V3（完整存档）](little-works/xiaoya-apple/native-v3/) · [其他历史版本与切换](versions/)
+- [版本来源、功能边界与数据隐私](VERSIONS.md) · [历史 Apple V3 源码来源提交](APPLE_SOURCE_PROVENANCE.json)
 
-原来的网页、参赛材料、Git 历史没有删除。**比赛已上传的 ZIP 是历史快照，不会因为更新在线网页而改变。** 当前公开 GitHub Pages 不预置 AI API Key，真实模型需要用户主动授权连接。
+**V4 新增：**「今天｜事项｜发展」三栏、一个小芽头像打开对话；DDL 与无期限待办明确分流；
+心情与日记保存、7/30 日统计和可导入/导出的私人记录；保留 V3 的成熟成长路线、
+课程/活动导入导出、建议预览与人工批准。V4 的 Dock 属于浏览器 **L1 渐变模糊**，
+未宣称 Apple 原生 L2 光学折射。真实 AI 需要用户主动连接模型。
+已上传的参赛 ZIP 是历史快照，线上升级不会自动修改原 ZIP。
 
 ---
 

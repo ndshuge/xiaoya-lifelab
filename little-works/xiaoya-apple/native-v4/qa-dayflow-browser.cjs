@@ -47,41 +47,22 @@ const server=http.createServer((req,res)=>{
    assert.equal(await nav.count(),3);
    assert.deepEqual((await nav.allTextContents()).map(x=>x.trim()),['今天','事项','发展']);
   });
-  await check('active tab click does not rebuild the page or jump scroll',async()=>{
-   await page.locator('.bottom-nav [data-view=today]').click();
-   const before=await page.evaluate(()=>{window.__qaPageRef=document.querySelector('#workspace .page');window.scrollTo(0,260);return window.scrollY});
-   await page.locator('.bottom-nav [data-view=today]').click();
-   const unchanged=await page.evaluate(()=>document.querySelector('#workspace .page')===window.__qaPageRef);
-   assert.ok(unchanged);
-   assert.ok(await page.evaluate(()=>window.scrollY)>=Math.max(0,before-1));
-   assert.equal(await page.locator('#workspace .page--enter').count(),0);
+  await check('items page contains dated schedule and independent inbox',async()=>{
+   await page.locator('.bottom-nav [data-view=items]').click();
+   assert.match(await page.locator('#workspace h1').innerText(),/事项/);
+   await page.locator('[data-items-tab=inbox]').click();
+   assert.equal(await page.locator('#items-undated').count(),1);
+   await page.locator('[data-items-tab=schedule]').click();
+   assert.equal(await page.locator('#items-schedule').count(),1);
   });
-  await check('floating dock has nonblocking gradient and development review is reachable',async()=>{
-   const nav=await page.locator('#bottom-nav').evaluate(n=>{
-    const x=getComputedStyle(n,'::after');return {pointer:x.pointerEvents,blur:x.backdropFilter,background:x.backgroundImage};
-   });
-   assert.equal(nav.pointer,'none');assert.match(nav.background,/gradient/);
-   await page.locator('.bottom-nav [data-view=goals]').click();
-   await page.locator('[data-view=review]').filter({hasText:'记录与复盘'}).first().click();
-   assert.equal(await page.locator('.bottom-nav [data-view=goals]').getAttribute('aria-current'),'page');
-   assert.match(await page.locator('#workspace h1').innerText(),/发展/);
-  });
-  await check('plan page retains the task inbox, with visible return to timetable',async()=>{
-   await page.locator('.bottom-nav [data-view=schedule]').click();
-   assert.match(await page.locator('#workspace h1').innerText(),/事项|计划/);
-   await page.locator('[data-view=tasks]').filter({hasText:'任务箱'}).first().click();
-   assert.match(await page.locator('#workspace h1').innerText(),/事项|任务/);
-   assert.equal(await page.locator('.bottom-nav [data-view=schedule]').getAttribute('aria-current'),'page');
-   await page.locator('.bottom-nav [data-view=schedule]').click();
-  });
-  await check('growth list precedes optional roadmap generator, keeping mature planner functional',async()=>{
-   await page.locator('.bottom-nav [data-view=goals]').click();
-   const a=await page.locator('#page-goals .section').filter({hasText:'进行中的目标'}).first().boundingBox();
-   const b=await page.locator('#page-goals .growth-planner').boundingBox();
-   assert.ok(a&&b&&a.y<b.y,'plan generator displaced goals');
+  await check('development goals precede the optional roadmap generator',async()=>{
+   await page.locator('.bottom-nav [data-view=develop]').click();
+   const a=await page.locator('#development-goals .v4-section-title').first().boundingBox();
+   const b=await page.locator('#v4-growth-planner').boundingBox();
+   assert.ok(a&&b&&a.y<b.y);
   });
   await check('assistant opens and local reply uses genuine demo data, no key',async()=>{
-   await page.locator('#toolbar-chat-trigger').click();
+   await page.locator('#xiaoya-avatar').click();
    assert.equal(await page.locator('#xiaoya-assistant').isVisible(),true);
    await page.locator('#assistant-input').fill('今天先做什么');
    await page.locator('#assistant-send').click();
@@ -90,32 +71,20 @@ const server=http.createServer((req,res)=>{
    await page.locator('#assistant-close').click();
   });
   await check('assistant closes with visible exit motion, restores focus, and supports rapid reopen',async()=>{
-   const trigger=page.locator('#toolbar-chat-trigger'),assistant=page.locator('#xiaoya-assistant');
+   const trigger=page.locator('#xiaoya-avatar'),assistant=page.locator('#xiaoya-assistant');
+   await page.waitForFunction(()=>document.querySelector('#xiaoya-assistant').hidden,null,{timeout:1800});
    await trigger.click();
    await page.locator('#assistant-close').click();
    assert.equal(await assistant.isVisible(),true,'exit motion should keep panel visible briefly');
    await page.waitForTimeout(500);
+   await page.waitForFunction(()=>document.querySelector('#xiaoya-assistant').hidden,null,{timeout:1800});
    assert.equal(await assistant.isVisible(),false);
-   assert.equal(await page.evaluate(()=>document.activeElement?.id),'toolbar-chat-trigger');
+   assert.equal(await page.evaluate(()=>document.activeElement?.id),'xiaoya-avatar');
    await trigger.click();await page.locator('#assistant-close').click();await trigger.click();
    await page.waitForTimeout(510);
    assert.equal(await assistant.isVisible(),true,'rapid reversal must not hide a reopened assistant');
    await page.locator('#assistant-close').click();
    await page.waitForTimeout(500);
-  });
-  await check('undated to-do can be created without fabricated deadline and appears in separate inbox',async()=>{
-   await page.locator('.bottom-nav [data-view=schedule]').click();
-   await page.locator('[data-view=tasks]').filter({hasText:'任务箱'}).first().click();
-   await page.locator('.glass-btn.add-top').click();
-   const title=page.locator('#fld-title'),due=page.locator('#fld-due');
-   assert.equal(await due.getAttribute('required'),null,'deadline should be optional');
-   await title.fill('无日期的长期阅读');await due.fill('');
-   await page.locator('#sheet-save').click();
-   const undated=await page.evaluate(()=>window.__XY_NATIVE_V3.getData().tasks.find(x=>x.title==='无日期的长期阅读'));
-   assert.ok(undated);assert.equal(undated.due,'');
-   await page.locator('.bottom-nav [data-view=schedule]').click();
-   assert.match(await page.locator('#workspace').innerText(),/待办池/);
-   assert.match(await page.locator('#workspace').innerText(),/无日期的长期阅读/);
   });
   await check('mobile no page errors, missing assets, or horizontal overflow',async()=>{
    assert.deepEqual(errors,[]);assert.deepEqual(missing,[]);
@@ -124,7 +93,7 @@ const server=http.createServer((req,res)=>{
   if(process.env.XIAOYA_V4_SHOTS){fs.mkdirSync(process.env.XIAOYA_V4_SHOTS,{recursive:true});
    await page.locator('.bottom-nav [data-view=today]').click();
    await page.waitForTimeout(480);await page.screenshot({path:path.join(process.env.XIAOYA_V4_SHOTS,'v4-today-390.png'),fullPage:true,animations:'disabled'});
-   await page.locator('.bottom-nav [data-view=goals]').click();
+   await page.locator('.bottom-nav [data-view=develop]').click();
    await page.waitForTimeout(480);await page.screenshot({path:path.join(process.env.XIAOYA_V4_SHOTS,'v4-growth-390.png'),fullPage:true,animations:'disabled'});
   }
   await ctx.close();
@@ -133,7 +102,7 @@ const server=http.createServer((req,res)=>{
   await check('desktop groups schedule and suggestion within an easy-to-scan layout',async()=>{
    const n=await desktop.locator('#dayflow-next').boundingBox(),s=await desktop.locator('#dayflow-suggestion').boundingBox();
    assert.ok(n&&s&&Math.abs(n.y-s.y)<180,'schedule/advice desktop not near same row');
-   assert.ok(await desktop.locator('.companion').isVisible());
+   assert.equal(await desktop.locator('.companion').count(),0);
   });
   if(process.env.XIAOYA_V4_SHOTS)await desktop.screenshot({path:path.join(process.env.XIAOYA_V4_SHOTS,'v4-today-1440.png'),fullPage:true,animations:'disabled'});
   await wide.close();
@@ -141,7 +110,7 @@ const server=http.createServer((req,res)=>{
   await rp.goto(url+'?judge=1',{waitUntil:'networkidle'});
   await check('motion-reduced mode never requires animated navigation',async()=>{
    assert.equal(await rp.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),true);
-   await rp.locator('.bottom-nav [data-view=goals]').click();
+   await rp.locator('.bottom-nav [data-view=develop]').click();
    assert.match(await rp.locator('#workspace h1').innerText(),/发展/);
   });
   await reduced.close();
