@@ -84,6 +84,7 @@
 | XY-01 | **P0** | `#editor .sheet-cancel/.sheet-save` 实际 48×36px，低于 44px；触控可用性 | CSS 保持小字体和原布局，将命中框扩至 ≥44px；Playwright 实测 | **FIXED / VERIFIED** |
 | XY-02 | **P0** | `lg-switch .lg-switch__input` 原 64×28px；视觉轨道尺寸与真实命中区混淆 | 仅真实 input 增大至 64×44px、原轨道仍 64×28；Space 键可切换 | **FIXED / VERIFIED** |
 | XY-03 | **P1** | 设置「使用体验」三个开关前重复绿色设置图标，信息无增益；Apple 节制 | `switchRow` 改为纯标签+原开关；真实截图对比、功能不变 | **FIXED / VERIFIED** |
+| XY-11 | **P0** | 编辑 Sheet 使用原生 Escape 取消时，`close` 事件异步触发前页面可能残留 `overflow: hidden`；4 次重复测试在修复前检出一次 | 在 `cancel` 事件中同步调用已有 `closeSheet()`；修后连续 4 轮 × 10 项浏览器断言均通过 | **FIXED / VERIFIED** |
 | XY-04 | **P1** | 旧主页面跳换与 Dock 白雾、动效重影。另一个脏工作树正在编辑 `motion-dock.css` + `app.mjs` | 独立 motion 分支需合并前检查中间帧、取消、反向、Reduced Motion 和 Safari WebKit | **OPEN — 刻意未覆盖并行工作树** |
 | XY-05 | **P1** | iPhone 原生浏览器 toolbar / 地址栏伸缩 / 软键盘易挡浮动 Dock 和聊天输入 | iPhone Safari 真机视频与输入滚动验收；必要时 visualViewport 安全区降级 | **UNVERIFIED — 需真机** |
 | XY-06 | **P1** | 发展页 5 片心情面板及长内容，仍有重复卡片感 | 对照 Apple Journal/Health 做一组连续可选控件，验证方向及失误率 | **OPEN，未强制重绘** |
@@ -96,7 +97,7 @@
 
 **已修改：**
 - `little-works/xiaoya-apple/native-v4/apple-polish.css`：增加明确作用域的 `#editor` 44px 行为和 `lg-switch` 输入扩展命中区，保留轨道尺寸。
-- `little-works/xiaoya-apple/native-v4/app.mjs`：设置开关改为文字＋开关，删除三个重复无用图标；保留现有数据和事件逻辑。
+- `little-works/xiaoya-apple/native-v4/app.mjs`：设置开关改为文字＋开关，删除三个重复无用图标；编辑 Sheet 的原生 `cancel` 事件统一同步释放页面滚动锁；保留数据和既有事件逻辑。
 - `little-works/xiaoya-apple/native-v4/qa-full-audit-ux.cjs`：建立真实 Edge 交互回归：弹窗键盘、焦点返回、Toast 消失/空间、按钮触控、开关键盘、AI 焦点与输入标签。
 
 **真实 390px 前后图（同一演示档案）：**
@@ -118,7 +119,7 @@
 | 范围 | 实际结果 |
 | --- | --- |
 | 全站截图扫描 | 4 个 CSS 视口 × 主要页面/模态组合，**38 个状态记录**，无横向溢出 |
-| 新增 UX 实测 | `qa-full-audit-ux.cjs` **10/10 PASS**；原始版先失败（弹窗 36px、开关 28px、3 个重复图标），修复后 PASS |
+| 新增 UX 实测 | `qa-full-audit-ux.cjs` **10/10 PASS**，发布集成分支连续 4 次重复 **4/4 PASS**；原始版先失败（弹窗 36px、开关 28px、3 个重复图标及 Escape 释放滚动锁偶发延迟），修复后 PASS |
 | 既有回归 | 固定比赛链接、版本、IA、日程数据、日记存储、今天/事项/发展、AI、成长规划、WebKit 与 V3 历史回归，总计 **16/16 组 PASS**（详见原项目 QA） |
 | 视觉审查 | 手动打开并检查同一 390px 弹窗/设置前后截图；明确了改动效果与剩余卡片、Dock 风险 |
 | 性能 | CSS 未添加新的 WebGL/第三方库；**未测真实 iPhone FPS、内存和主线程长帧** |

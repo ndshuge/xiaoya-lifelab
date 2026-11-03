@@ -324,6 +324,8 @@ document.addEventListener('click',e=>{
  if(t.dataset.undo){try{store.replace(undoTransaction(state(),t.dataset.undo));render();notify('操作已撤销')}catch(e){notify(e.message)}}
 });
 $('#sheet-body').addEventListener('submit',submitSheet);
+// Native cancel can hide the dialog before close dispatches; release scroll synchronously.
+$('#editor').addEventListener('cancel',e=>{e.preventDefault();closeSheet()});
 $('#editor').addEventListener('close',()=>{document.body.style.overflow='';modal=null});
 $('#editor').addEventListener('click',e=>{if(e.target===$('#editor'))closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!$('#editor').open&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();navigate('search')}});

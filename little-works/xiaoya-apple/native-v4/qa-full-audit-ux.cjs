@@ -51,7 +51,7 @@ await check('settings switches have 44px physical hit area and keyboard operatio
 });
 await check('assistant Escape restores focus to single Xiaoya avatar',async()=>{
  await page.locator('#xiaoya-avatar').click();await page.locator('#assistant-input').waitFor({state:'visible'});
- await page.keyboard.press('Escape');await page.waitForTimeout(430);
+ await page.keyboard.press('Escape');await page.locator('#xiaoya-assistant').waitFor({state:'hidden',timeout:2200});
  assert.equal(await page.locator('#xiaoya-assistant').isVisible(),false);
  assert.equal(await page.evaluate(()=>document.activeElement?.id),'xiaoya-avatar');
 });
