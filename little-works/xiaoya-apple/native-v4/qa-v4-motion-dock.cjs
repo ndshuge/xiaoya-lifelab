@@ -24,6 +24,11 @@ const server=http.createServer((req,res)=>{
   const page=await context.newPage(),errors=[];page.setDefaultTimeout(3000);
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(url,{waitUntil:'networkidle'});
+  await check('modified route module invalidates the previously shipped browser cache key',async()=>{
+   const src=await page.locator('script[src*="app.mjs"]').getAttribute('src');
+   const revision=new URL(src,page.url()).searchParams.get('v');
+   assert.ok(revision&&revision!=='4.5.1','app.mjs changed, but stale cache key '+revision);
+  });
   await check('mobile dock uses a translucent lens without opaque white veil',async()=>{
    const info=await page.evaluate(()=>{
     const back=getComputedStyle(document.querySelector('.app-frame'),'::after');
