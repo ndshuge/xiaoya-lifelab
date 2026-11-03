@@ -453,7 +453,17 @@ $('#sheet-body').addEventListener('submit',submitSheet);
 $('#editor').addEventListener('cancel',e=>{e.preventDefault();closeSheet()});
 $('#editor').addEventListener('close',()=>{document.body.style.overflow='';modal=null});
 $('#editor').addEventListener('click',e=>{if(e.target===$('#editor'))closeSheet()});
-document.addEventListener('keydown',e=>{if(e.key==='/'&&!$('#editor').open&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();navigate('search')}});
+document.addEventListener('keydown',e=>{
+ // Escape belongs to an open editor or the assistant first; otherwise dismiss pushed destinations.
+ if(e.key==='Escape'&&(view==='settings'||view==='search')&&!$('#editor').open&&!document.body.classList.contains('assistant-is-open')){
+  e.preventDefault();navigate(lastPrimaryView);
+  $('.topbar .toolbar-actions .glass-btn')?.focus({preventScroll:true});
+  return;
+ }
+ if(e.key==='/'&&!$('#editor').open&&!document.body.classList.contains('assistant-is-open')&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){
+  e.preventDefault();navigate('search');
+ }
+});
 document.addEventListener('input',e=>{if(e.target.id==='journal-note'){journalDrafts.set(journalDraftKey(),e.target.value);const status=$('#journal-status');if(status)status.textContent='未保存';return}if(e.target.id==='search-input'){query=e.target.value;const start=e.target.selectionStart;render();$('#search-input')?.setSelectionRange(start,start)}});
 document.addEventListener('change',e=>{
  const t=e.target;

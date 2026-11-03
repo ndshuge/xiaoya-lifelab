@@ -15,4 +15,13 @@
 #toolbar-chat-trigger{color:var(--accent)}.pet-illustration[data-action=pet]{background:transparent;border:0;width:100%;cursor:pointer;padding:5px 0;transition:transform .4s var(--spring)}.pet-illustration[data-action=pet]:active{transform:scale(.96)}
 .companion-quick-actions{display:flex;gap:7px;margin-top:12px}.companion-quick-actions button{border:0;background:#ecf4ef;color:var(--accent);border-radius:11px;padding:9px 10px;font-size:12px;flex:1}
 @media(max-width:700px){.assistant-panel{right:9px;left:9px;bottom:calc(68px + env(safe-area-inset-bottom));width:auto;height:min(600px,calc(100dvh - 90px - env(safe-area-inset-bottom)));border-radius:22px}.assistant-config{max-height:48dvh}.assistant-messages{padding:13px}.assistant-identity span{max-width:132px}}
+/* Mobile Safari zooms focused editable fields smaller than 16 CSS px.
+   Keep user pinch zoom enabled; increase only input text and actual field hit height. */
+@media(max-width:700px){
+ .assistant-compose input,
+ .assistant-config label:not(.assistant-consent)>input,
+ .assistant-config select{font-size:16px}
+ .assistant-config label:not(.assistant-consent)>input,
+ .assistant-config select{min-height:44px}
+}
 @media(prefers-reduced-motion:reduce){.assistant-panel,.pet-illustration[data-action=pet]{animation:none;transition:none}}

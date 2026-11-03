@@ -105,6 +105,33 @@ await check('WebKit detail navigation remains actionable without blocked bottom 
    }finally{await wc.close()}
  }finally{await wb.close()}
 });
+await check('Escape dismisses pushed Settings and returns focus to the toolbar',async()=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.locator('.bottom-nav [data-view=items]').click();
+ await page.locator('.topbar .toolbar-actions button').click();
+ assert.equal(await page.locator('#workspace h1').innerText(),'设置');
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#workspace h1').innerText(),'事项');
+ assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('aria-label')),'更多与设置');
+});
+await check('Escape closes assistant before leaving a pushed screen',async()=>{
+ await page.locator('.topbar .toolbar-actions button').click();
+ await page.locator('#xiaoya-avatar').click();
+ assert.equal(await page.locator('#xiaoya-assistant').isVisible(),true);
+ await page.keyboard.press('Escape');
+ // The assistant deliberately plays a 300ms exit spring before becoming hidden.
+ await page.locator('#xiaoya-assistant').waitFor({state:'hidden',timeout:2500});
+ assert.equal(await page.locator('#xiaoya-assistant').isVisible(),false);
+ assert.equal(await page.locator('#workspace h1').innerText(),'设置');
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#workspace h1').innerText(),'事项');
+});
+await check('Search shortcut opens a dismissible secondary view',async()=>{
+ await page.keyboard.press('/');
+ assert.equal(await page.locator('#workspace h1').innerText(),'搜索');
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#workspace h1').innerText(),'事项');
+});
 await check('no console errors',async()=>assert.deepEqual(errors,[]));await ctx.close();
 }finally{await browser.close();await new Promise(r=>server.close(r))}
 console.log('SECONDARY_NAV '+pass+'/'+(pass+fail));if(fail)process.exitCode=1;
