@@ -136,6 +136,7 @@ function render(){
  $('#date-compact').textContent=new Date().toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
  $('#nav-count').textContent=d.tasks.filter(t=>!t.done).length||'';
  $('#workspace').innerHTML='<div class="page" id="page-'+view+'">'+({today:todayView,items:itemsView,develop:developView,schedule:scheduleView,tasks:tasksView,goals:goalsView,review:reviewView,settings:d=>settingsView(d)+'<div class="v4-settings-extra"><a id="v4-version-library" href="../../../versions/">浏览历史版本 '+icon('right')+'</a></div>',search:searchView}[view]||todayView)(d)+'</div>';
+ $('#workspace').setAttribute('aria-busy','false');
  if(view==='develop'&&preserveGrowthOpen)$('#v4-growth-planner').open=true;
  if(view==='develop'){
    const input=$('#journal-note'),draft=journalDrafts.get(journalDraftKey());

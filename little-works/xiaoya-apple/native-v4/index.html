@@ -11,9 +11,9 @@
 <link rel="stylesheet" href="./dayflow.css?v=4.0.0">
 <link rel="stylesheet" href="./v4-polish.css?v=4.2.0">
 <link rel="stylesheet" href="./apple-polish.css?v=4.3.0">
-<link rel="stylesheet" href="./product-ux.css?v=4.4.0">
+<link rel="stylesheet" href="./product-ux.css?v=4.5.4">
 <link rel="stylesheet" href="./motion-dock.css?v=4.5.2">
-<script type="module" src="./app.mjs?v=4.5.3"></script>
+<script type="module" src="./app.mjs?v=4.5.4" onerror="const w=document.getElementById('workspace');if(w){w.dataset.bootError='true';w.setAttribute('aria-busy','false')}"></script>
 </head>
 <body>
 <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -54,7 +54,21 @@
       </div>
     </header>
     <div class="workspace-grid">
-      <main id="workspace" class="workspace" tabindex="-1" aria-live="polite"></main>
+      <main id="workspace" class="workspace" tabindex="-1" aria-live="polite" aria-busy="true">
+        <div class="page xy-boot" aria-label="正在载入今天">
+          <div class="xy-boot-meta" aria-hidden="true"><span></span><span></span></div>
+          <div class="page-heading v4-page-heading"><h1>今天</h1></div>
+          <div class="xy-boot-primary xy-boot-placeholder" aria-hidden="true"><span></span><span></span></div>
+          <div class="xy-boot-caption xy-boot-placeholder" aria-hidden="true"></div>
+          <div class="xy-boot-secondary xy-boot-placeholder" aria-hidden="true"><span></span><span></span><span></span></div>
+          <div class="xy-boot-error" role="alert">
+            <strong>无法载入小芽</strong>
+            <p>请检查网络后重新加载。</p>
+            <a href="">重新加载</a>
+          </div>
+          <noscript><p class="xy-boot-noscript">请开启 JavaScript，以读取本地日程和记录。</p></noscript>
+        </div>
+      </main>
 
     </div>
   </div>

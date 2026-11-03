@@ -152,3 +152,39 @@
   #workspace .v4-mood-picker{border-color:#8d9d92}
   #workspace .v4-mood-picker::before{background:#d8e8dc;box-shadow:inset 0 0 0 1px #799b83}
 }
+
+/* First visit: a stable, content-shaped placeholder while ES modules load.
+   No fake course/deadline data and no shimmer competing with the real app. */
+#workspace[aria-busy="true"] .xy-boot{animation:none!important;min-height:410px}
+.xy-boot-meta{display:flex;align-items:center;gap:12px;height:23px;margin-bottom:4px}
+.xy-boot-meta span{display:block;height:12px;border-radius:6px;background:rgba(60,83,71,.105);width:126px}
+.xy-boot-meta span:last-child{width:89px;height:22px;border-radius:8px;background:rgba(48,126,83,.075)}
+.xy-boot .page-heading{padding-bottom:30px}
+.xy-boot-placeholder{background:#fff;border:1px solid rgba(37,63,43,.045);border-radius:19px;box-shadow:0 7px 18px rgba(16,43,29,.018)}
+.xy-boot-primary{height:106px;padding:23px 24px;display:flex;flex-direction:column;gap:16px}
+.xy-boot-primary span{width:51%;height:17px;border-radius:6px;background:#edf0ed}
+.xy-boot-primary span:last-child{width:72%;height:12px;background:#f2f3f2}
+.xy-boot-caption{width:42%;height:14px;margin:40px 0 17px;border:0;border-radius:7px;background:rgba(53,71,57,.11);box-shadow:none}
+.xy-boot-secondary{height:154px;padding:22px 21px;display:flex;flex-direction:column;gap:17px}
+.xy-boot-secondary span{display:block;height:13px;width:75%;border-radius:6px;background:#f0f2f0}
+.xy-boot-secondary span:nth-child(2){width:57%}
+.xy-boot-secondary span:nth-child(3){width:63%}
+.xy-boot-noscript{color:var(--secondary);line-height:1.6;font-size:14px}
+@media(max-width:700px){
+  .xy-boot{max-width:100%}
+  .xy-boot-primary{height:105px}
+}
+@media(prefers-reduced-motion:reduce){
+  #workspace[aria-busy="true"] .xy-boot,
+  .xy-boot-placeholder,.xy-boot-meta span{animation:none!important;transition:none!important}
+}
+/* A failed module must leave a useful retry path, never an endless placeholder. */
+.xy-boot-error{display:none;background:#fff;border-radius:18px;padding:22px 24px;line-height:1.55}
+.xy-boot-error strong{display:block;color:var(--ink);font-size:17px}
+.xy-boot-error p{color:var(--secondary);font-size:14px;margin:8px 0 16px}
+.xy-boot-error a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 16px;border-radius:12px;background:var(--mint);color:var(--accent-dark);text-decoration:none;font-weight:620}
+#workspace[data-boot-error="true"] .xy-boot-meta,
+#workspace[data-boot-error="true"] .xy-boot-primary,
+#workspace[data-boot-error="true"] .xy-boot-caption,
+#workspace[data-boot-error="true"] .xy-boot-secondary{display:none}
+#workspace[data-boot-error="true"] .xy-boot-error{display:block}
