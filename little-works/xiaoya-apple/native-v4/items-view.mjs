@@ -30,11 +30,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
   '<section class="v4-items-calendar"><div class="v4-section-title"><div><h2>课程与活动</h2></div>'+
   '<div class="v4-calendar-actions"><button data-add="event">添加活动</button><button data-add="course">添加课程</button></div></div>'+
   '<div id="items-schedule" class="calendar-day calendar-day-timeline">'+
-  (slots.length?'<div class="v4-schedule-summary" aria-label="当天课程与活动">'+slots.map(session=>
-    '<button class="v4-schedule-summary-row" data-edit="'+esc(session.kind)+'" data-id="'+esc(session.id)+'">'+
-    '<span class="v4-schedule-summary-time">'+esc(session.start)+'–'+esc(session.end)+'</span>'+
-    '<span class="v4-schedule-summary-body"><strong>'+esc(session.name)+'</strong><small>'+esc(session.place||'未设置地点')+'</small></span>'+ic('right')+'</button>').join('')+'</div>'+
-  buildDayTimeline(slots,{date:selectedDate,nowDate:at})+
+  (slots.length?buildDayTimeline(slots,{date:selectedDate,nowDate:at})+
   '<div class="calendar-caption">时间轴可滚动查看全天</div>':
   '<div class="v4-no-schedule"><span aria-hidden="true">'+ic('clock')+'</span><div><strong>这一天暂时没有课程或活动</strong><p>添加课程或活动后，这里会按时间显示。</p></div></div>')+'</div>'+
   '<details class="v4-semantic-note"><summary>截止日期与日程的区别</summary><p>截止日期表示最后期限，不会自动安排学习时段。</p></details>'+
@@ -52,6 +48,6 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
  return '<div class="v4-items"><header class="page-heading v4-page-heading"><div><h1>事项</h1><p class="v4-subtitle">'+
   total+' 件待办</p></div></header>'+
   '<div class="v4-item-segments" aria-label="事项视图"><button class="'+(active==='schedule'?'is-active':'')+'" data-items-tab="schedule" aria-pressed="'+(active==='schedule')+'">日程</button>'+
-  '<button class="'+(active==='inbox'?'is-active':'')+'" data-items-tab="inbox" aria-pressed="'+(active==='inbox')+'">独立待办 <span>'+undated.length+'</span></button></div>'+
+  '<button class="'+(active==='inbox'?'is-active':'')+'" data-items-tab="inbox" aria-pressed="'+(active==='inbox')+'">待办 <span>'+total+'</span></button></div>'+
   content+'</div>';
 }

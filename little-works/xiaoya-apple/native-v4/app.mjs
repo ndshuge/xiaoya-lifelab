@@ -160,10 +160,87 @@ function render(){
  document.body.classList.toggle('reduce-motion',!!d.settings.reducedMotion);
  document.body.dataset.view=view;
  const mobileNav=$('#bottom-nav');if(mobileNav){const tabs=$$('.bottom-nav .tab');mobileNav.style.setProperty('--dayflow-tab-index',String(Math.max(0,tabs.findIndex(b=>b.classList.contains('is-active')))))}
+ const segment=$('.v4-develop-segments');if(segment)segment.style.setProperty('--xy-develop-index',developTab==='goals'?'1':'0');
 
 
  const addTop=document.querySelector('.glass-btn.add-top');if(addTop)addTop.hidden=view==='settings';
  if(view==='search'){$('#search-input')?.focus()}
+}
+// Each logical destination owns its scroll position, including inner segments.
+const scrollMemory=new Map();
+const scrollKey=(v=view,it=itemsTab,dt=developTab)=>
+ v==='items'?'items:'+it:v==='develop'?'develop:'+dt:v;
+const rememberScroll=()=>scrollMemory.set(scrollKey(),window.scrollY);
+function restoreScroll(){
+ const top=scrollMemory.get(scrollKey())??0;
+ window.scrollTo({left:0,top,behavior:'instant'});
+}
+let routeMotion=null;
+function stopRouteMotion(){
+ if(!routeMotion)return;
+ for(const anim of routeMotion.animations){try{anim.cancel()}catch{}}
+ routeMotion.ghost?.remove();
+ routeMotion=null;
+ document.body.classList.remove('xy-motion-active');
+}
+// ViewTransition's DOM update runs on the next rendering frame; rapid taps used
+// to race. Commit routes synchronously, then animate TWO separate visual layers.
+function transitionContent(update,{animate=true,direction='neutral'}={}){
+ stopRouteMotion();
+ const host=$('#workspace');
+ const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches||!!state().settings.reducedMotion;
+ const useMotion=animate&&!reduced&&host&&typeof host.animate==='function';
+ let ghost=null;
+ if(useMotion){
+   const rect=host.getBoundingClientRect();
+   const top=Math.max(0,rect.top),bottom=Math.min(innerHeight,rect.bottom);
+   // Long feeds must never clone hundreds of live controls just for motion.
+   if(host.querySelectorAll('*').length<600&&rect.width>0&&bottom>top+20){
+     ghost=document.createElement('div');
+     ghost.className='xy-route-ghost';
+     ghost.setAttribute('aria-hidden','true');ghost.inert=true;
+     Object.assign(ghost.style,{
+       left:rect.left+'px',top:top+'px',width:rect.width+'px',
+       height:(bottom-top)+'px'
+     });
+     const snapshot=host.cloneNode(true);
+     snapshot.removeAttribute('id');
+     // A ghost is paint-only. Remove IDs and delegated action attributes so
+     // selectors, screen readers and test locators see only the live page.
+     snapshot.querySelectorAll('*').forEach(el=>{
+       for(const name of el.getAttributeNames())if(name==='id'||name.startsWith('data-'))el.removeAttribute(name);
+       if(el.matches('button,a,input,select,textarea,summary,[tabindex]'))el.setAttribute('tabindex','-1');
+     });
+     snapshot.style.transform='translateY('+(rect.top-top)+'px)';
+     ghost.append(snapshot);document.body.append(ghost);
+   }
+ }
+ update(); // ALWAYS synchronous, even if the browser drops animation frames.
+ document.documentElement.dataset.xyNavDirection=direction;
+ if(!ghost)return;
+ const current=$('#workspace');
+ document.body.classList.add('xy-motion-active');
+ const sign=direction==='backward'?-1:1;
+ const incoming=current.animate([
+   {opacity:0,transform:'translate3d('+(sign*10)+'px,0,0)'},
+   {opacity:1,transform:'translate3d(0,0,0)'}
+ ],{duration:170,delay:70,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
+ const outgoing=ghost.animate([
+   {opacity:1,transform:'translate3d(0,0,0)'},
+   {opacity:0,transform:'translate3d('+(-sign*7)+'px,0,0)'}
+ ],{duration:90,easing:'cubic-bezier(.4,0,.8,.5)',fill:'both'});
+ const currentMotion={ghost,animations:[incoming,outgoing]};
+ routeMotion=currentMotion;
+ // The ghost is needed only for the 90ms outgoing fade, not for the full incoming transition.
+ // Bounded cleanup even if a backgrounded browser throttles WAAPI finish events.
+ setTimeout(()=>{ghost.remove();if(routeMotion===currentMotion)currentMotion.ghost=null},125);
+ outgoing.finished.catch(()=>{}).finally(()=>{
+   ghost.remove();
+   if(routeMotion===currentMotion)currentMotion.ghost=null;
+ });
+ incoming.finished.catch(()=>{}).finally(()=>{
+   if(routeMotion===currentMotion)stopRouteMotion();
+ });
 }
 function navigate(target){
  const from=target;let next=target;
@@ -171,8 +248,14 @@ function navigate(target){
  if(target==='goals'||target==='review'){developTab=target==='goals'?'goals':'record';next='develop'}
  if(target==='develop'&&view!=='develop')developTab='record';
  if(next===view&&from===view)return;
- view=next;if(next!=='search')query='';render();
- if(next!=='search')window.scrollTo(0,0);
+ const order=['today','items','develop'];
+ const fromIndex=order.indexOf(view),toIndex=order.indexOf(next);
+ const dir=fromIndex>=0&&toIndex>=0?(toIndex>=fromIndex?'forward':'backward'):'neutral';
+ const primary=fromIndex>=0&&toIndex>=0&&fromIndex!==toIndex;
+ transitionContent(()=>{
+   rememberScroll();view=next;if(next!=='search')query='';render();
+   if(next!=='search')restoreScroll();
+ },{animate:primary,direction:dir});
 }
 function input(label,name,value='',type='text',extra=''){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><input id="fld-'+name+'" name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+extra+'></div>'}
 function select(label,name,value,items){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><select name="'+name+'" id="fld-'+name+'">'+items.map(([v,l])=>'<option value="'+esc(v)+'" '+(String(v)===String(value)?'selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div>'}
@@ -288,11 +371,26 @@ function runAction(action,source){
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;
  if(growthPanel.handle(t))return;
- if(t.dataset.itemsTab){itemsTab=t.dataset.itemsTab;view='items';render();return}
+ if(t.dataset.itemsTab){
+   const target=t.dataset.itemsTab;if(target===itemsTab)return;
+   const dir=target==='inbox'?'forward':'backward';
+   transitionContent(()=>{
+     rememberScroll();itemsTab=target;view='items';render();restoreScroll();
+   },{direction:dir});return;
+ }
  if(t.dataset.developTab){
-   developTab=t.dataset.developTab;
-   $$('.v4-develop-segments [data-develop-tab]').forEach(b=>{const current=b.dataset.developTab===developTab;b.classList.toggle('is-active',current);b.setAttribute('aria-pressed',String(current))});
-   $$('[data-develop-panel]').forEach(panel=>{panel.hidden=panel.dataset.developPanel!==developTab});
+   const target=t.dataset.developTab;if(target===developTab)return;
+   transitionContent(()=>{
+     rememberScroll();developTab=target;
+     $$('.v4-develop-segments [data-develop-tab]').forEach(b=>{
+       const active=b.dataset.developTab===developTab;
+       b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));
+     });
+     const segment=$('.v4-develop-segments');
+     if(segment)segment.style.setProperty('--xy-develop-index',developTab==='goals'?'1':'0');
+     $$('[data-develop-panel]').forEach(panel=>{panel.hidden=panel.dataset.developPanel!==developTab});
+     restoreScroll();
+   },{direction:target==='goals'?'forward':'backward'});
    return;
  }
  if(t.dataset.mood){

@@ -100,15 +100,17 @@ const server=http.createServer((req,res)=>{
   await page.locator('[data-develop-tab=record]').click();
   assert.equal(await page.locator('#journal-note').inputValue(),'保存前的真实草稿不会丢');
  });
- await check('calendar shows actual course summary before long time grid',async()=>{
+ await check('calendar shows each real course once without duplicate summary cards',async()=>{
   await page.locator('.bottom-nav [data-view=items]').click();
   await page.locator('.v4-item-segments [data-items-tab=schedule]').click();
   await page.locator('.v4-week-rail [data-day="2026-11-03"]').click();
-  const rows=page.locator('#items-schedule .v4-schedule-summary-row');
-  assert.ok(await rows.count()>0,'demo fixture has a real scheduled class');
-  assert.match(await rows.first().innerText(),/高等数学|08:00/);
-  const summary=await rows.first().boundingBox(),timeline=await page.locator('#items-schedule .native-timeline-scroll').boundingBox();
-  assert.ok(summary&&timeline&&summary.y<timeline.y);
+  assert.equal(await page.locator('#items-schedule .v4-schedule-summary-row').count(),0,'duplicate class summary still present');
+  const events=page.locator('#items-schedule .native-event');
+  assert.ok(await events.count()>0,'demo fixture lost its scheduled class');
+  assert.match(await events.first().innerText(),/08:00/);
+  const first=await events.first().boundingBox(),dock=await page.locator('#bottom-nav').boundingBox();
+  assert.ok(first&&dock&&first.y<dock.y-45,'course is hidden under floating dock');
+  const timeline=await page.locator('#items-schedule .native-timeline-scroll').boundingBox();
   assert.ok(timeline.height<=360,'timeline is overly tall: '+timeline.height);
  });
  await check('an unsaved journal draft survives leaving and returning to Development',async()=>{
