@@ -222,8 +222,8 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
  document.body.classList.add('xy-motion-active');
  const sign=direction==='backward'?-1:1;
  const incoming=current.animate([
-   {opacity:0,transform:'translate3d('+(sign*10)+'px,0,0)'},
-   {opacity:1,transform:'translate3d(0,0,0)'}
+   {opacity:0},
+   {opacity:1}
  ],{duration:170,delay:70,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
  const outgoing=ghost.animate([
    {opacity:1,transform:'translate3d(0,0,0)'},

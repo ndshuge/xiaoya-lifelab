@@ -39,17 +39,22 @@ const server=http.createServer((req,res)=>{
   });
   await check('main tab changes synchronously and uses two spatial surfaces',async()=>{
    const origin=await page.locator('#bottom-nav').evaluate(e=>{window.__NAV_NODE=e;return e.id});
+   const liveX=await page.locator('#workspace').evaluate(e=>e.getBoundingClientRect().left);
    await page.locator('#bottom-nav [data-view=items]').evaluate(el=>el.click());
    const data=await page.evaluate(()=>({
      route:document.querySelector('#workspace .page')?.id,
      navStable:document.querySelector('#bottom-nav')===window.__NAV_NODE,
      direction:document.documentElement.dataset.xyNavDirection,
+     liveX:document.querySelector('#workspace').getBoundingClientRect().left,
+     liveTransform:getComputedStyle(document.querySelector('#workspace')).transform,
      leaving:document.querySelectorAll('.xy-route-ghost').length,
      outgoingMotion:[...document.getAnimations()].some(a=>a.effect?.target?.closest?.('.xy-route-ghost'))
    }));
    assert.equal(data.route,'page-items','click did not synchronously update DOM');
    assert.equal(data.navStable,true);
    assert.equal(data.direction,'forward');
+   assert.equal(data.liveTransform,'none','live interactive page should never slide its hit targets');
+   assert.ok(Math.abs(data.liveX-liveX)<.5,'live content hitbox shifted during navigation');
    assert.equal(data.leaving,1,'old page lacks its spatial exit surface');
    assert.equal(data.outgoingMotion,true,'old page not animated as separate surface');
    const ghostSafety=await page.evaluate(()=>{
