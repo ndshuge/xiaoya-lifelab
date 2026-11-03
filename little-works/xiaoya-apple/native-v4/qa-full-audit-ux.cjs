@@ -43,7 +43,7 @@ await check('settings toggles do not repeat a decorative settings icon',async()=
  assert.equal(await page.locator('.settings-row:has(lg-switch) .setting-icon').count(),0);
 });
 await check('settings switches have 44px physical hit area and keyboard operation',async()=>{
- await page.locator('.topbar [data-view=settings]').click();
+ assert.equal(await page.locator('#workspace h1').innerText(),'设置');
  const target=page.locator('lg-switch[data-setting=quiet] input');
  const box=await target.boundingBox();assert.ok(box.height>=44,'switch actual hit '+box.height);
  const initial=await target.isChecked();await target.focus();await page.keyboard.press('Space');
@@ -56,6 +56,7 @@ await check('assistant Escape restores focus to single Xiaoya avatar',async()=>{
  assert.equal(await page.evaluate(()=>document.activeElement?.id),'xiaoya-avatar');
 });
 await check('text fields keep real associated accessible names',async()=>{
+ await page.locator('.topbar .toolbar-actions button[aria-label^="完成设置"]').click();
  await page.locator('.bottom-nav [data-view=items]').click();await page.locator('.v4-item-segments [data-items-tab=inbox]').click();await page.locator('#items-undated [data-add=task]').click();
  for(const name of ['title','due']){const linked=await page.locator('#fld-'+name).evaluate(e=>e.labels?.length||0);assert.ok(linked>0,'no label for '+name)}
 });

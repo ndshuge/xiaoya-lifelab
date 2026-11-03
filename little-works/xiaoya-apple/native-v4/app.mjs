@@ -20,7 +20,7 @@ const dateFor=(d)=>new Date(d+'T00:00');
 const shortDate=(d)=>new Date(d).toLocaleDateString('zh-CN',{month:'short',day:'numeric'});
 const humanDate=(d)=>d.toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric',weekday:'long'});
 const timePart=s=>s?.includes('T')?s.slice(11,16):s||'';
-let store,view='today',itemsTab='schedule',developTab='record',filter='all',query='',selectedDate=dateKey(now()),weekStart=monday(now()),journalDate=dateKey(now()),moodDraft=null,modal=null,preview=null,toastTimeout=null;
+let store,view='today',lastPrimaryView='today',itemsTab='schedule',developTab='record',filter='all',query='',selectedDate=dateKey(now()),weekStart=monday(now()),journalDate=dateKey(now()),moodDraft=null,modal=null,preview=null,toastTimeout=null;
 try{store=createStore({preferDemoOnFreshSession:new URLSearchParams(location.search).get('judge')==='1'})}catch(e){$('#workspace').innerHTML='<div class="page-heading"><h1>档案需要处理</h1></div><div class="group"><div class="empty-group"><strong>为了保护你的记录，小芽不会覆盖无法读取的数据</strong><p>'+esc(e.message)+'</p><a href="../index.html">打开原有完整界面以导出备份</a></div></div>';throw e}
 const state=()=>store.current();
 const journal=createJournalStore({getMode:()=>store.mode()});
@@ -163,6 +163,22 @@ function render(){
  document.body.dataset.view=view;
  const mobileNav=$('#bottom-nav');if(mobileNav){const tabs=$$('.bottom-nav .tab');mobileNav.style.setProperty('--dayflow-tab-index',String(Math.max(0,tabs.findIndex(b=>b.classList.contains('is-active')))))}
  const segment=$('.v4-develop-segments');if(segment)segment.style.setProperty('--xy-develop-index',developTab==='goals'?'1':'0');
+ // Settings and Search are pushed destinations, not a fourth bottom tab.
+ // The existing upper-right overflow button becomes a calm '完成' dismiss action.
+ const toolbarRoute=$('.topbar .toolbar-actions .glass-btn');
+ if(toolbarRoute){
+   const detail=view==='settings'||view==='search';
+   const label=detail?(view==='settings'?'完成设置，返回':'返回')+(routeLabels[lastPrimaryView]||'今天'):'更多与设置';
+   toolbarRoute.dataset.view=detail?lastPrimaryView:'settings';
+   toolbarRoute.setAttribute('title',label);
+   toolbarRoute.setAttribute('aria-label',label);
+   toolbarRoute.classList.toggle('is-detail-done',detail);
+   if(detail){
+     const word=view==='settings'?'完成':'返回';
+     if(toolbarRoute.textContent!==word)toolbarRoute.textContent=word;
+   }else if(!toolbarRoute.querySelector('use'))toolbarRoute.innerHTML=icon('more');
+ }
+
 
 
  const addTop=document.querySelector('.glass-btn.add-top');if(addTop)addTop.hidden=view==='settings';
@@ -252,12 +268,16 @@ function navigate(target){
  if(next===view&&from===view)return;
  const order=['today','items','develop'];
  const fromIndex=order.indexOf(view),toIndex=order.indexOf(next);
- const dir=fromIndex>=0&&toIndex>=0?(toIndex>=fromIndex?'forward':'backward'):'neutral';
+ const detailForward=fromIndex>=0&&(next==='settings'||next==='search');
+ const detailBackward=toIndex>=0&&(view==='settings'||view==='search');
+ const dir=detailForward?'forward':detailBackward?'backward':fromIndex>=0&&toIndex>=0?(toIndex>=fromIndex?'forward':'backward'):'neutral';
  const primary=fromIndex>=0&&toIndex>=0&&fromIndex!==toIndex;
+ if((next==='settings'||next==='search')&&fromIndex>=0)lastPrimaryView=view;
+ if(toIndex>=0)lastPrimaryView=next;
  transitionContent(()=>{
    rememberScroll();view=next;if(next!=='search')query='';render();
    if(next!=='search')restoreScroll();
- },{animate:primary,direction:dir});
+ },{animate:primary||detailForward||detailBackward,direction:dir});
 }
 function input(label,name,value='',type='text',extra=''){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><input id="fld-'+name+'" name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+extra+'></div>'}
 function select(label,name,value,items){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><select name="'+name+'" id="fld-'+name+'">'+items.map(([v,l])=>'<option value="'+esc(v)+'" '+(String(v)===String(value)?'selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div>'}

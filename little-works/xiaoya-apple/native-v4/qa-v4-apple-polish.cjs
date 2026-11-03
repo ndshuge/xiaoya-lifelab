@@ -29,7 +29,10 @@ async function size(page,selector){return page.locator(selector).first().evaluat
     await page.waitForTimeout(200);
     assert.equal(await sc.count(),1);
     const pos=await sc.evaluate(e=>e.scrollTop);
-    assert.ok(pos>=350&&pos<=700,'scrollTop='+pos);
+    // Scroll location varies with the first actual scheduled time; do not hardcode a morning-only range.
+    const metrics=await sc.evaluate(e=>({top:Number.parseFloat(e.querySelector('.native-event')?.style.getPropertyValue('--top')),max:Math.max(0,e.scrollHeight-e.clientHeight)}));
+    const expected=Math.min(metrics.max,Math.max(0,Math.round(metrics.top*14.4)-60));
+    assert.ok(Number.isFinite(metrics.top)&&Math.abs(pos-expected)<=3,'scrollTop='+pos+' expected='+expected+' firstTop='+metrics.top);
     const ev=page.locator('.native-event').first();
     const r=await ev.boundingBox(),p=await sc.boundingBox();
     assert.ok(r&&p&&r.y+r.height>p.y&&r.y<p.y+p.height,'class '+JSON.stringify(r)+' scroller '+JSON.stringify(p)+' pos '+pos);
@@ -54,6 +57,8 @@ async function size(page,selector){return page.locator(selector).first().evaluat
      assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
     }finally{await narrow.close()}
   });
+  // Settings is now a pushed detail destination; return via its Back affordance.
+  await page.locator('.topbar .toolbar-actions button[aria-label^="完成设置"]').click();
   await check('bottom Dock never covers the last growth planner action',async()=>{
    await page.locator('.bottom-nav [data-view=develop]').click();
    await page.locator('[data-develop-tab=goals]').click();

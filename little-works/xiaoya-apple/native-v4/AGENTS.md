@@ -5,6 +5,7 @@ Scope: `little-works/xiaoya-apple/native-v4/`, the **judge-facing app** in `ndsh
 ## Product and information architecture
 - Keep the three top-level destinations: **今天 / 事项 / 发展**. Inside 事项: real calendar events, dated deadlines, undated inbox. A deadline is **not** a scheduled study block. Inside 发展: mood/journal and goals. Preserve the single original Xiaoya avatar as the assistant entry.
 - Minimize duplicate actions, repeated labels, inflated empty summaries and faux dashboard scores. A new task must remain quick; advanced fields are opt-in. Journal and mood are private local data; no automatic AI upload.
+- **Secondary navigation (2026-11-03)**: on mobile, `设置` and `搜索` are pushed destinations, never fourth/fifth tabs. Hide the bottom Dock **and its progressive blur edge** while a secondary view is open, turn the existing upper-right overflow control into a calm, >=44px `完成` dismissal (search uses `返回`), and restore the last primary screen, scroll state and unsaved journal draft. The Xiaoya avatar remains the only assistant trigger; do not replace it with a back button. Desktop keeps its sidebar. Keep route updates synchronous and interruptible; reduced-motion and WebKit must work.
 - Retain judge demo vs personal-mode separation, original V3 archive, data export/import, the mature growth route and explicit AI authorization.
 
 ## Apple-inspired design decisions — verified scope

@@ -92,6 +92,25 @@ body.xy-motion-active #workspace .page { animation:none!important; }
 }
 
 
+/* Close a pushed screen in the same top-right location where it opened.
+   iOS-style textual completion suits the right edge better than a left chevron. */
+.topbar .toolbar-actions .glass-btn.is-detail-done{
+  background:transparent;border-color:transparent;box-shadow:none;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  color:#206f4b;font-size:15px;font-weight:650;letter-spacing:-.025em;
+}
+.topbar .toolbar-actions .glass-btn.is-detail-done:active{opacity:.7}
+
+/* In a pushed detail view the bottom tabs have no selected destination.
+   Hide the whole floating dock and give the page its own back affordance.
+   Desktop keeps its persistent sidebar; this rule is mobile-only. */
+@media(max-width:700px){
+  body[data-view="settings"] #bottom-nav,
+  body[data-view="search"] #bottom-nav{display:none!important}
+  body[data-view="settings"] .app-frame::after,
+  body[data-view="search"] .app-frame::after{display:none!important}
+}
+
 /* Keyboard-driven mobile viewport: do not leave the floating dock
    floating over text input or the system keyboard. This is L1 fallback,
    not a simulation of the browser's native bar. */
