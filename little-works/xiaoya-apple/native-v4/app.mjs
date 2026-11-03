@@ -2,6 +2,7 @@ import {DAYS,localStamp,uid,esc,emptyStore,validateStore,dueState,dueLabel,fmtDa
 import {dateKey,weekday,monday,plusDays,teachingWeek,occurrences,growth,checkSchedule,checkSemester,parseSchedule,applyImport,exportCalendar,undoTransaction,executePlan,parseExceptions} from '../domain.js';
 import {createSpring} from '../glass/liquid-glass.js';
 import '../glass/components.js'; // Original liquidglass.dev optical controls, self-hosted (MIT).
+import './viewport-guard.mjs?v=4.5.3';
 import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';

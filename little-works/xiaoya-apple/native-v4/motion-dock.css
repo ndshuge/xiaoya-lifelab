@@ -90,3 +90,31 @@ body.xy-motion-active #workspace .page { animation:none!important; }
   }
   .bottom-nav::before{background:#f3f6f3!important}
 }
+
+
+/* Keyboard-driven mobile viewport: do not leave the floating dock
+   floating over text input or the system keyboard. This is L1 fallback,
+   not a simulation of the browser's native bar. */
+@media(max-width:700px){
+  body.xy-keyboard-occluded .bottom-nav{
+    opacity:0!important;
+    visibility:hidden!important;
+    pointer-events:none!important;
+  }
+  body.xy-keyboard-occluded .app-frame::after{
+    opacity:0!important;
+    pointer-events:none!important;
+  }
+  body.xy-keyboard-occluded .assistant-panel:not([hidden]){
+    bottom:calc(var(--xy-visual-bottom-inset,0px) + 6px);
+    height:min(600px,calc(var(--xy-visual-height,100dvh) - 12px));
+    max-height:calc(var(--xy-visual-height,100dvh) - 12px);
+  }
+  body.xy-keyboard-occluded #editor[open]{
+    margin-bottom:var(--xy-visual-bottom-inset,0px);
+    max-height:calc(var(--xy-visual-height,100dvh) - 12px);
+  }
+  body.xy-keyboard-occluded #editor .sheet-frame{
+    max-height:calc(var(--xy-visual-height,100dvh) - 12px);
+  }
+}
