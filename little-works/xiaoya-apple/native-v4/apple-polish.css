@@ -1,0 +1,174 @@
+/* Apple polish, 2026-11-03 · ChatGPT-native Apple Web Design + Impeccable review.
+   V4-only: meaningful typography and stable 44px hit regions. Original V3 untouched.
+   L1 scroll-edge frost only, not a claim of native/L2 optical refraction. */
+:root{
+  --xy-hit:44px;
+  --xy-caption:12.5px;
+  --xy-hairline:rgba(28,43,32,.075);
+  --xy-secondary:#65756a;
+  --xy-muted:#718076;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+#workspace{color:#243129}
+#workspace .page-heading h1{line-height:1.2}
+#workspace .v4-page-heading{padding-bottom:23px}
+#workspace .v4-page-heading h1{letter-spacing:-.035em}
+#workspace .v4-subtitle{font-size:13px!important;line-height:1.55;color:var(--xy-secondary)!important}
+#workspace .dayflow-heading{padding-bottom:23px}
+#workspace .dayflow-heading h1{letter-spacing:-.032em}
+#workspace .dayflow-heading>.page-heading-right{align-self:center}
+#workspace .dayflow-section-head h2,
+#workspace .v4-section-title h2{margin-top:0}
+#workspace .dayflow-section-head,
+#workspace .v4-section-title{align-items:center}
+#workspace .dayflow-section-head button,
+#workspace .v4-section-title button{font-size:13px}
+#workspace .dayflow-focus-title{line-height:1.35}
+#workspace .dayflow-focus-body p,
+#workspace .dayflow-advice-content p{font-size:var(--xy-caption);line-height:1.65;color:var(--xy-secondary)}
+#workspace .dayflow-advice-head small{font-size:var(--xy-caption);color:var(--xy-secondary);line-height:1.5}
+#workspace .dayflow-rail-time{font-size:var(--xy-caption);color:var(--xy-secondary)}
+#workspace .dayflow-demo-tag{font-size:12px;padding:4px 7px}
+#workspace .v4-week-rail .day-pill small{font-size:12px}
+#workspace .native-timeline-scroll .hour-label{font-size:12px;color:#6d7d73}
+#workspace .native-timeline-scroll .native-event-detail{font-size:12px;line-height:1.25;opacity:.9}
+#workspace .dayflow-focus-body .dayflow-future-label{font-size:var(--xy-caption);font-weight:630;color:var(--xy-secondary)}
+#workspace .dayflow-focus-body p.dayflow-future{font-size:var(--xy-caption);color:var(--xy-secondary)}
+#workspace .dayflow-focus-bottom>span{font-size:var(--xy-caption);color:var(--xy-secondary)}
+#workspace .dayflow-focus-bottom button{margin-left:auto}
+#workspace .dayflow-section-head>div>small,
+#workspace .v4-section-title>div>small{display:none}
+#workspace .dayflow-task-main small,
+#workspace .dayflow-time-content small,
+#workspace .v4-task-copy small,
+#workspace .v4-goal-caption{font-size:var(--xy-caption);color:var(--xy-secondary);line-height:1.5}
+#workspace .dayflow-task-due,
+#workspace .v4-task-status{font-size:var(--xy-caption);color:var(--xy-secondary)}
+#workspace .dayflow-hour{font-size:12.5px}
+#workspace .v4-week-rail .day-pill small{font-size:12px;color:#6d7970}
+#workspace .v4-item-segments button span{font-size:12px}
+#workspace .v4-goal-checkin{font-size:12.5px;line-height:1.4}
+#workspace .v4-week-tools>span{font-size:12px}
+#workspace .v4-mood-option{font-size:12.5px;color:#526258}
+#workspace .v4-journal-toolbar>span,
+#workspace .v4-stats-line small,
+#workspace .v4-ai-disclaimer,
+#workspace .v4-journal-row-preview{font-size:var(--xy-caption);color:var(--xy-secondary);line-height:1.6}
+#workspace .v4-stats-note{font-size:13px;color:var(--xy-secondary)}
+#workspace .v4-goal-caption{margin-top:7px}
+#workspace .v4-record-empty{font-size:13px;color:var(--xy-secondary)}
+#workspace .v4-no-schedule p{font-size:13px;color:var(--xy-secondary)}
+#workspace .v4-list-empty{font-size:13px;color:var(--xy-secondary)}
+#workspace .v4-semantic-note{font-size:var(--xy-caption);margin:12px 1px 8px;color:var(--xy-secondary)}
+#workspace .v4-semantic-note summary{min-height:var(--xy-hit);display:flex;align-items:center;width:max-content;max-width:100%;cursor:pointer;color:#4c7d5f;font-weight:600}
+#workspace .v4-semantic-note p{margin:0 0 8px;line-height:1.65;color:var(--xy-secondary)}
+#workspace .v4-calendar-import{margin:9px 0 22px}
+/* Fixed, understandable hit targets; visual feedback stays inside the button so it cannot cause layout shifts. */
+.topbar .glass-btn,
+#workspace .primary,
+#workspace .dayflow-focus-bottom button,
+#workspace .dayflow-section-head button,
+#workspace .dayflow-advice-actions button,
+#workspace .v4-item-segments button,
+#workspace .v4-week-tools button,
+#workspace .v4-section-title button,
+#workspace .v4-calendar-actions button,
+#workspace .v4-calendar-import button,
+#workspace .v4-journal-save,
+#workspace .v4-ask-companion,
+#workspace .v4-goal-checkin,
+#workspace .v4-goal-name,
+#workspace .v4-task-name,
+#workspace .dayflow-task-main>button,
+#workspace .dayflow-time-content,
+#workspace .v4-journal-row,
+#workspace .v4-archive-list summary,
+#workspace .v4-completed-goals summary,
+#workspace .v4-completed-goal-row button,
+#workspace .v4-growth-disclosure summary,
+#workspace .v4-journal-delete,
+#workspace .dayflow-tasks-empty button,
+#workspace .v4-done-row button,
+#workspace .v4-goal-row button,
+#workspace .v4-week-today,
+#workspace .small-action,
+#workspace .settings-row>input:not([type=checkbox]):not([type=file]),
+#workspace .day-pill{min-height:var(--xy-hit)}
+#workspace .v4-section-title button,
+#workspace .v4-week-tools button{min-width:var(--xy-hit)}
+#workspace .v4-section-title button{padding:9px 8px}
+#workspace .dayflow-focus-bottom button{padding:11px 2px 11px 10px}
+#workspace .dayflow-section-head button{padding:10px 2px 10px 9px}
+#workspace .dayflow-advice-actions button{padding:11px 14px}
+#workspace .dayflow-task-main>button,
+#workspace .v4-task-name,
+#workspace .v4-goal-name{display:flex;align-items:center}
+#workspace .dayflow-task-row,
+#workspace .v4-task-row{min-height:83px}
+#workspace .dayflow-task-row+.dayflow-task-row:before,
+#workspace .v4-task-row+.v4-task-row:before{left:70px}
+#workspace button.circle-check{position:relative;display:grid;place-items:center;flex:0 0 var(--xy-hit);width:var(--xy-hit);height:var(--xy-hit);border:0;background:transparent!important;border-radius:50%;padding:0;transform:none!important;transition:none}
+#workspace button.circle-check::before{content:"";position:absolute;inset:11px;border:1.7px solid #b8c3bb;border-radius:50%;background:#fff;transition:transform .22s cubic-bezier(.2,.8,.3,1),border-color .18s,background-color .18s}
+#workspace button.circle-check:active::before{transform:scale(.87);border-color:#257b54;background:#e5f4eb}
+#workspace button.circle-check.checked::before{background:#25805a;border-color:#25805a}
+#workspace button.circle-check svg{position:relative;z-index:1}
+#workspace button.circle-check:focus-visible{outline:2px solid #3a9467;outline-offset:0}
+/* The single-avatar chat should feel tactility, but the trigger's position must not change. */
+.xiaoya-avatar{transform:none!important;will-change:auto}
+.xiaoya-avatar img{transition:transform .25s cubic-bezier(.24,.84,.28,1);transform:scale(var(--avatar-scale,1))}
+.xiaoya-avatar:active img{transform:scale(.955)}
+/* Settings and assistant buttons match the same touch language. */
+#workspace .settings-row .small-action{min-width:44px;min-height:44px;font-size:13px;letter-spacing:0;padding:10px 12px}
+#workspace .settings-row{min-height:64px}
+#workspace .settings-row input:not([type=checkbox]):not([type=file]){min-height:44px}
+#workspace .settings-row .label{font-size:14px;color:#344239}
+.assistant-panel .assistant-icon,
+.assistant-panel .assistant-shortcuts button,
+.assistant-panel .assistant-compose button,
+.assistant-panel .assistant-config-actions button{min-height:44px}
+.assistant-panel .assistant-icon:last-child{min-width:44px}
+.assistant-panel .assistant-top{padding:12px 15px}
+.assistant-panel .assistant-identity span{font-size:12px}
+.assistant-panel .assistant-message{font-size:15px}
+.assistant-panel>footer{font-size:12px;line-height:1.5}
+.assistant-panel .assistant-shortcuts button{font-size:13px}
+/* Functional calendar labels are information, not decorative microcopy. */
+#workspace .native-timeline-scroll .hour-label{font-size:12.5px;color:#65746c;font-variant-numeric:tabular-nums}
+#workspace .native-timeline-scroll .native-event-title{font-size:13px;line-height:1.28}
+#workspace .native-timeline-scroll .native-event-detail{font-size:12px;line-height:1.3;opacity:1;color:#536c5d}
+#workspace .native-timeline-scroll .native-now b{font-size:12px}
+#workspace .v4-week-rail .day-pill:focus-visible{outline:2px solid #29815a;outline-offset:-2px}
+/* Stop the glass navigation from obscuring touch targets, retain real native safe-area. */
+@media(max-width:700px){
+  .topbar .glass-btn{width:44px;height:44px;min-width:44px;min-height:44px}
+  #workspace .v4-page-heading{padding-top:19px}
+  #workspace .v4-page-heading h1{font-size:38px}
+  #workspace .dayflow-heading h1{font-size:41px}
+  #workspace .dayflow-task-row,
+  #workspace .v4-task-row{padding-left:8px;padding-right:10px}
+  #workspace .dayflow-task-row+.dayflow-task-row:before,
+  #workspace .v4-task-row+.v4-task-row:before{left:62px}
+  #workspace .v4-mood-picker{gap:6px}
+  #workspace .v4-mood-option{font-size:12px;line-height:1.3;min-width:0}
+  #workspace .v4-section-title button{padding:9px 5px}
+  #workspace .v4-calendar-actions{gap:3px}
+  #workspace .v4-calendar-actions button{font-size:12.5px;white-space:nowrap}
+  #workspace .v4-week-rail .day-pill small{font-size:12px}
+  #workspace .v4-week-rail{display:flex;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:none;scroll-snap-type:x proximity}
+  #workspace .v4-week-rail::-webkit-scrollbar{display:none}
+  #workspace .v4-week-rail .day-pill{flex:1 0 44px;min-width:44px;scroll-snap-align:start}
+  #workspace .v4-journal-toolbar{flex-wrap:wrap;gap:5px}
+  #workspace .v4-journal-toolbar>span{min-width:90px}
+  #workspace .v4-stats-line small{font-size:12px}
+}
+@media(max-width:359px){
+  #workspace .v4-stats-line{gap:3px}
+  #workspace .v4-task-status{font-size:12px}
+  #workspace .v4-journal-row{flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){
+  .xiaoya-avatar img,#workspace button.circle-check::before{transition:none!important}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+  .assistant-panel{background:#fff}
+}

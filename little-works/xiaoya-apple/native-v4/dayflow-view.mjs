@@ -18,15 +18,15 @@ function focusCard(model,at){
     '<div class="dayflow-focus-bottom"><span>'+model.schedule.length+' 项今日日程</span><button data-view="schedule">查看完整计划 '+icon('right')+'</button></div></section>';
  }
  const next=model.nextUpcoming;
- const upcoming=next?'<span class="dayflow-future-label">下一项真实安排</span><p class="dayflow-future">'+
+ const upcoming=next?'<span class="dayflow-future-label">下一项安排</span><p class="dayflow-future">'+
    esc(labelDate(next.startsAt))+' · '+esc(next.start)+' '+esc(next.name)+'</p>':'<p class="dayflow-future">还没有登记接下来的课程或活动。</p>';
  const past=model.schedule.length>0;
  return '<section class="dayflow-focus dayflow-focus-open" id="dayflow-next" aria-labelledby="dayflow-next-label">'+
   '<div class="dayflow-rail"><span class="dayflow-rail-mark"></span><span id="dayflow-next-label">今天的日程</span><span class="dayflow-rail-time">'+(past?'全部已结束':'暂无待开始的安排')+'</span></div>'+
   '<div class="dayflow-focus-main"><div class="dayflow-focus-icon">'+icon('calendar')+'</div><div class="dayflow-focus-body">'+
-  '<strong class="dayflow-focus-title">'+(past?'今天的课程与活动已结束':'今天还没有已安排的课程或活动')+'</strong>'+
+  '<strong class="dayflow-focus-title">'+(past?'今天安排已结束':'今天还没有已安排的课程或活动')+'</strong>'+
   upcoming+'</div></div>'+
-  '<div class="dayflow-focus-bottom"><span>只显示你实际保存的日程</span><button data-view="schedule">打开计划 '+icon('right')+'</button></div></section>';
+  '<div class="dayflow-focus-bottom"><span></span><button data-view="schedule">打开计划 '+icon('right')+'</button></div></section>';
 }
 
 function adviceCard(suggestion){
@@ -42,7 +42,7 @@ function adviceCard(suggestion){
   controls='<button class="dayflow-approve" data-action="pet">和小芽聊聊 '+icon('right')+'</button>';
  }
  return '<section class="dayflow-advice" id="dayflow-suggestion" aria-labelledby="dayflow-advice-title">'+
-   '<div class="dayflow-advice-head"><span class="dayflow-sprout">'+icon('growth')+'</span><div><small>来自已保存的记录 · 本地规则</small><h2 id="dayflow-advice-title">小芽的建议</h2></div></div>'+
+   '<div class="dayflow-advice-head"><span class="dayflow-sprout">'+icon('growth')+'</span><div><small>本地建议 · 需要你确认</small><h2 id="dayflow-advice-title">小芽的建议</h2></div></div>'+
    '<div class="dayflow-advice-content">'+content+'</div>'+
    '<div class="dayflow-advice-actions">'+controls+'</div></section>';
 }
@@ -54,10 +54,10 @@ function timeline(model){
    '<span class="dayflow-time-name">'+esc(item.name)+'</span>'+
    '<small>'+esc(item.end)+' 结束 · '+esc(item.place||'未设置地点')+'</small></button></li>').join('');
  return '<section class="dayflow-timeline" id="dayflow-today-schedule"><div class="dayflow-section-head"><div>'+
-   '<small>YOUR DAY</small><h2>今天的时间线</h2></div><button data-view="schedule">查看计划 '+icon('right')+'</button></div>'+
+   '<h2>今日日程</h2></div><button data-view="schedule">查看计划 '+icon('right')+'</button></div>'+
    (model.schedule.length?'<ol class="dayflow-timeline-list">'+rows+'</ol>':
      '<div class="dayflow-timeline-empty"><span>'+icon('clock')+'</span><div><strong>今天还没有排入课程或活动</strong>'+
-     '<p>暂时留白也很好。你可以从计划页添加安排，或先完成待办。</p></div></div>')+'</section>';
+     '<p>有新安排时，再添加到日程。</p></div></div>')+'</section>';
 }
 
 function tasks(model){
@@ -66,8 +66,8 @@ function tasks(model){
   '<div class="dayflow-task-main"><button data-edit="task" data-id="'+esc(item.id)+'">'+esc(item.title)+'</button>'+
   '<small>'+esc(item.course||'事项')+(item.due?' · '+esc(labelDate(item.due)):' · 未设置截止')+'</small></div>'+
   '<span class="dayflow-task-due '+dueState(item)+'">'+esc(dueLabel(item))+'</span></div>').join('');
- return '<section class="dayflow-tasks" id="dayflow-pending-tasks"><div class="dayflow-section-head"><div><small>TO DO</small><h2>待处理事项 <span class="dayflow-task-count">'+model.pendingCount+'</span></h2></div>'+
-   '<button data-view="tasks">任务箱 '+icon('right')+'</button></div>'+
+ return '<section class="dayflow-tasks" id="dayflow-pending-tasks"><div class="dayflow-section-head"><div><h2>待办 <span class="dayflow-task-count">'+model.pendingCount+'</span></h2></div>'+
+   '<button data-view="tasks">查看全部 '+icon('right')+'</button></div>'+
    (rows?'<div class="dayflow-task-list">'+rows+'</div>':'<div class="dayflow-tasks-empty">目前没有未完成事项。<button data-add="task">新增一项</button></div>')+'</section>';
 }
 
@@ -77,8 +77,7 @@ export function renderDayflowToday(data,at=new Date(),{isDemo=false}={}){
  return '<div class="dayflow-home">'+
    '<header class="page-heading dayflow-heading"><div><span class="eyebrow">'+esc(date)+
    (isDemo?' <span class="dayflow-demo-tag">合成演示档案</span>':'')+'</span>'+
-   '<h1>今天<span class="dayflow-header-period">，好好安排。</span></h1>'+
-   '<p class="dayflow-lead">先看日程，再做重要的事。</p></div>'+
+   '<h1>今天</h1></div>'+
    '<div class="page-heading-right"><button class="primary" data-action="add-task">'+icon('plus')+' 新增事项</button></div></header>'+
    '<div class="dayflow-overview">'+focusCard(model,at)+adviceCard(model.suggestion)+'</div>'+
    timeline(model)+tasks(model)+'</div>';

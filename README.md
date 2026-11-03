@@ -7,6 +7,7 @@
 - [Apple Native V4 · DAYFLOW（正式版）](little-works/xiaoya-apple/native-v4/) · [固定评委演示入口](https://ndshuge.github.io/xiaoya-lifelab/?judge=1)
 - [Apple Native V3（完整存档）](little-works/xiaoya-apple/native-v3/) · [其他历史版本与切换](versions/)
 - [版本来源、功能边界与数据隐私](VERSIONS.md) · [历史 Apple V3 源码来源提交](APPLE_SOURCE_PROVENANCE.json)
+- [V4 Apple UI 规范与逐项整改报告](docs/APPLE_UI_AUDIT_20261103.md)
 
 **V4 新增：**「今天｜事项｜发展」三栏、一个小芽头像打开对话；DDL 与无期限待办明确分流；
 心情与日记保存、7/30 日统计和可导入/导出的私人记录；保留 V3 的成熟成长路线、

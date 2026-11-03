@@ -28,27 +28,27 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
  const moodButtons=moods.map(([n,label])=>'<button type="button" class="v4-mood-option'+(saved?.mood===Number(n)?' is-active':'')+'" data-mood="'+n+'" aria-pressed="'+(saved?.mood===Number(n))+'">'+
    '<span class="v4-mood-face v4-mood-'+n+'" aria-hidden="true"><i></i><b></b></span><span>'+label+'</span></button>').join('');
  return '<div class="v4-development">'+
-  '<header class="page-heading v4-page-heading"><div><span class="eyebrow">生活与成长</span><h1>发展</h1><p class="v4-subtitle">留下生活的痕迹，看见真实的变化。</p></div>'+
+  '<header class="page-heading v4-page-heading"><div><h1>发展</h1></div>'+
   '<div class="page-heading-right"><button class="primary" data-add="goal">'+ic('plus')+' 目标</button></div></header>'+
-  '<div class="v4-development-intro"><p class="v4-intro-day">TODAY · '+esc(today)+'</p><h2>今天，感觉怎么样？</h2>'+
-  '<p>随手记下这一刻。心情可以单独保存。</p></div>'+
+  '<div class="v4-development-intro"><h2>今天，感觉怎么样？</h2>'+
+  '</div>'+
   '<section id="development-mood" class="v4-mood-section" aria-labelledby="v4-mood-label">'+
   '<h3 id="v4-mood-label" class="v4-visually-hidden">记录心情</h3><div class="v4-mood-picker">'+moodButtons+'</div></section>'+
-  '<section id="development-journal" class="v4-journal-section"><div class="v4-section-title"><div><small>JOURNAL</small><h2>写几句话</h2></div><span id="v4-journal-date">'+esc(today)+'</span></div>'+
+  '<section id="development-journal" class="v4-journal-section"><div class="v4-section-title"><div><h2>写几句话</h2></div><span id="v4-journal-date">'+esc(today)+'</span></div>'+
   '<div class="v4-journal-paper"><label class="v4-visually-hidden" for="journal-note">日记</label>'+
   '<textarea id="journal-note" placeholder="有什么值得记住的小事？" maxlength="1800" spellcheck="false">'+esc(saved?.note||'')+'</textarea>'+
   '<div class="v4-journal-toolbar"><span id="journal-status" role="status">'+(saved?'这一天已有记录':'仅存储在当前浏览器')+'</span>'+
   (saved?'<button id="journal-delete" class="v4-journal-delete" type="button">删除记录</button>':'')+
   '<button id="journal-save" class="v4-journal-save" type="button">保存记录 '+ic('right')+'</button></div></div></section>'+
-  '<section class="v4-history-section"><div class="v4-section-title"><div><small>LOOK BACK</small><h2>最近的日子</h2></div><span>'+stats.count30+' 天 / 30 天</span></div>'+
-  (recentHtml?'<div class="v4-journal-history">'+recentHtml+'</div>':'<div class="v4-record-empty">你的日记会静静地留在这里。还没有记录也没关系。</div>')+'</section>'+
-  '<section class="v4-stats-section"><div class="v4-section-title"><div><small>REFLECTION</small><h2>近 7 天</h2></div><span>只统计已保存的记录</span></div>'+
+  '<section class="v4-history-section"><div class="v4-section-title"><div><h2>最近的日子</h2></div>'+(stats.count30?'<span>'+stats.count30+' 天 / 30 天</span>':'')+'</div>'+
+  (recentHtml?'<div class="v4-journal-history">'+recentHtml+'</div>':'<div class="v4-record-empty">保存后会出现在这里。</div>')+'</section>'+
+  ''+(stats.count30?'<section class="v4-stats-section"><div class="v4-section-title"><div><h2>近 7 天</h2></div><span>只统计已保存的记录</span></div>'+
   '<div class="v4-stats-line"><div><strong>'+stats.count7+'</strong><small>天有记录</small></div><div><strong>'+(stats.average7??'—')+'</strong><small>心情平均值 / 5</small></div>'+
   '<div><strong>'+stats.moodCount7+'</strong><small>天标注心情</small></div></div>'+
   '<p class="v4-stats-note">'+esc(stats.explanation)+'</p>'+
   '<button class="v4-ask-companion" data-action="pet">和小芽聊聊 '+ic('right')+'</button>'+
-  '<small class="v4-ai-disclaimer">本地统计不构成医学判断；对话不会自动发送日记。</small></section>'+
-  '<section id="development-goals" class="v4-goals-section"><div class="v4-section-title"><div><small>GROWTH</small><h2>正在坚持的事</h2></div><button data-add="goal">'+ic('plus')+' 新建目标</button></div>'+
+  '<small class="v4-ai-disclaimer">心情统计不构成医学判断；日记不会自动发给 AI。</small></section>':'')+
+  '<section id="development-goals" class="v4-goals-section"><div class="v4-section-title"><div><h2>正在坚持的事</h2></div><button data-add="goal">'+ic('plus')+' 新建目标</button></div>'+
   '<div class="v4-unified-list">'+(goalsHtml||'<p class="v4-list-empty">还没有目标。可以先从一件想坚持的小事开始。</p>')+'</div>'+
   (done.length?'<details class="v4-completed-goals" id="development-completed-goals"><summary>已完成 '+done.length+' 个目标</summary><div class="v4-unified-list">'+done.map(g=>'<div class="v4-completed-goal-row"><button data-edit="goal" data-id="'+esc(g.id)+'">'+esc(g.title)+'</button><button data-toggle="goal" data-id="'+esc(g.id)+'" aria-label="重新进行 '+esc(g.title)+'">重新进行</button></div>').join('')+'</div></details>':'')+
   '<details class="v4-growth-disclosure" id="v4-growth-planner"><summary>制定新的成长路线 '+ic('right')+'</summary><div class="v4-growth-planner-content">'+growthPlanner+'</div></details>'+

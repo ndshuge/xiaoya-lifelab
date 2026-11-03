@@ -96,9 +96,9 @@ function settingsRow(iconName,label,after){return '<div class="settings-row"><sp
 function switchRow(name,label,checked){return settingsRow('settings',label,'<lg-switch aria-label="'+esc(label)+'" data-setting="'+name+'" '+(checked?'checked':'')+'></lg-switch>')}
 function settingsView(d){
  const s=d.settings,mode=store.mode();
- return head('设置','个人偏好与档案管理')+
+ return head('设置','')+
  '<section class="section"><div class="section-head"><h2>使用体验</h2></div><div class="settings-group">'+
- switchRow('quiet','安静模式',s.quiet)+switchRow('hidePet','隐藏小芽',s.hidePet)+switchRow('reducedMotion','减少动效',s.reducedMotion)+switchRow('reminderEnabled','网页内提醒',s.reminderEnabled)+'</div></section>'+
+ switchRow('quiet','安静模式',s.quiet)+switchRow('reducedMotion','减少动效',s.reducedMotion)+switchRow('reminderEnabled','网页内提醒',s.reminderEnabled)+'</div></section>'+
  '<section class="section"><div class="section-head"><h2>学期与提醒</h2></div><div class="settings-group">'+
  settingsRow('calendar','学期名称','<input data-semester="name" type="text" aria-label="学期名称" value="'+esc(d.semester.name||'我的学期')+'">')+
  settingsRow('calendar','开始日期','<input data-semester="start" type="date" aria-label="学期开始日期" value="'+esc(d.semester.start||'')+'">')+
@@ -132,6 +132,10 @@ function render(){
  $('#nav-count').textContent=d.tasks.filter(t=>!t.done).length||'';
  $('#workspace').innerHTML='<div class="page" id="page-'+view+'">'+({today:todayView,items:itemsView,develop:developView,schedule:scheduleView,tasks:tasksView,goals:goalsView,review:reviewView,settings:d=>settingsView(d)+'<div class="v4-settings-extra"><a id="v4-version-library" href="../../../versions/">浏览历史版本 '+icon('right')+'</a></div>',search:searchView}[view]||todayView)(d)+'</div>';
  if(view==='develop'&&preserveGrowthOpen)$('#v4-growth-planner').open=true;
+ if(view==='items'&&itemsTab==='schedule'){
+   const scroller=$('.native-timeline-scroll'),earliest=scroller?.querySelector('.native-event');
+   if(earliest){const top=Number.parseFloat(earliest.style.getPropertyValue('--top'));if(Number.isFinite(top))scroller.scrollTop=Math.max(0,Math.round(top*14.4)-60)}
+ }
  if(view==='schedule'){const scroller=$('.hourly-scroll');if(scroller){const entries=visibleOn(d);const starts=entries.map(e=>Number((e.start||'08').slice(0,2))).filter(Number.isFinite);const hour=Math.max(0,Math.min(7,...starts.map(h=>Math.max(0,h-1))));scroller.scrollTop=hour*60}}
  const pending=d.tasks.filter(t=>!t.done).length;
  // V4 has a single avatar trigger; no duplicate pet panel.
