@@ -1,0 +1,89 @@
+/* Native V4 product UX 2026-11-03 — actions belong to content; maintain original Apple visual language.
+   Inspired by open-source planning/quick-journal workflows, no third-party code or images. */
+:root{--xy-ui-ink:#27362c;--xy-ui-soft:#728176;--xy-ui-quiet:#f4f6f4}
+/* Three stable primary tabs; do not reintroduce a global FAB into the header. */
+.topbar .toolbar-actions{margin-left:auto}
+.topbar #date-compact{margin-right:auto}
+.v4-page-heading:has(+ .v4-item-segments){padding-bottom:15px}
+.dayflow-heading{margin-bottom:1px}
+.dayflow-heading>.page-heading-right:empty,.v4-page-heading>.page-heading-right:empty{display:none}
+#workspace .v4-section-title button[data-add=task],
+#workspace .v4-section-title button[data-add=goal]{font-size:13px;font-weight:650;color:#267a51;min-height:44px;padding:9px 8px}
+#workspace .v4-section-title button[data-due-date]{border:0;background:transparent;color:#247b50;white-space:nowrap}
+#workspace .v4-inbox-group .v4-section-title button{white-space:nowrap}
+/* The primary schedule is a readable list; the 24-hour grid is an optional detail, not an endless first impression. */
+#items-schedule .v4-schedule-summary{display:grid;gap:0;border-bottom:1px solid rgba(40,79,49,.085);margin:0 0 11px}
+#items-schedule .v4-schedule-summary-row{border:0;border-top:1px solid rgba(40,79,49,.08);background:transparent;display:flex;align-items:center;gap:13px;text-align:left;min-height:74px;width:100%;padding:11px 7px;color:#273b2d}
+#items-schedule .v4-schedule-summary-row:first-child{border-top:0}
+#items-schedule .v4-schedule-summary-row:focus-visible{outline:2px solid #308157;outline-offset:-2px}
+#items-schedule .v4-schedule-summary-time{flex:0 0 100px;color:#5b8266;font-weight:680;font-size:12.5px;font-variant-numeric:tabular-nums}
+#items-schedule .v4-schedule-summary-body{display:grid;gap:5px;flex:1;min-width:0}
+#items-schedule .v4-schedule-summary-body strong{font-size:14px;font-weight:685;overflow-wrap:anywhere}
+#items-schedule .v4-schedule-summary-body small{font-size:12.5px;color:#728178}
+#items-schedule .v4-schedule-summary-row svg{width:16px;height:16px;color:#8b9e90;flex-shrink:0}
+#items-schedule .native-timeline-scroll{height:310px;min-height:310px}
+#items-schedule .calendar-caption{font-size:12px;color:#738377}
+@media(max-width:359px){
+ #items-schedule .v4-schedule-summary-time{flex-basis:92px;font-size:12px}
+ #items-schedule .v4-schedule-summary-row{gap:9px}
+}
+/* A finished day needs one next-step summary, not a second full schedule dashboard. */
+#workspace .dayflow-focus-complete{min-height:0;padding:18px 19px;border-radius:20px;display:block}
+#workspace .dayflow-complete-row{display:flex;gap:11px;align-items:center}
+#workspace .dayflow-complete-icon{display:grid;place-items:center;flex:0 0 37px;width:37px;height:37px;border-radius:12px;background:rgba(255,255,255,.7);color:#31835c}
+#workspace .dayflow-complete-icon svg{width:21px;height:21px}
+#workspace .dayflow-complete-row strong{min-width:0;flex:1;font-size:16px;line-height:1.45;font-weight:710;color:#2b6043;letter-spacing:-.3px}
+#workspace .dayflow-complete-row button{min-height:44px;min-width:58px;display:inline-flex;align-items:center;justify-content:flex-end;gap:3px;flex:0 0 auto;border:0;background:transparent;color:#297851;font-size:13px;font-weight:640;padding:10px 0 10px 6px}
+#workspace .dayflow-complete-row button svg{width:15px;height:15px}
+#workspace .dayflow-complete-next{font-size:12.5px;line-height:1.6;color:#587967;margin:5px 0 0 48px;overflow-wrap:anywhere}
+@media(min-width:1181px){#workspace .dayflow-overview:has(.dayflow-focus-complete){align-items:start}}
+/* Each product mode serves one job; "发展" has personal records vs longer-term goals. */
+.v4-develop-segments{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px;background:#e9eeea;border:1px solid rgba(91,122,100,.07);padding:4px;border-radius:16px;margin:1px 0 29px;max-width:400px}
+.v4-develop-segments button{appearance:none;min-width:0;min-height:44px;border:0;border-radius:12px;background:transparent;color:#748477;font-size:14px;line-height:1.4;font-weight:600;transition:background-color .19s ease,color .19s ease,box-shadow .19s ease}
+.v4-develop-segments button.is-active{background:#fff;color:#245d40;font-weight:710;box-shadow:0 2px 9px rgba(24,51,34,.08)}
+.v4-develop-segments button:active{transform:none!important;background:#f6faf7}
+.v4-develop-segments button:focus-visible{outline:2px solid #25885b;outline-offset:-2px}
+[data-develop-panel][hidden]{display:none!important}
+[data-develop-panel=goals] .v4-goals-section{margin-top:3px}
+[data-develop-panel=record] .v4-development-intro h2{margin-top:0}
+.v4-develop-segments+[data-develop-panel=goals] .v4-goals-section{min-height:0}
+.v4-development .v4-page-heading{padding-bottom:18px}
+.v4-development .v4-history-section{margin-top:6px}
+.v4-development .v4-mood-section{margin-bottom:28px}
+.v4-development .v4-journal-section{margin-bottom:32px}
+.v4-development .v4-goals-section{margin-bottom:55px}
+/* Let a quick reminder be quick; reveal explanatory properties only when the user asks. */
+#task-advanced{margin:18px 0 1px;padding:0;border-top:1px solid rgba(36,66,46,.09)}
+#task-advanced summary{cursor:pointer;list-style:none;min-height:48px;padding:14px 2px;display:flex;align-items:center;justify-content:space-between;color:#357653;font-size:14px;font-weight:650;outline-offset:3px}
+#task-advanced summary::-webkit-details-marker{display:none}
+#task-advanced summary::after{content:"";display:block;width:8px;height:8px;border-right:1.7px solid currentColor;border-bottom:1.7px solid currentColor;transform:rotate(45deg);margin:0 6px 5px 0;transition:transform .18s ease}
+#task-advanced[open] summary::after{transform:rotate(225deg);margin-top:5px;margin-bottom:0}
+#task-advanced .task-advanced-fields{padding-top:9px;border-top:1px solid rgba(36,66,46,.07)}
+/* Completed classes are history, not another full attention-grabbing schedule list. */
+#workspace .dayflow-past-details{border:1px solid rgba(43,86,55,.08);background:#fff;border-radius:18px;overflow:hidden}
+#workspace .dayflow-past-details summary{display:flex;align-items:center;gap:10px;justify-content:space-between;cursor:pointer;list-style:none;min-height:60px;padding:13px 17px;color:#5c7563;font-size:14px;font-weight:630}
+#workspace .dayflow-past-details summary::-webkit-details-marker{display:none}
+#workspace .dayflow-past-details summary::after{content:"";width:9px;height:9px;margin-right:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;transform:rotate(45deg);transition:transform .18s ease}
+#workspace .dayflow-past-details[open] summary::after{transform:rotate(225deg)}
+#workspace .dayflow-past-details[open] .dayflow-timeline-list{border:0;border-top:1px solid rgba(43,86,55,.08);border-radius:0}
+#workspace .dayflow-section-head h2{letter-spacing:-.45px}
+#workspace .dayflow-overview{margin-bottom:24px}
+@media(max-width:700px){
+  .v4-develop-segments{width:100%;max-width:none;margin:0 0 24px}
+  .v4-development .v4-page-heading{padding-bottom:14px}
+  .v4-development .v4-development-intro h2{font-size:22px}
+  .v4-development .v4-mood-picker{margin-top:2px}
+  .v4-development .v4-journal-paper textarea{min-height:130px}
+  #workspace .dayflow-past-details summary{min-height:57px;padding:11px 15px}
+  #workspace .dayflow-overview{margin-bottom:20px}
+  #workspace .v4-section-title button[data-add=task],
+  #workspace .v4-section-title button[data-add=goal]{padding:10px 4px;font-size:13px}
+}
+/* Respect platform preferences without changing the user's physical touch targets. */
+@media(prefers-reduced-motion:reduce){
+  #task-advanced summary::after,#workspace .dayflow-past-details summary::after,.v4-develop-segments button{transition:none!important}
+}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
+  .v4-develop-segments{background:#e8ede9}
+  .v4-develop-segments button.is-active{border:1px solid #6a9880}
+}

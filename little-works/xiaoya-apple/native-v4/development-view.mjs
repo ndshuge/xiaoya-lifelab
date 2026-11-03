@@ -4,7 +4,7 @@ import {analyzeJournal} from './journal-store.mjs';
 const ic=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
 const moods=[['1','很低落'],['2','有点累'],['3','平稳'],['4','不错'],['5','很好']];
 const dateZh=s=>new Date(s+'T12:00:00').toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
-export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPlanner='' }={}){
+export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPlanner='',active='record'}={}){
  const saved=entries.find(e=>e.date===selectedDate)||null;
  const stats=analyzeJournal(entries,at),recent=entries.slice(0,8);
  const today=dateZh(selectedDate);
@@ -28,8 +28,11 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
  const moodButtons=moods.map(([n,label])=>'<button type="button" class="v4-mood-option'+(saved?.mood===Number(n)?' is-active':'')+'" data-mood="'+n+'" aria-pressed="'+(saved?.mood===Number(n))+'">'+
    '<span class="v4-mood-face v4-mood-'+n+'" aria-hidden="true"><i></i><b></b></span><span>'+label+'</span></button>').join('');
  return '<div class="v4-development">'+
-  '<header class="page-heading v4-page-heading"><div><h1>发展</h1></div>'+
-  '<div class="page-heading-right"><button class="primary" data-add="goal">'+ic('plus')+' 目标</button></div></header>'+
+  '<header class="page-heading v4-page-heading"><div><h1>发展</h1></div></header>'+
+  '<div class="v4-develop-segments" aria-label="发展分类">'+
+  '<button type="button" data-develop-tab="record" aria-pressed="'+(active==='record')+'" class="'+(active==='record'?'is-active':'')+'">记录</button>'+
+  '<button type="button" data-develop-tab="goals" aria-pressed="'+(active==='goals')+'" class="'+(active==='goals'?'is-active':'')+'">目标</button></div>'+
+  '<div data-develop-panel="record"'+(active==='record'?'':' hidden')+'>'+
   '<div class="v4-development-intro"><h2>今天，感觉怎么样？</h2>'+
   '</div>'+
   '<section id="development-mood" class="v4-mood-section" aria-labelledby="v4-mood-label">'+
@@ -48,9 +51,11 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
   '<p class="v4-stats-note">'+esc(stats.explanation)+'</p>'+
   '<button class="v4-ask-companion" data-action="pet">和小芽聊聊 '+ic('right')+'</button>'+
   '<small class="v4-ai-disclaimer">心情统计不构成医学判断；日记不会自动发给 AI。</small></section>':'')+
-  '<section id="development-goals" class="v4-goals-section"><div class="v4-section-title"><div><h2>正在坚持的事</h2></div><button data-add="goal">'+ic('plus')+' 新建目标</button></div>'+
+  '</div>'+
+  '<div data-develop-panel="goals"'+(active==='goals'?'':' hidden')+'>'+
+  '<section id="development-goals" class="v4-goals-section"><div class="v4-section-title"><div><h2>正在坚持的事</h2></div><button data-add="goal">新建目标</button></div>'+
   '<div class="v4-unified-list">'+(goalsHtml||'<p class="v4-list-empty">还没有目标。可以先从一件想坚持的小事开始。</p>')+'</div>'+
   (done.length?'<details class="v4-completed-goals" id="development-completed-goals"><summary>已完成 '+done.length+' 个目标</summary><div class="v4-unified-list">'+done.map(g=>'<div class="v4-completed-goal-row"><button data-edit="goal" data-id="'+esc(g.id)+'">'+esc(g.title)+'</button><button data-toggle="goal" data-id="'+esc(g.id)+'" aria-label="重新进行 '+esc(g.title)+'">重新进行</button></div>').join('')+'</div></details>':'')+
   '<details class="v4-growth-disclosure" id="v4-growth-planner"><summary>制定新的成长路线 '+ic('right')+'</summary><div class="v4-growth-planner-content">'+growthPlanner+'</div></details>'+
-  '</section></div>';
+  '</section></div></div>';
 }

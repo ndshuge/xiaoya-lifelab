@@ -21,7 +21,7 @@ async function size(page,selector){return page.locator(selector).first().evaluat
    assert.equal((await page.locator('#workspace').innerText()).includes('0 天 / 30 天'),false);
   });
   await page.locator('.bottom-nav [data-view=today]').click();
-  await check('today primary and secondary actions have 44px touch height',async()=>{for(const sel of ['.topbar .glass-btn.add-top','.topbar .glass-btn[data-view=settings]','.dayflow-focus-bottom button','.dayflow-advice-actions button','.dayflow-section-head button','.dayflow-task-main>button','.dayflow-task-row .circle-check']){const [w,h]=await size(page,sel);assert.ok(w>=40&&h>=44,sel+' '+w+'x'+h)}});
+  await check('today primary and secondary actions have 44px touch height',async()=>{const focus=await page.locator('.dayflow-focus-complete').count()?'.dayflow-complete-row button':'.dayflow-focus-bottom button';for(const sel of ['.topbar .glass-btn[data-view=settings]',focus,'.dayflow-advice-actions button','.dayflow-section-head button','.dayflow-task-main>button','.dayflow-task-row .circle-check']){const [w,h]=await size(page,sel);assert.ok(w>=40&&h>=44,sel+' '+w+'x'+h)}});
   await page.locator('.bottom-nav [data-view=items]').click();
   await check('items has 44px action targets and visible week controls',async()=>{for(const sel of ['.v4-item-segments button','.v4-week-tools button','.v4-section-title button','.v4-calendar-actions button','.v4-calendar-import button']){const [w,h]=await size(page,sel);assert.ok(w>=44&&h>=44,sel+' '+w+'x'+h)}});
   await check('calendar auto scrolls to nearest actual appointment',async()=>{
@@ -35,7 +35,9 @@ async function size(page,selector){return page.locator(selector).first().evaluat
     assert.ok(r&&p&&r.y+r.height>p.y&&r.y<p.y+p.height,'class '+JSON.stringify(r)+' scroller '+JSON.stringify(p)+' pos '+pos);
   });
   await page.locator('.bottom-nav [data-view=develop]').click();
-  await check('development input and goal actions have 44px hit boxes',async()=>{for(const sel of ['#journal-save','.v4-goals-section .v4-section-title button','.v4-goal-checkin','.v4-goal-name']){const [w,h]=await size(page,sel);assert.ok(w>=44&&h>=44,sel+' '+w+'x'+h)}});
+  await check('development journal action stays at 44px',async()=>{const [w,h]=await size(page,'#journal-save');assert.ok(w>=44&&h>=44)});
+  await page.locator('[data-develop-tab=goals]').click();
+  await check('development goal actions stay at 44px',async()=>{for(const sel of ['.v4-goals-section .v4-section-title button','.v4-goal-checkin','.v4-goal-name']){const [w,h]=await size(page,sel);assert.ok(w>=44&&h>=44,sel+' '+w+'x'+h)}});
   await page.locator('.topbar [data-view=settings]').click();
   await check('settings input controls have 44px hit boxes and no obsolete pet toggle',async()=>{assert.equal(await page.locator('[data-setting=hidePet]').count(),0);
     for(const sel of ['.settings-row .small-action']){const all=page.locator(sel);for(let i=0;i<await all.count();i++){const [w,h]=await all.nth(i).evaluate(e=>{let r=e.getBoundingClientRect();return [r.width,r.height]});assert.ok(w>=44&&h>=44,sel+' #'+i+' '+w+'x'+h)}}
@@ -54,6 +56,7 @@ async function size(page,selector){return page.locator(selector).first().evaluat
   });
   await check('bottom Dock never covers the last growth planner action',async()=>{
    await page.locator('.bottom-nav [data-view=develop]').click();
+   await page.locator('[data-develop-tab=goals]').click();
    await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
    await page.waitForTimeout(150);
    const a=await page.locator('#v4-growth-planner summary').boundingBox();

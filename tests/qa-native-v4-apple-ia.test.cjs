@@ -18,7 +18,9 @@ test('deadline and undated inbox are different from actual timetable',()=>{
  const view=read('items-view.mjs'),model=read('items-model.mjs'),app=read('app.mjs');
  assert.ok(view.includes('id="items-date-deadlines"')&&view.includes('id="items-undated"'));
  assert.ok(view.includes('buildDayTimeline'));assert.ok(model.includes('deadlineTasksForDate'));
- assert.ok(app.includes('截止时间（可选；留空进入独立待办）'));
+ assert.ok(app.includes('截止日期（可选）'));
+ assert.ok(app.includes('id="task-advanced"'));
+ assert.ok(view.includes('data-due-date='));
 });
 test('private journal stores and exports independent per mode',()=>{
  const journal=read('journal-store.mjs'),app=read('app.mjs'),develop=read('development-view.mjs');

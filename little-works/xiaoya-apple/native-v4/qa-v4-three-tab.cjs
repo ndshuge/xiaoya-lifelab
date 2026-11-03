@@ -102,6 +102,7 @@ const server=http.createServer((req,res)=>{let p=decodeURIComponent(new URL(req.
    });
    await page.locator('.bottom-nav [data-view=today]').click();
    await page.locator('.bottom-nav [data-view=develop]').click();
+   await page.locator('[data-develop-tab=goals]').click();
    const archive=page.locator('#development-completed-goals');
    assert.equal(await archive.count(),1);
    await archive.locator('summary').click();
@@ -112,6 +113,7 @@ const server=http.createServer((req,res)=>{let p=decodeURIComponent(new URL(req.
   });
   await check('mature growth planner remains open after generating two routes and waits for explicit approval',async()=>{
    await page.locator('.bottom-nav [data-view=develop]').click();
+   await page.locator('[data-develop-tab=goals]').click();
    await page.locator('#v4-growth-planner summary').click();
    await page.locator('#growth-goal').fill('学习 Python');
    await page.locator('#growth-baseline').fill('刚入门');

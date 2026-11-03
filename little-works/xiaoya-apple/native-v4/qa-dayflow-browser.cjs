@@ -33,12 +33,15 @@ const server=http.createServer((req,res)=>{
    const p=await page.locator('#dayflow-suggestion').boundingBox();
    assert.ok(p.y<844,'suggestion should appear without leaving first viewport, y='+p.y);
    assert.match(await page.locator('#dayflow-next').innerText(),/日程|安排|课程/);
-   assert.equal(await page.locator('#dayflow-today-schedule').count(),1);
+   assert.equal(await page.locator('#dayflow-next [data-view=schedule]').count(),1);
   });
   await check('only saved course or activity occurrences appear on the actual current day',async()=>{
    const expected=await page.evaluate(async()=>{const {occurrences,dateKey,plusDays}=await import('../domain.js');const day=new Date(dateKey(new Date())+'T00:00:00');return occurrences(window.__XY_NATIVE_V3.getData(),day,plusDays(day,1)).length});
-   assert.equal(await page.locator('#dayflow-today-schedule .dayflow-time-content').count(),expected,'no synthetic calendar event may appear');
-   if(!expected)assert.match(await page.locator('#dayflow-today-schedule').innerText(),/今天还没有|暂无/);
+   const compact=await page.locator('#dayflow-next.dayflow-focus-complete').count();
+   const visible=await page.locator('#dayflow-today-schedule .dayflow-time-content').count();
+   if(compact)assert.equal(visible,0,'completed/empty day should not duplicate timeline');
+   else assert.equal(visible,expected,'no synthetic calendar event may appear');
+   if(!expected)assert.ok((await page.locator('#dayflow-next').innerText()).trim().length>0);
    assert.match(await page.locator('#dayflow-next').innerText(),/下一项|今天|接下来|正在进行/);
    assert.ok(await page.locator('#dayflow-suggestion [data-suggest]').count()===1 || await page.locator('#dayflow-suggestion [data-action]').count()>=1);
   });
@@ -57,6 +60,7 @@ const server=http.createServer((req,res)=>{
   });
   await check('development goals precede the optional roadmap generator',async()=>{
    await page.locator('.bottom-nav [data-view=develop]').click();
+   await page.locator('[data-develop-tab=goals]').click();
    const a=await page.locator('#development-goals .v4-section-title').first().boundingBox();
    const b=await page.locator('#v4-growth-planner').boundingBox();
    assert.ok(a&&b&&a.y<b.y);

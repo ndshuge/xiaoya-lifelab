@@ -23,21 +23,25 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
   '<span>'+esc(days[0].toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'}))+' — '+esc(days[6].toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'}))+'</span></div>'+
   '<div class="week-rail v4-week-rail">'+days.map(x=>{const stamp=dateKey(x);return '<button class="day-pill '+(stamp===selectedDate?'is-selected ':'')+(stamp===dateKey(at)?'is-today':'')+
    '" data-day="'+stamp+'"><small>'+DAYS[weekday(x)]+'</small><strong>'+x.getDate()+'</strong></button>'}).join('')+'</div>'+
-  '<section id="items-date-deadlines" class="v4-items-deadlines"><div class="v4-section-title"><div><h2>'+esc(date.toLocaleDateString('zh-CN',{month:'long',day:'numeric'}))+' · 截止提醒</h2></div><button data-add="task" aria-label="添加事项">'+ic('plus')+'</button></div>'+
-  '<div class="v4-unified-list">'+(expires.length?expires.map(taskRow).join(''):'<p class="v4-list-empty">当天没有截止事项。</p>')+'</div>'+
+  '<section id="items-date-deadlines" class="v4-items-deadlines"><div class="v4-section-title"><div><h2>'+esc(date.toLocaleDateString('zh-CN',{month:'long',day:'numeric'}))+' · 截止提醒</h2></div><button data-add="task" data-due-date="'+esc(selectedDate)+'">添加截止</button></div>'+
+  (expires.length?'<div class="v4-unified-list">'+expires.map(taskRow).join('')+'</div>':'')+
   (overdue.length?'<p class="v4-overdue-note">'+overdue.length+' 件此前逾期的事项仍未完成。<button data-items-tab="inbox">查看待办</button></p>':'')+
   '</section>'+
   '<section class="v4-items-calendar"><div class="v4-section-title"><div><h2>课程与活动</h2></div>'+
   '<div class="v4-calendar-actions"><button data-add="event">添加活动</button><button data-add="course">添加课程</button></div></div>'+
   '<div id="items-schedule" class="calendar-day calendar-day-timeline">'+
-  (slots.length?buildDayTimeline(slots,{date:selectedDate,nowDate:at})+
-  '<div class="calendar-caption">'+slots.length+' 项真实日程 · 点击编辑</div>':
+  (slots.length?'<div class="v4-schedule-summary" aria-label="当天课程与活动">'+slots.map(session=>
+    '<button class="v4-schedule-summary-row" data-edit="'+esc(session.kind)+'" data-id="'+esc(session.id)+'">'+
+    '<span class="v4-schedule-summary-time">'+esc(session.start)+'–'+esc(session.end)+'</span>'+
+    '<span class="v4-schedule-summary-body"><strong>'+esc(session.name)+'</strong><small>'+esc(session.place||'未设置地点')+'</small></span>'+ic('right')+'</button>').join('')+'</div>'+
+  buildDayTimeline(slots,{date:selectedDate,nowDate:at})+
+  '<div class="calendar-caption">时间轴可滚动查看全天</div>':
   '<div class="v4-no-schedule"><span aria-hidden="true">'+ic('clock')+'</span><div><strong>这一天暂时没有课程或活动</strong><p>添加课程或活动后，这里会按时间显示。</p></div></div>')+'</div>'+
   '<details class="v4-semantic-note"><summary>截止日期与日程的区别</summary><p>截止日期表示最后期限，不会自动安排学习时段。</p></details>'+
   '<div class="v4-calendar-import"><button data-action="calendar-import">'+ic('archive')+' 导入课表</button><button data-action="export-ics">'+ic('export')+' 导出日历</button></div></section>';
  }else{
   const done=(d.tasks||[]).filter(t=>t.done).slice(-8).reverse();
-  content='<section id="items-undated" class="v4-inbox-group"><div class="v4-section-title"><div><h2>独立待办 <span class="v4-inline-count">'+undated.length+'</span></h2></div><button data-add="task">'+ic('plus')+' 添加</button></div>'+
+  content='<section id="items-undated" class="v4-inbox-group"><div class="v4-section-title"><div><h2>独立待办 <span class="v4-inline-count">'+undated.length+'</span></h2></div><button data-add="task">添加待办</button></div>'+
    '<div class="v4-unified-list">'+(undated.length?undated.map(taskRow).join(''):'<p class="v4-list-empty">暂无无期限待办。</p>')+'</div></section>'+
    '<section class="v4-inbox-group"><div class="v4-section-title"><div><h2>有截止日期 <span class="v4-inline-count">'+dated.length+'</span></h2></div></div>'+
    '<div class="v4-unified-list">'+(dated.length?dated.map(taskRow).join(''):'<p class="v4-list-empty">没有待截止的事项。</p>')+'</div></section>'+
@@ -46,7 +50,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
     '</div></details>':'');
  }
  return '<div class="v4-items"><header class="page-heading v4-page-heading"><div><h1>事项</h1><p class="v4-subtitle">'+
-  total+' 件待办</p></div><div class="page-heading-right"><button class="primary" data-add="task">'+ic('plus')+' 新增</button></div></header>'+
+  total+' 件待办</p></div></header>'+
   '<div class="v4-item-segments" aria-label="事项视图"><button class="'+(active==='schedule'?'is-active':'')+'" data-items-tab="schedule" aria-pressed="'+(active==='schedule')+'">日程</button>'+
   '<button class="'+(active==='inbox'?'is-active':'')+'" data-items-tab="inbox" aria-pressed="'+(active==='inbox')+'">独立待办 <span>'+undated.length+'</span></button></div>'+
   content+'</div>';
