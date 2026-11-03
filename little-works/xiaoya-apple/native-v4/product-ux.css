@@ -87,3 +87,68 @@
   .v4-develop-segments{background:#e8ede9}
   .v4-develop-segments button.is-active{border:1px solid #6a9880}
 }
+
+
+/* Xiaoya V4 shared emotional scale: one grouped surface, one moving selection.
+   Unscheduled visual state has no indicator; no page layout moves on selection.
+   A soft selection underlay is the only animated geometric surface. */
+#workspace .v4-mood-picker{
+  --xy-mood-index:0;
+  --xy-mood-visible:0;
+  position:relative;isolation:isolate;
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:0;padding:3px;
+  border:1px solid rgba(36,63,43,.085);
+  border-radius:18px;background:#fff;
+  box-shadow:0 1px 8px rgba(35,53,38,.025);
+}
+#workspace .v4-mood-picker::before{
+  content:"";
+  position:absolute;z-index:0;
+  left:3px;top:3px;bottom:3px;
+  width:calc((100% - 6px) / 5);
+  border-radius:14px;
+  background:#e5f2e9;
+  box-shadow:inset 0 0 0 1px rgba(47,115,71,.075);
+  transform:translateX(calc(var(--xy-mood-index) * 100%));
+  opacity:var(--xy-mood-visible);
+  pointer-events:none;
+  transition:transform 320ms cubic-bezier(.25,1,.5,1),opacity 180ms ease-out;
+}
+#workspace .v4-mood-picker:has(.v4-mood-option.is-active){--xy-mood-visible:1}
+#workspace .v4-mood-picker:has(.v4-mood-option:nth-child(1).is-active){--xy-mood-index:0}
+#workspace .v4-mood-picker:has(.v4-mood-option:nth-child(2).is-active){--xy-mood-index:1}
+#workspace .v4-mood-picker:has(.v4-mood-option:nth-child(3).is-active){--xy-mood-index:2}
+#workspace .v4-mood-picker:has(.v4-mood-option:nth-child(4).is-active){--xy-mood-index:3}
+#workspace .v4-mood-picker:has(.v4-mood-option:nth-child(5).is-active){--xy-mood-index:4}
+#workspace .v4-mood-option,
+#workspace .v4-mood-option.is-active{
+  position:relative;z-index:1;
+  min-width:0;min-height:84px;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:7px;
+  padding:10px 2px;
+  border:0;border-radius:14px;
+  background:transparent;
+  box-shadow:none;
+  color:#516b5a;font-size:12px;line-height:1.4;font-weight:590;
+  transition:color 200ms ease-out;
+}
+#workspace .v4-mood-option.is-active{color:#205b3d;font-weight:700}
+#workspace .v4-mood-option:hover:not(.is-active){background:rgba(218,233,222,.32)}
+#workspace .v4-mood-option:focus-visible{outline:2px solid #277b54;outline-offset:-3px}
+#workspace .v4-mood-face{
+  width:31px;height:31px;flex-shrink:0;opacity:.83;
+  transition:transform 180ms cubic-bezier(.25,1,.5,1),opacity 180ms;
+}
+#workspace .v4-mood-option.is-active .v4-mood-face{opacity:1}
+#workspace .v4-mood-option:active .v4-mood-face{transform:scale(.9)}
+@media (prefers-reduced-motion:reduce){
+  #workspace .v4-mood-picker::before,
+  #workspace .v4-mood-option,
+  #workspace .v4-mood-face{transition:none!important}
+}
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more){
+  #workspace .v4-mood-picker{border-color:#8d9d92}
+  #workspace .v4-mood-picker::before{background:#d8e8dc;box-shadow:inset 0 0 0 1px #799b83}
+}

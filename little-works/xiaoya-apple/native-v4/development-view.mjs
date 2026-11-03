@@ -36,7 +36,7 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
   '<div class="v4-development-intro"><h2>今天，感觉怎么样？</h2>'+
   '</div>'+
   '<section id="development-mood" class="v4-mood-section" aria-labelledby="v4-mood-label">'+
-  '<h3 id="v4-mood-label" class="v4-visually-hidden">记录心情</h3><div class="v4-mood-picker">'+moodButtons+'</div></section>'+
+  '<h3 id="v4-mood-label" class="v4-visually-hidden">记录心情</h3><div class="v4-mood-picker" role="group" aria-labelledby="v4-mood-label">'+moodButtons+'</div></section>'+
   '<section id="development-journal" class="v4-journal-section"><div class="v4-section-title"><div><h2>写几句话</h2></div><span id="v4-journal-date">'+esc(today)+'</span></div>'+
   '<div class="v4-journal-paper"><label class="v4-visually-hidden" for="journal-note">日记</label>'+
   '<textarea id="journal-note" placeholder="有什么值得记住的小事？" maxlength="1800" spellcheck="false">'+esc(saved?.note||'')+'</textarea>'+

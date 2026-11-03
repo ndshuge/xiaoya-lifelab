@@ -139,6 +139,10 @@ function render(){
  if(view==='develop'){
    const input=$('#journal-note'),draft=journalDrafts.get(journalDraftKey());
    if(input&&draft!==undefined)input.value=draft;
+   if(moodDraft!==null){
+     $$('.v4-mood-option').forEach(b=>{const active=Number(b.dataset.mood)===moodDraft;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active))});
+   }
+   if(moodDraft!==null||draft!==undefined){const status=$('#journal-status');if(status)status.textContent='未保存'}
  }
  if(view==='items'&&itemsTab==='schedule'){
    const scroller=$('.native-timeline-scroll'),earliest=scroller?.querySelector('.native-event');
@@ -294,6 +298,7 @@ document.addEventListener('click',e=>{
  if(t.dataset.mood){
    moodDraft=Number(t.dataset.mood);
    $$('.v4-mood-option').forEach(b=>{const active=Number(b.dataset.mood)===moodDraft;b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active))});
+   const status=$('#journal-status');if(status)status.textContent='未保存';
    return;
  }
  if(t.dataset.journalDate){journalDate=t.dataset.journalDate;moodDraft=null;render();document.getElementById('development-mood')?.scrollIntoView({block:'start'});return}
@@ -329,7 +334,7 @@ $('#editor').addEventListener('cancel',e=>{e.preventDefault();closeSheet()});
 $('#editor').addEventListener('close',()=>{document.body.style.overflow='';modal=null});
 $('#editor').addEventListener('click',e=>{if(e.target===$('#editor'))closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='/'&&!$('#editor').open&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){e.preventDefault();navigate('search')}});
-document.addEventListener('input',e=>{if(e.target.id==='journal-note'){journalDrafts.set(journalDraftKey(),e.target.value);return}if(e.target.id==='search-input'){query=e.target.value;const start=e.target.selectionStart;render();$('#search-input')?.setSelectionRange(start,start)}});
+document.addEventListener('input',e=>{if(e.target.id==='journal-note'){journalDrafts.set(journalDraftKey(),e.target.value);const status=$('#journal-status');if(status)status.textContent='未保存';return}if(e.target.id==='search-input'){query=e.target.value;const start=e.target.selectionStart;render();$('#search-input')?.setSelectionRange(start,start)}});
 document.addEventListener('change',e=>{
  const t=e.target;
  const setting=t.dataset.setting||t.closest('lg-switch')?.dataset.setting;

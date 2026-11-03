@@ -11,6 +11,7 @@ Scope: `little-works/xiaoya-apple/native-v4/`, the **judge-facing app** in `ndsh
 - Apply **clarity, content-first hierarchy, predictable navigation, direct manipulation and restraint**. Preserve the original Xiaoya illustration and system/PingFang CJK typography. Use grouped rows/hairlines rather than stacks of look-alike cards.
 - Material tiers: opaque content (L0), purposeful overlapping dock/dialog frost (L1), true optical displacement only when an actual licensed shader has been integrated **and proven across WebKit/Chromium** (L2). CSS `backdrop-filter` alone is **never L2**. Avoid double white haze or stacking independent scroll-edge effects.
 - Interactive targets use **at least 44×44 CSS px** (as a web test approximation; not a claim of iOS native-point parity). 64×28 visible switches must have ≥44px *actual native input* hit height. Keep `:focus-visible`, associated labels, keyboard Escape, return focus and scroll unlock.
+- Mood picker: one unified 5-option choice surface, never five separate decorated cards. Preserve labels, pressed state, and visible “未保存” feedback until the user commits the day’s journal; do not silently upload or autosave a private mood entry.
 - Motion is functional: down/hold/release/cancel, opening and closing from the same origin, interruption, repeated taps and Reduced Motion. Avoid layout-shifting scale and independent motion of the dock.
 - Test iPhone safe area, browser toolbar, content underlay, open virtual keyboard, 200% zoom and long Chinese strings. **WebKit simulation is not real iPhone Safari**.
 
