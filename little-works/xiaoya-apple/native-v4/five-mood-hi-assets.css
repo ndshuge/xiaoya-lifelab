@@ -1,0 +1,42 @@
+/* High-density Xiaoya mood illustrations, individually exported from the
+   five 1254×1254 original image generations (never the 500×80 preview).
+   Each web-optimized transparent export is 512×512. Mapping:
+   1 low / 2 tired / 3 steady / 4 good / 5 delighted. */
+#workspace .v4-mood-option .v4-mood-art{
+  display:block;
+  width:min(100%,70px);
+  height:68px;
+  flex:0 0 auto;
+  background-position:center center!important;
+  background-size:contain!important;
+  background-repeat:no-repeat!important;
+  image-rendering:auto;
+  opacity:1;
+  transform:none!important;
+  transition:none!important;
+}
+#workspace .v4-mood-option .v4-mood-art-1{background-image:url('./assets/xiaoya-mood-1-hi-v2.webp')!important}
+#workspace .v4-mood-option .v4-mood-art-2{background-image:url('./assets/xiaoya-mood-2-hi.webp')!important}
+#workspace .v4-mood-option .v4-mood-art-3{background-image:url('./assets/xiaoya-mood-3-hi.webp')!important}
+#workspace .v4-mood-option .v4-mood-art-4{background-image:url('./assets/xiaoya-mood-4-hi.webp')!important}
+#workspace .v4-mood-option .v4-mood-art-5{background-image:url('./assets/xiaoya-mood-5-hi.webp')!important}
+#workspace .v4-mood-option,
+#workspace .v4-mood-option.is-active{
+  min-height:97px;
+  gap:2px;
+  padding:4px 0 6px;
+}
+#workspace .v4-mood-option:is(:active,.xy-is-pressed) .v4-mood-art{
+  transform:none!important;
+}
+@media(max-width:359px){
+  #workspace .v4-mood-option,
+  #workspace .v4-mood-option.is-active{min-height:88px}
+  #workspace .v4-mood-option .v4-mood-art{
+    width:min(100%,62px);
+    height:62px;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #workspace .v4-mood-art{transition:none!important}
+}

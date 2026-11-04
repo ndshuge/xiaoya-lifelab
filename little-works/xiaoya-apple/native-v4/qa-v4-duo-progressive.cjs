@@ -29,9 +29,10 @@ await check(label+' single journal action settles promptly and preserves hitbox'
  const initial=await button.evaluate(e=>getComputedStyle(e).boxShadow);
  assert.match(initial,/3.5px|4px/);
  const down=await button.boundingBox();await p.mouse.move(down.x+down.width/2,down.y+down.height/2);await p.mouse.down();await p.waitForTimeout(85);
+ await p.waitForFunction(original=>{const e=document.querySelector('#journal-save');return e&&(e.matches(':active')||e.classList.contains('xy-is-pressed'))&&getComputedStyle(e).boxShadow!==original},initial,{timeout:800});
  const pressed=await button.evaluate(e=>({shadow:getComputedStyle(e).boxShadow,pressed:e.matches(':active')||e.classList.contains('xy-is-pressed')}));
  assert.equal(pressed.pressed,true);assert.notEqual(pressed.shadow,initial);
- await p.mouse.up();await p.waitForTimeout(260);
+ await p.mouse.up();await p.waitForFunction(expected=>{const e=document.querySelector('#journal-save');return e&&!e.classList.contains('xy-is-pressed')&&getComputedStyle(e).boxShadow===expected},initial,{timeout:1300});
  const settle=await button.evaluate(e=>({shadow:getComputedStyle(e).boxShadow,trans:getComputedStyle(e).transitionDuration}));assert.equal(settle.shadow,initial);
  const final=await button.boundingBox();assert.ok(Math.abs(final.width-box.width)<.5);
 });

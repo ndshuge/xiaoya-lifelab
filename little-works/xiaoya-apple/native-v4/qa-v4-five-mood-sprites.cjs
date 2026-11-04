@@ -18,13 +18,18 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
   assert.deepEqual(texts.map(x=>x.trim()),['很低落','有点累','平稳','不错','很好']);
   assert.equal(await p.locator('.v4-mood-face').count(),0);
  });
- await check(name+' sprite asset loads and all five positions are distinct',async()=>{
+ await check(name+' five separate HD assets load and map to correct moods',async()=>{
   const entries=await p.locator('.v4-mood-art').evaluateAll(xs=>xs.map(x=>({bg:getComputedStyle(x).backgroundImage,pos:getComputedStyle(x).backgroundPositionX,width:x.getBoundingClientRect().width,height:x.getBoundingClientRect().height})));
-  assert.ok(entries.every(x=>x.bg.includes('xiaoya-moods-v1.webp')),JSON.stringify(entries));
-  assert.deepEqual(entries.map(x=>x.pos),['0%','25%','50%','75%','100%']);
-  assert.ok(entries.every(x=>x.width>=53&&x.height>=51),JSON.stringify(entries));
-  const status=await p.evaluate(async()=>{const img=new Image();img.src=new URL('./assets/xiaoya-moods-v1.webp',location.href);await img.decode();return {w:img.naturalWidth,h:img.naturalHeight}});
-  assert.deepEqual(status,{w:500,h:80});assert.deepEqual(missing,[]);
+  for(const [i,entry] of entries.entries()){
+    assert.ok(entry.bg.includes(i===0?'xiaoya-mood-1-hi-v2.webp':'xiaoya-mood-'+(i+1)+'-hi.webp'),JSON.stringify(entry));
+    assert.ok(entry.width>=49&&entry.height>=60,JSON.stringify(entry));
+  }
+  const status=await p.evaluate(async()=>Promise.all([1,2,3,4,5].map(async i=>{
+    const img=new Image();img.src=new URL(i===1?'./assets/xiaoya-mood-1-hi-v2.webp':'./assets/xiaoya-mood-'+i+'-hi.webp',location.href);
+    await img.decode();return [img.naturalWidth,img.naturalHeight]
+  })));
+  assert.deepEqual(status,Array(5).fill([512,512]));
+  assert.deepEqual(missing,[]);
  });
  await check(name+' active selection remains one soft integrated pill and draft not autosaved',async()=>{
   await p.locator('.v4-mood-option[data-mood="5"]').click();
