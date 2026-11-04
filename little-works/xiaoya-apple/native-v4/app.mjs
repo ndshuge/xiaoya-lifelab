@@ -15,6 +15,7 @@ import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=5.1.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
+import {createAgentBridge} from './agent-bridge.mjs?v=5.2.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const icon=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
@@ -34,7 +35,8 @@ let journalHistory=null;
 const journalDrafts=new Map();
 const journalDraftKey=()=>store.mode()+':'+journalDate;
 function clearModeDrafts(){for(const key of journalDrafts.keys())if(key.startsWith(store.mode()+':'))journalDrafts.delete(key)}
-const assistant=createAssistant({getData:state,getMode:()=>store.mode(),navigate});
+const agent=createAgentBridge({getData:state,persist:next=>store.replace(next),getJournalEntries:()=>journal.all(),getMode:()=>store.mode(),openSheet,closeSheet,notify,refresh:render,esc});
+const assistant=createAssistant({getData:state,getMode:()=>store.mode(),navigate,getAgentReply:question=>agent.answer(question)});
 const growthPanel=createGrowthPanel({getData:state,getMode:()=>store.mode(),replace:next=>store.replace(next),refresh:render,openSheet,closeSheet,notify,esc});
 
 function notify(s,kind='standard'){const el=$('#toast');el.textContent=s;el.dataset.kind=kind;el.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>{el.classList.remove('show');delete el.dataset.kind},2900)}
@@ -143,6 +145,7 @@ function render(){
  $('#nav-count').textContent=d.tasks.filter(t=>!t.done).length||'';
  $('#workspace').innerHTML='<div class="page" id="page-'+view+'">'+({today:todayView,items:itemsView,develop:developView,schedule:scheduleView,tasks:tasksView,goals:goalsView,review:reviewView,settings:d=>settingsView(d)+'<div class="v4-settings-extra"><a id="v4-version-library" href="../../../versions/">浏览历史版本 '+icon('right')+'</a></div>',search:searchView}[view]||todayView)(d)+'</div>';
  $('#workspace').setAttribute('aria-busy','false');
+ agent.render(view,$('#workspace .page'));
  if(view==='develop'&&preserveGrowthOpen)$('#v4-growth-planner').open=true;
  if(view==='develop'){
    const input=$('#journal-note'),draft=journalDrafts.get(journalDraftKey());
@@ -306,7 +309,8 @@ function editForm(kind,id='',preset={}){
     '<div class="fieldrow">'+input('开始时间','start',obj.start||'09:00','time','required')+input('结束时间','end',obj.end||'10:30','time','required')+'</div>'+
     input('地点（可选）','place',obj.place||'')+input('单次日期（可选）','date',obj.date||(kind==='event'?preset.date||selectedDate:''),'date')+
     '<div class="fieldrow">'+input('教学起始周','weekStart',obj.weekStart||1,'number','min="1" max="54"')+input('教学结束周','weekEnd',obj.weekEnd||18,'number','min="1" max="54"')+'</div>'+
-    select('周次','parity',obj.parity||'all',[['all','每周'],['odd','单周'],['even','双周']]);
+    select('周次','parity',obj.parity||'all',[['all','每周'],['odd','单周'],['even','双周']])+
+    (kind==='event'?select('活动环境','outdoor',obj.outdoor===true?'true':'false',[['false','室内或未标记'],['true','户外活动']]):'');
  }
  if(id)fields+='<div class="sheet-footer"><button type="button" class="danger" data-delete="'+kind+'" data-id="'+esc(id)+'">删除记录</button></div>';
  openSheet((id?'编辑':'新增')+({task:'提醒',goal:'目标',course:'课程',event:'活动'}[kind]),fields,{type:'edit',kind,id},{source:preset.source||null});
@@ -323,6 +327,7 @@ function saveEdit(){
    f.title=f.title.trim();f.weeklyTarget=Math.max(1,Math.min(7,Number(f.weeklyTarget)||1));
  }else{
    f.day=Number(f.day);f.weekStart=Number(f.weekStart);f.weekEnd=Number(f.weekEnd);f.exceptions=state()[key].find(x=>x.id===id)?.exceptions||[];
+   if(kind==='event')f.outdoor=f.outdoor==='true';
    try{checkSchedule(f)}catch(e){return notify(e.message)}
  }
  const previous=state()[key].find(x=>x.id===id);
@@ -383,7 +388,7 @@ function runAction(action,source){
  case 'open-goals-archive':notify('已完成的目标保留在原版成长记录中。');break;
  case 'close':closeSheet();break;
  case 'pet':assistant.open(source);break;
- case 'mode':store.setMode(store.mode()==='demo'?'personal':'demo');navigate('today');notify(store.mode()==='demo'?'已切换到合成演示档案':'已返回私人档案');break;
+ case 'mode':agent.resetForMode();store.setMode(store.mode()==='demo'?'personal':'demo');navigate('today');notify(store.mode()==='demo'?'已切换到合成演示档案':'已返回私人档案');break;
  case 'export-json':blobDownload(JSON.stringify({...state(),journalV1:journal.all(),exportedAt:now().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(now())+'.json');notify('已导出当前档案');break;
  case 'import-json':$('#import-file').click();break;
  case 'export-ics':blobDownload(exportCalendar(state()),'text/calendar','xiaoya-calendar.ics');notify('已导出日历');break;
@@ -393,6 +398,7 @@ function runAction(action,source){
 }
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;
+ if(agent.handle(t))return;
  if(t.dataset.contextAction){
   const action=t.dataset.contextAction,context=modal;
   if(!context||context.type!=='context-actions')return;
