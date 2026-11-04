@@ -1,0 +1,158 @@
+/* Xiaoya tactile buttons: inspired by Duolingo's raised press, using Xiaoya colors.
+   The real button box never translates: only its lower-edge paint and children move. */
+:root{
+  --xy-key-edge:#b8c9bc;
+  --xy-key-edge-green:#4d9468;
+  --xy-key-surface:#f8fbf9;
+}
+@media(prefers-color-scheme:dark){
+  :root{--xy-key-edge:#425a4a;--xy-key-edge-green:#386e50;--xy-key-surface:#26352b}
+}
+#workspace .v4-mood-option,
+#workspace .v4-week-tools .calendar-arrow button,
+#workspace .v4-journal-save,
+#workspace .v4-goal-checkin,
+#workspace .v4-section-title button[data-add],
+#workspace .v4-section-title button[data-due-date],
+#workspace .v4-ask-companion,
+#workspace .v4-journal-delete,
+#workspace .v4-goal-name,
+#workspace .small-action,
+#workspace .dayflow-focus-bottom button,
+.sheet .sheet-save,
+.sheet .sheet-cancel,
+.assistant-shortcuts button,
+.assistant-config-actions button,
+.topbar .toolbar-actions .glass-btn {
+  --xy-key-edge-current:var(--xy-key-edge);
+  box-shadow:0 4px 0 var(--xy-key-edge-current);
+  transition:
+    box-shadow 135ms cubic-bezier(.25,.8,.25,1),
+    background-color 170ms ease,
+    border-color 170ms ease;
+  touch-action:manipulation;
+}
+#workspace .v4-mood-option.is-active,
+#workspace .v4-journal-save,
+#workspace .v4-goal-checkin,
+#workspace .v4-section-title button[data-add],
+#workspace .dayflow-focus-bottom button,
+.sheet .sheet-save{
+  --xy-key-edge-current:var(--xy-key-edge-green);
+}
+#workspace .v4-mood-option.xy-is-pressed,
+#workspace .v4-mood-option:active,
+#workspace .v4-week-tools .calendar-arrow button.xy-is-pressed,
+#workspace .v4-week-tools .calendar-arrow button:active,
+#workspace .v4-journal-save.xy-is-pressed,
+#workspace .v4-journal-save:active,
+#workspace .v4-goal-checkin.xy-is-pressed,
+#workspace .v4-goal-checkin:active,
+#workspace .v4-section-title button.xy-is-pressed,
+#workspace .v4-section-title button:active,
+#workspace .v4-ask-companion.xy-is-pressed,
+#workspace .v4-ask-companion:active,
+#workspace .v4-journal-delete.xy-is-pressed,
+#workspace .v4-journal-delete:active,
+#workspace .v4-goal-name.xy-is-pressed,
+#workspace .v4-goal-name:active,
+#workspace .small-action.xy-is-pressed,
+#workspace .small-action:active,
+#workspace .dayflow-focus-bottom button.xy-is-pressed,
+#workspace .dayflow-focus-bottom button:active,
+.sheet .sheet-save.xy-is-pressed,
+.sheet .sheet-save:active,
+.sheet .sheet-cancel.xy-is-pressed,
+.sheet .sheet-cancel:active,
+.assistant-shortcuts button.xy-is-pressed,
+.assistant-shortcuts button:active,
+.assistant-config-actions button.xy-is-pressed,
+.assistant-config-actions button:active,
+.topbar .toolbar-actions .glass-btn.xy-is-pressed,
+.topbar .toolbar-actions .glass-btn:active {
+  box-shadow:0 0 0 var(--xy-key-edge-current);
+  transition-duration:95ms,170ms,170ms;
+}
+#workspace .v4-mood-option:is(:active,.xy-is-pressed) > .v4-mood-face,
+#workspace .v4-mood-option:is(:active,.xy-is-pressed) > span:last-child,
+#workspace .v4-week-tools .calendar-arrow button:is(:active,.xy-is-pressed) > svg,
+#workspace .v4-item-segments button:is(:active,.xy-is-pressed) > .xy-elastic-face,
+#workspace .v4-develop-segments button:is(:active,.xy-is-pressed) > .xy-elastic-face,
+.bottom-nav .tab:is(:active,.xy-is-pressed) > svg,
+.bottom-nav .tab:is(:active,.xy-is-pressed) > span,
+.topbar .glass-btn:is(:active,.xy-is-pressed) > svg{
+  transform:translateY(2px) scale(.95);
+  transition-duration:145ms;
+}
+#workspace .v4-mood-option{border-radius:12px}
+#workspace .v4-mood-option:is(:active,.xy-is-pressed){background-color:rgba(108,180,132,.18)}
+#workspace .v4-mood-option.is-active:is(:active,.xy-is-pressed){background-color:rgba(91,185,119,.28)}
+/* Keep segmented and Dock icons touch responsive without turning them into
+   three-dimensional slabs or changing their stable 44px hit areas. */
+#workspace .v4-item-segments button,
+#workspace .v4-develop-segments button{touch-action:manipulation}
+@media(prefers-reduced-motion:reduce){
+  #workspace .v4-mood-option,
+  #workspace .v4-week-tools .calendar-arrow button,
+  #workspace .v4-journal-save,
+  #workspace .v4-goal-checkin,
+  #workspace .v4-section-title button,
+  #workspace .v4-ask-companion,
+  #workspace .v4-journal-delete,
+  #workspace .v4-goal-name,
+  #workspace .small-action,
+  .sheet .sheet-save,.sheet .sheet-cancel,
+  .assistant-shortcuts button,
+  .assistant-config-actions button,
+  .topbar .toolbar-actions .glass-btn{transition:none!important}
+}
+body.reduce-motion #workspace .v4-mood-option,
+body.reduce-motion #workspace .v4-week-tools .calendar-arrow button,
+body.reduce-motion #workspace .v4-journal-save,
+body.reduce-motion #workspace .v4-goal-checkin,
+body.reduce-motion #workspace .v4-section-title button,
+body.reduce-motion #workspace .v4-ask-companion,
+body.reduce-motion #workspace .v4-journal-delete,
+body.reduce-motion #workspace .v4-goal-name,
+body.reduce-motion #workspace .small-action,
+body.reduce-motion .sheet .sheet-save,
+body.reduce-motion .sheet .sheet-cancel,
+body.reduce-motion .assistant-shortcuts button,
+body.reduce-motion .assistant-config-actions button,
+body.reduce-motion .topbar .toolbar-actions .glass-btn{transition:none!important}
+@media(forced-colors:active){
+  #workspace .v4-mood-option,
+  #workspace .v4-week-tools .calendar-arrow button,
+  #workspace .v4-journal-save,
+  #workspace .v4-goal-checkin,
+  #workspace .v4-section-title button,
+  .sheet .sheet-save,.sheet .sheet-cancel{box-shadow:0 3px 0 ButtonText}
+  #workspace .v4-mood-option:is(:active,.xy-is-pressed),
+  #workspace .v4-week-tools .calendar-arrow button:is(:active,.xy-is-pressed),
+  #workspace .v4-journal-save:is(:active,.xy-is-pressed){
+    box-shadow:none;outline:2px solid Highlight
+  }
+}
+/* Text-only links must not appear as thick underlines. Duolingo's raised
+   treatment belongs on filled keys, not every verb in the interface. */
+#workspace .v4-section-title button,
+#workspace .v4-goal-name,
+#workspace .v4-ask-companion,
+#workspace .v4-journal-delete,
+#workspace .small-action,
+.sheet .sheet-save,
+.sheet .sheet-cancel{
+  box-shadow:none!important;
+}
+.topbar .toolbar-actions .glass-btn{
+  box-shadow:0 2px 8px rgba(30,62,40,.08)!important;
+}
+#workspace .v4-mood-option:not(.is-active){
+  box-shadow:0 2px 0 var(--xy-key-edge);
+}
+#workspace .v4-mood-option.is-active{
+  box-shadow:0 4px 0 var(--xy-key-edge-green);
+}
+#workspace .v4-mood-option:is(:active,.xy-is-pressed){
+  box-shadow:0 0 0 var(--xy-key-edge)!important;
+}

@@ -42,7 +42,7 @@ const server=http.createServer((req,res)=>{
    assert.ok(rgba&&Number(rgba[1])<0.52,'nav opaque alpha '+info.navColor);
    assert.ok(!info.veil.includes('0.96')&&!info.veil.includes('0.75'),'heavy white veil '+info.veil);
   });
-  await check('main tab changes synchronously and uses two spatial surfaces',async()=>{
+  await check('main tab changes synchronously without cloned ghost layers',async()=>{
    const origin=await page.locator('#bottom-nav').evaluate(e=>{window.__NAV_NODE=e;return e.id});
    const liveX=await page.locator('#workspace').evaluate(e=>e.getBoundingClientRect().left);
    await page.locator('#bottom-nav [data-view=items]').evaluate(el=>el.click());
@@ -60,14 +60,8 @@ const server=http.createServer((req,res)=>{
    assert.equal(data.direction,'forward');
    assert.equal(data.liveTransform,'none','live interactive page should never slide its hit targets');
    assert.ok(Math.abs(data.liveX-liveX)<.5,'live content hitbox shifted during navigation');
-   assert.equal(data.leaving,1,'old page lacks its spatial exit surface');
-   assert.equal(data.outgoingMotion,true,'old page not animated as separate surface');
-   const ghostSafety=await page.evaluate(()=>{
-     const ghost=document.querySelector('.xy-route-ghost');
-     return {hidden:ghost?.getAttribute('aria-hidden'),inert:ghost?.inert,
-       active:ghost?.querySelectorAll('[id],[data-items-tab],[data-develop-tab],[data-action],[data-add],[data-view]').length||0};
-   });
-   assert.deepEqual(ghostSafety,{hidden:'true',inert:true,active:0},'exiting snapshot contains live controls');
+   assert.equal(data.leaving,0,'cloned outgoing page would leave a visual afterimage');
+   assert.equal(data.outgoingMotion,false,'old snapshot animation must not run');
    await page.waitForTimeout(270);
    assert.equal(await page.locator('.xy-route-ghost').count(),0,'outgoing visual layer leaked');
   });
@@ -113,7 +107,7 @@ const server=http.createServer((req,res)=>{
    });
    assert.ok(d.last<d.dock,'last item='+d.last+' dock top='+d.dock);
   });
-  await check('long task feed skips expensive snapshot cloning without delaying navigation',async()=>{
+  await check('long task feed navigates synchronously without ever cloning pages',async()=>{
     await page.locator('#bottom-nav [data-view=today]').evaluate(el=>el.click());
     await page.waitForTimeout(250);
     await page.evaluate(()=>{

@@ -36,7 +36,7 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
    assert.notEqual(first,end,'selector did not travel');
    assert.notEqual(second,end,'indicator jumped instantly to end');
  });
- await check(name+' page motion is directional and uninterrupted',async()=>{
+ await check(name+' page direction updates without any visual clone',async()=>{
    await page.locator('.bottom-nav [data-view=today]').click();
    await page.waitForTimeout(260);
    const oldRect=await page.locator('#workspace').evaluate(e=>e.getBoundingClientRect().x);
@@ -44,9 +44,8 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
    const early=await page.evaluate(()=>{const g=document.querySelector('.xy-route-ghost');
      return {route:document.body.dataset.view,direction:document.documentElement.dataset.xyNavDirection,ghost:!!g,dist:g?g.getAnimations().map(a=>a.effect?.getKeyframes().at(-1)?.transform):[],dur:g?g.getAnimations().map(a=>a.effect?.getTiming().duration):[]};});
    assert.equal(early.route,'items');assert.equal(early.direction,'forward');
-   assert.equal(early.ghost,true);
-   assert.ok(early.dist.some(v=>/1[4-9]px|2[0-9]px/.test(v||'')),JSON.stringify(early.dist));
-   assert.ok(early.dur.some(v=>v>=150),JSON.stringify(early.dur));
+   assert.equal(early.ghost,false,'old page cannot overlay the new view');
+   assert.deepEqual(early.dist,[]);
    assert.ok(Math.abs((await page.locator('#workspace').evaluate(e=>e.getBoundingClientRect().x))-oldRect)<1);
    await page.locator('.bottom-nav [data-view=develop]').evaluate(e=>e.click());
    await page.locator('.bottom-nav [data-view=today]').evaluate(e=>e.click());

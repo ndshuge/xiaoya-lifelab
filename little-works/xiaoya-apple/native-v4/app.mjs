@@ -3,7 +3,7 @@ import {dateKey,weekday,monday,plusDays,teachingWeek,occurrences,growth,checkSch
 import {createSpring} from '../glass/liquid-glass.js';
 import '../glass/components.js'; // Original liquidglass.dev optical controls, self-hosted (MIT).
 import './viewport-guard.mjs?v=4.5.3';
-import './press-feedback.mjs?v=4.6.3';
+import './press-feedback.mjs?v=4.6.5';
 import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
@@ -194,72 +194,22 @@ function restoreScroll(){
  const top=scrollMemory.get(scrollKey())??0;
  window.scrollTo({left:0,top,behavior:'instant'});
 }
-let routeMotion=null;
-function stopRouteMotion(){
- if(!routeMotion)return;
- for(const anim of routeMotion.animations){try{anim.cancel()}catch{}}
- routeMotion.ghost?.remove();
- routeMotion=null;
- document.body.classList.remove('xy-motion-active');
-}
-// ViewTransition's DOM update runs on the next rendering frame; rapid taps used
-// to race. Commit routes synchronously, then animate TWO separate visual layers.
+// Route updates are synchronous, with exactly one painted page.
+ // Previous versions cloned #workspace for an outgoing animation, leaving
+ // visible duplicate text and cards in mobile Safari during rapid taps.
 function transitionContent(update,{animate=true,direction='neutral'}={}){
- stopRouteMotion();
- const host=$('#workspace');
- const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches||!!state().settings.reducedMotion;
- const useMotion=animate&&!reduced&&host&&typeof host.animate==='function';
- let ghost=null;
- if(useMotion){
-   const rect=host.getBoundingClientRect();
-   const top=Math.max(0,rect.top),bottom=Math.min(innerHeight,rect.bottom);
-   // Long feeds must never clone hundreds of live controls just for motion.
-   if(host.querySelectorAll('*').length<600&&rect.width>0&&bottom>top+20){
-     ghost=document.createElement('div');
-     ghost.className='xy-route-ghost';
-     ghost.setAttribute('aria-hidden','true');ghost.inert=true;
-     Object.assign(ghost.style,{
-       left:rect.left+'px',top:top+'px',width:rect.width+'px',
-       height:(bottom-top)+'px'
-     });
-     const snapshot=host.cloneNode(true);
-     snapshot.removeAttribute('id');
-     // A ghost is paint-only. Remove IDs and delegated action attributes so
-     // selectors, screen readers and test locators see only the live page.
-     snapshot.querySelectorAll('*').forEach(el=>{
-       for(const name of el.getAttributeNames())if(name==='id'||name.startsWith('data-'))el.removeAttribute(name);
-       if(el.matches('button,a,input,select,textarea,summary,[tabindex]'))el.setAttribute('tabindex','-1');
-     });
-     snapshot.style.transform='translateY('+(rect.top-top)+'px)';
-     ghost.append(snapshot);document.body.append(ghost);
-   }
- }
- update(); // ALWAYS synchronous, even if the browser drops animation frames.
- document.documentElement.dataset.xyNavDirection=direction;
- if(!ghost)return;
- const current=$('#workspace');
- document.body.classList.add('xy-motion-active');
- const sign=direction==='backward'?-1:1;
- // Keep the live workspace fully opaque: animating it from 48% made the
- // iPhone Safari recording flash pale between fast tab switches.
- const outgoing=ghost.animate([
-   {opacity:1,transform:'translate3d(0,0,0)'},
-   {opacity:0,transform:'translate3d('+(-sign*20)+'px,0,0)'}
- ],{duration:180,easing:'cubic-bezier(.25,1,.5,1)',fill:'both'});
- const heading=current.querySelector('.page-heading h1');
- const headingMotion=heading?.animate([{transform:'translate3d(0,5px,0)'},{transform:'translate3d(0,0,0)'}],{duration:320,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
- const currentMotion={ghost,animations:[outgoing,...(headingMotion?[headingMotion]:[])]};
- routeMotion=currentMotion;
- // The ghost is needed only for the 180ms outgoing spatial exit, not for the full incoming transition.
- // Bounded cleanup even if a backgrounded browser throttles WAAPI finish events.
- setTimeout(()=>{ghost.remove();if(routeMotion===currentMotion)currentMotion.ghost=null},210);
- outgoing.finished.catch(()=>{}).finally(()=>{
-   ghost.remove();
-   if(routeMotion===currentMotion)currentMotion.ghost=null;
- });
- (headingMotion||outgoing).finished.catch(()=>{}).finally(()=>{
-   if(routeMotion===currentMotion)stopRouteMotion();
- });
+  document.querySelectorAll('.xy-route-ghost').forEach(node=>node.remove());
+  document.documentElement.dataset.xyNavDirection=direction;
+  update();
+  // A single headline may settle, but no duplicate screens or full-page fades.
+  const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches||
+    !!state().settings.reducedMotion;
+  if(!animate||reduced)return;
+  const title=document.querySelector('#workspace .page-heading h1');
+  title?.animate?.(
+    [{transform:'translate3d(0,4px,0)'},{transform:'translate3d(0,0,0)'}],
+    {duration:220,easing:'cubic-bezier(.25,1,.5,1)'}
+  );
 }
 function navigate(target){
  const from=target;let next=target;

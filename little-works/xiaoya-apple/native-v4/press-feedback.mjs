@@ -5,7 +5,11 @@ const pressSelector=[
   '.v4-week-rail .day-pill','.v4-item-segments button',
   '.v4-develop-segments button','.v4-mood-option',
   '.v4-section-title button','.topbar .glass-btn',
-  '.v4-journal-save'
+  '.v4-journal-save','.v4-goal-checkin','.v4-ask-companion',
+  '.v4-journal-delete','.v4-goal-name','.small-action',
+  '.sheet .sheet-save','.sheet .sheet-cancel',
+  '.assistant-shortcuts button','.assistant-config-actions button',
+  '.dayflow-focus-bottom button'
 ].join(',');
 const pointers=new Map();
 const clear=id=>{const b=pointers.get(id);if(!b)return;b.classList.remove('xy-is-pressed');pointers.delete(id)};

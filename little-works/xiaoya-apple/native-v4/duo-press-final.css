@@ -1,0 +1,23 @@
+/* Duolingo-like button depth is for filled controls; textual actions stay flat. */
+#workspace .v4-section-title button[data-add],
+#workspace .v4-section-title button[data-due-date],
+#workspace .v4-ask-companion,
+#workspace .v4-journal-delete,
+#workspace .v4-goal-name,
+#workspace .small-action,
+.sheet .sheet-cancel{
+  box-shadow:none;
+}
+#workspace .v4-mood-option:not(.is-active){
+  box-shadow:0 2px 0 var(--xy-key-edge-current);
+}
+#workspace .v4-mood-option.is-active{
+  box-shadow:0 4px 0 var(--xy-key-edge-green);
+}
+#workspace .v4-mood-option:is(:active,.xy-is-pressed){
+  box-shadow:0 0 0 var(--xy-key-edge-current);
+}
+@media(forced-colors:active){
+  #workspace .v4-section-title button[data-add],
+  #workspace .v4-section-title button[data-due-date]{box-shadow:none}
+}

@@ -36,7 +36,7 @@ await check('develop journal draft survives a visit to settings',async()=>{
  await page.locator('.topbar .toolbar-actions button').click();
  assert.equal(await page.locator('#journal-note').inputValue(),'从设置返回后，这条草稿还在');
 });
-await check('secondary screen transitions use synchronous, interruptible spatial motion',async()=>{
+await check('secondary screen transitions remain synchronous without visual clones',async()=>{
  const forward=await page.evaluate(()=>{
    document.querySelector('.topbar .toolbar-actions button').click();
    return {view:document.querySelector('#workspace h1')?.innerText,
@@ -45,7 +45,7 @@ await check('secondary screen transitions use synchronous, interruptible spatial
  });
  assert.equal(forward.view,'设置','route update must be synchronous');
  assert.equal(forward.direction,'forward');
- assert.ok(forward.ghosts>0,'no outgoing visual for pushed settings');
+ assert.equal(forward.ghosts,0,'pushed settings must not overlay a cloned old screen');
  const backward=await page.evaluate(()=>{
    document.querySelector('.topbar .toolbar-actions button').click();
    return {view:document.querySelector('#workspace h1')?.innerText,
@@ -54,7 +54,7 @@ await check('secondary screen transitions use synchronous, interruptible spatial
  });
  assert.equal(backward.view,'发展');
  assert.equal(backward.direction,'backward');
- assert.ok(backward.ghostCount<=1,'stale ghosts block navigation');
+ assert.equal(backward.ghostCount,0,'return navigation must not clone a page');
  await page.waitForTimeout(350);
  assert.equal(await page.locator('.xy-route-ghost').count(),0);
 });
