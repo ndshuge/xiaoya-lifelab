@@ -53,3 +53,32 @@
 - **未完成：** P0/P1 共享元素 Magic Move 的卡片→编辑 sheet 与反向动画；P1 日记卡片→详情/返回空间连续性、交互式后退、角色姿态插值、任务完成分级反馈；P2 细节视觉系统微调。
 - **为什么不视为完成：** 旧全屏过渡会造成 Safari 闪影；本轮没有足以证明新的 Magic Move 在 iPhone 真实触控无残影的证据。
 - **未验收环境：** 实际 iPhone Safari、iPad、系统键盘遮挡、200% 缩放下的实时触控/动画性能；模拟器/桌面 WebKit ≠ 真机。
+
+## 第二阶段更新｜11 月 4 日 21:00 之后（以此覆盖上方第一阶段待办）
+**新证据：** 真实研发浏览器 Edge 与 Playwright WebKit、同一演示档案的 22 张视觉证据，路径 `docs/qa/evidence/2026-11-04-xiaoya-living-motion-phase2/`。原版与上一轮时间轴的 6 张对照仍保留。
+
+### 原理研究与工程取舍
+- [Apple HIG Motion](https://developer.apple.com/design/human-interface-guidelines/motion)：动效需帮助用户理解空间来源，避免突然缩放、不应阻止操作。
+- [MDN View Transition API](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API/Using)：原生 View Transition 会捕获旧/新渲染快照；项目旧 `.xy-route-ghost` 在 Safari 曾产生内容残影，故不启用全页 View Transition，保留用户确认过的单 live workspace。
+- [MDN Web Animations](https://developer.mozilla.org/en-US/docs/Web/API/Web_Animations_API/Using_the_Web_Animations_API)：通过 Animation.cancel()、独立 keyframe 生命周期和 Reduced Motion 精确掌控。原工程本身 ES Modules，不引入 Motion / React / Skia。
+- **采纳的安全 Magic Move：** 原卡片 `getBoundingClientRect()` → 新 Sheet/日记几何位置，绘制单个 `aria-hidden` 且 `pointer-events:none` 的纯色圆角视觉层，沿几何轨迹形变；真正的 `#workspace`、表单控件与日记 textarea 不做缩放；反向同理。关闭时清理中间层并恢复焦点。采用几何示意层是为了可用性，不是复制页面截图。
+- 上一版曾试验直接缩放 Sheet 整体，Edge 下复现长按 500ms 打开菜单后 `button.getBoundingClientRect().height<44`，即视觉命中区不稳定；已撤回该方案，并验证最终按钮 `63×44 CSS px`。
+- 历史日记返回按钮置于“写几句话”标题层，来源/目标滚动与日期恢复；向右边缘滑动超过 88px 返回，缩回取消；常规上下滚动不触发。
+- 心情素材无换图：已采用五张 512px 高清角色，避免独立形态插值导致位移/错脸，只保留既有单组顺滑状态指示器；50 次快速切换验证单一选中状态。此为有意识的视觉取舍。
+- 保存日记、完成任务和成长行动沿用唯一 Toast 的轻量 `✓` 成功标识；不额外给导航/开关/心情按钮播放庆祝动画。
+
+### 回归矩阵与剩余限制
+| 范围 | 新结果 / 说明 |
+| --- | --- |
+| 时间轴 | 12/12；旧 24h 和空状态不改 |
+| Magic Move / 返回 / 心情 50 次 / 成功反馈 | 18/18 |
+| 长按与操作表单触控 | 10/10；中间帧真控件 44px 高 |
+| 原导航、日记、设置、AI、Dock、高清五情绪 | 其余 139/139（含通用数据单测） |
+| 汇总 | **179/179**；测试运行日志来自隔离工作树的 `qa-vnext-phase2.cjs` 等，不包括原生 iPhone Safari |
+| 截图 | Edge/WebKit × (390 明亮、320 暗色 Reduced Motion、1440 桌面) 的卡片/打开中间帧/稳定 Sheet，另有 390px 日记中间和稳定画面，共 22 张 |
+| UI 设计最终批准 | 未取得用户真机确认；本报告不声明 Apple 原生复刻，也不声明全部动效取得用户主观批准 |
+
+### 版本边界
+- 原设计 `Dock` 全冻结，相关三个 CSS 无本轮变更；最新 main 高清心情资源保留。
+- 历史编辑/任务操作已复用现有数据和授权规则。未给用户日记上传网络的任何新行为。
+- 实机 iPhone Safari、软键盘真机、主屏安装后触控、Safari 真正 200% 浏览器缩放和 GPU 性能未测试，只保留明确阻塞项；真实设备结果优先于模拟截图。

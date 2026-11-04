@@ -39,6 +39,19 @@
 .xy-context-action.is-danger{color:#bb453d}
 .xy-context-action:focus-visible{outline:3px solid #6eaf89;outline-offset:-3px}
 .xy-context-action:active{filter:brightness(.95)}
+/* Local shared motion: no snapshots, no transformations of #workspace or Dock. */
+#development-journal{scroll-margin-top:108px}
+#development-journal .v4-section-title{flex-wrap:wrap;gap:6px 10px}
+.xy-journal-back{margin-left:auto;min-height:44px;border:0;border-radius:11px;padding:9px 13px;background:rgba(76,132,96,.11);color:var(--accent,#36764e);font-weight:620}
+.xy-journal-back:focus-visible{outline:3px solid rgba(65,143,88,.55);outline-offset:2px}
+#toast:is([data-kind="complete"],[data-kind="checkin"],[data-kind="saved"]){letter-spacing:.01px}
+#toast:is([data-kind="complete"],[data-kind="checkin"],[data-kind="saved"])::before{
+ content:"✓";display:inline-flex;align-items:center;justify-content:center;
+ border-radius:50%;width:18px;height:18px;margin-right:8px;
+ font-size:12px;font-weight:800;color:#fff;background:#3c9360;
+}
+@media(prefers-reduced-motion:reduce){.xy-journal-back{transition:none!important}}
+body.reduce-motion .xy-journal-back{transition:none!important}
 /* Quiet actions keep a tiny tactile displacement with paint feedback.
    Remove rubber-band scaling that looked like an electrical jolt. */
 #workspace button[data-press-role="quiet"],

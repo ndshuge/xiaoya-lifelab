@@ -88,4 +88,19 @@ node little-works/xiaoya-apple/native-v4/qa-vnext-visual.cjs
 - 合并 HEAD：c8ca2d6619b628c9586cacf12361c3acee9f99ca；合并前动效提交 f93d07c。
 - Git 确认 origin/main 是本分支 HEAD 的祖先；合并后 worktree 干净，远程 main 不含本次动效代码。
 - 对整合后的五张高清资源、时间轴、长按和旧 Dock 动效重新实跑 42/42 通过（10 + 12 + 10 + 10）。
-- 项目仍未进行真 iPhone Safari 测试、Magic Move/Interactive Pop 和全站人工验收。此合并不等于批准发布。
+- 本条记录反映上一阶段：截至 `c8ca2d6` 尚未实现 Magic Move/Interactive Pop。见下面第二阶段已落实与仍未验证清单；不代表当前分支施工状态。
+
+## 10. 2026-11-04 第二阶段施工与真实回归
+- 续接本功能分支，阶段起点 `54917ea`（此前 `c8ca2d6` 合并过高清心情素材），2026-11-04 再次核对 `origin/main=05d48f6`，开始时 worktree 干净。
+- `native-v4/shared-motion.mjs`（新增）：针对任务/目标编辑 Sheet、成长行动记录和日记历史的局部共享几何。**最终实现采用单个 aria-hidden、pointer-events:none 的画布外观层（纯色圆角几何），绝不克隆旧页面/卡片内容或移动 #workspace。Sheet 和日记文本、真实输入命中框只渐变透明度，禁止缩放。** 260–310ms 内可中断，返回从来源卡片反向收束；如果来源已被重新渲染，则保留原始几何作为 fallback。
+- `app.mjs`：编辑/长按/成长行动入口透传原始 `source`，原生 `dialog.showModal()` 仍承载用户输入；取消会清理动画并恢复焦点。历史日记可从记录行进入正文，返回后恢复日期与滚动位置，同时保留按日期索引的未保存草稿。
+- `development-view.mjs`：历史日记新增“返回最近记录”，并在小屏的正文区标题位置可见；避免原入口滚动到顶部被遮挡。心情素材与保存模型不变。
+- `installEdgePop`：仅 Sheet/历史日记详情允许左缘向右滑返回；横向移动超过 88px 才退出，垂直移动或中止回归原状态。真实 iPhone Safari 边缘手势仍需真机验收。
+- `living-motion.css`：仅加入上述本地交互布局、安静反馈及 44px 返回按钮；没有修改 Dock 任何实现文件。完成任务、记录成长行动、保存日记仅在已有 Toast 上以绿色小对勾区别成功，不显示星芒或整页庆祝。
+- 五种原版高清小芽图片仍由 `five-mood-hi-assets.css` 显示；保持固定实际像素尺寸，不强行 interpolate 图片形态；其单一选择指示器已自然连续移动，50 次快速切换仍只有一个有效状态。
+- 第二阶段新测试 `qa-vnext-phase2.cjs`：Edge/WebKit **18/18**。发现并修正长按时整体 Sheet 缩小导致按钮命中区只有 <44px 的问题，改为只变形非交互视觉层后 `qa-vnext-longpress.cjs` 重复执行 **10/10**。
+- 重新执行完整测试集合：`18+10+12+13+10+14+14+10+18+41+19 = 179/179` 全部通过，含深浅色、320px、CSS 模拟 200% zoom、键盘/长按/数据、原 Dock、无 ghost 回归。**CSS zoom 不是 Safari 实际缩放。**
+- `qa-vnext-phase2-visual.cjs`：在 Edge 和 WebKit 各生成 390px 手机、320px Dark+Reduced Motion、1440px 桌面的编辑器中间帧与稳定帧，另有历史日记中间与稳定截图，共 22 张：
+  `docs/qa/evidence/2026-11-04-xiaoya-living-motion-phase2/`。中间帧真实控件保存按钮矩形 **63×44 CSS px**，不存在实时压缩命中区。已人工观察其中的手机、桌面、中间帧截图。
+- 重要限制：没有实际 iPhone/iPad Safari 真机交互、软键盘视频或逐帧 GPU 性能采样；用户最终视觉批准也未取得。此项不能写成 PASS。所有下一轮修改务必优先复用、谨慎更换已通过的 Shell/Dock/高清资源。
+- 交付纪律：保持 feature 分支独立，未经用户明确授权不合并 main 或发布 Pages。每次换对话先用 `git status --short --branch`、`git fetch` 和 `git rev-parse HEAD` 复核（这里仅记录起点，不伪造自指的最终提交 SHA）。

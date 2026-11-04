@@ -4,7 +4,7 @@ import {analyzeJournal} from './journal-store.mjs';
 const ic=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
 const moods=[['1','很低落'],['2','有点累'],['3','平稳'],['4','不错'],['5','很好']];
 const dateZh=s=>new Date(s+'T12:00:00').toLocaleDateString('zh-CN',{month:'long',day:'numeric',weekday:'long'});
-export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPlanner='',active='record'}={}){
+export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPlanner='',active='record',historyReturn=false}={}){
  const saved=entries.find(e=>e.date===selectedDate)||null;
  const stats=analyzeJournal(entries,at),recent=entries.slice(0,8);
  const today=dateZh(selectedDate),isToday=selectedDate===at.toLocaleDateString('sv-SE');
@@ -33,11 +33,11 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
   '<button type="button" data-develop-tab="record" aria-pressed="'+(active==='record')+'" class="'+(active==='record'?'is-active':'')+'"><b class=\"xy-elastic-face\">记录</b></button>'+
   '<button type="button" data-develop-tab="goals" aria-pressed="'+(active==='goals')+'" class="'+(active==='goals'?'is-active':'')+'"><b class=\"xy-elastic-face\">目标</b></button></div>'+
   '<div data-develop-panel="record"'+(active==='record'?'':' hidden')+'>'+
-  '<div class="v4-development-intro"><h2>'+(isToday?'今天，感觉怎么样？':'那天感觉怎么样？')+'</h2>'+(isToday?'':'<button class="xy-journal-return" data-action="journal-today">回到今天</button>')+
+  '<div class="v4-development-intro"><h2>'+(isToday?'今天，感觉怎么样？':'那天感觉怎么样？')+'</h2>'+(historyReturn?'':isToday?'':'<button class="xy-journal-return" data-action="journal-today">回到今天</button>')+
   '</div>'+
   '<section id="development-mood" class="v4-mood-section" aria-labelledby="v4-mood-label">'+
   '<h3 id="v4-mood-label" class="v4-visually-hidden">记录心情</h3><div class="v4-mood-picker" role="group" aria-labelledby="v4-mood-label">'+moodButtons+'</div></section>'+
-  '<section id="development-journal" class="v4-journal-section"><div class="v4-section-title"><div><h2>写几句话</h2></div><span id="v4-journal-date">'+esc(today)+'</span></div>'+
+  '<section id="development-journal" class="v4-journal-section"><div class="v4-section-title"><div><h2>写几句话</h2></div><span id="v4-journal-date">'+esc(today)+'</span>'+(historyReturn?'<button class="xy-journal-back" data-action="journal-back">返回最近记录</button>':'')+'</div>'+
   '<div class="v4-journal-paper"><label class="v4-visually-hidden" for="journal-note">日记</label>'+
   '<textarea id="journal-note" placeholder="有什么值得记住的小事？" maxlength="1800" spellcheck="false">'+esc(saved?.note||'')+'</textarea>'+
   '<div class="v4-journal-toolbar"><span id="journal-status" role="status">'+(saved?'这一天已有记录':'仅存储在当前浏览器')+'</span>'+
