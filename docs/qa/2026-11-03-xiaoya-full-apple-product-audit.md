@@ -182,3 +182,15 @@
 - **高对比度兼容**：实际用 Chromium CDP 模拟 dark + `prefers-reduced-transparency: reduce` / dark + `prefers-contrast: more`，旧 CSS 会让 Dock pill 和底部 edge 重返浅白（定向测试 39/41）；修正最后优先级规则后专项 **41/41 PASS**，强制颜色键盘焦点也可用。
 - **新鲜全量回归**：在合并前的同一独立施工工作树运行 **25/25 组 PASS**，含 24 组 V4/V3/AI/评委入口/版本既有套件及新 `qa-v4-theme-a11y.cjs`，进程 exit 0；日志在 `E:/CHATGPT/work/xiaoya-v4-a11y-qa-20261104.{json,log}`。记录 Edge/WebKit 320/390 暗亮与桌面深色实际截图：`E:/CHATGPT/work/xiaoya-v4-theme-review-20261104/`，曾先目检再修正设置/心情/历史/导航层并重新取图。桌面 CSS `zoom=2` 仅是浏览器重排近似验收，不等同完整操作系统字体放大。
 - **验证边界/下一步**：真实 iPhone Safari 地址栏、第三方输入法、VoiceOver、OS 200% 字体、实际帧率及用户视觉认可仍 **UNVERIFIED**；真实跨浏览器 L2 折射不是本次 CSS L1。必须先完成设备人工验收，再评估可退回的局部 L2 试验。
+
+
+
+## M. 2026-11-04｜用户确认效果图：五种小芽心情插画替换
+
+- **需求与视觉来源**：用户明确认可当前对话生成的「发展」页面效果图，要求正式线上 HTML 采用同样的五种小芽形象（很低落、 有点累、平稳、不错、很好）。改动只限 Native V4 的心情选择器与随附 WebP 图像；不替换顶部原始小芽头像，也不改日记、Mood 分值 1–5、隐私或评委数据模式。
+- **图像制作**：从用户确认的效果图中逐个裁出五个角色、抠除背景并合并为一张 500×80 的透明 WebP 图集 `assets/xiaoya-moods-v1.webp`（10,858 B，SHA-256 `6cdfb121e21c910fb9c8d1abb9d4696b83fb8320f03b8b5f2b15fbd5b91d2471`）。采用图集可保证五个角色同源并减少手机请求；不声称是独立原画 PSD。
+- **网页实现**：`development-view.mjs` 将旧 CSS 线条表情替换为 `v4-mood-art-1..5`，无障碍仍通过按钮文字/aria-pressed 表达。新增最后加载的 `five-mood-illustrations.css?v=4.9.0`：五列同一选择区，移动的浅绿选中底板、统一插画尺寸、无重型按钮阴影或按压缩放；暗色与 reduced-motion 降级保留。入口 JS `app.mjs?v=4.9.0`，子模块 `development-view.mjs?v=4.9.0`，防旧版本缓存。
+- **RED→GREEN**：先添加 `qa-v4-five-mood-sprites.cjs`，基线 Edge/WebKit **6/10 通过**（缺五张插画），改造后 **10/10 通过**：图集图片实际可解码为 500×80、五张位置独立、文案正确、选中高亮/aria-pressed、点选仍待保存、320px 无横向溢出、无 JS 错误。
+- **实际截图**：`E:/CHATGPT/work/xiaoya-v4-five-moods-visual-20261104/light-develop.png`、`dark-develop.png`，均已目视检查；更大屏和页面其他流已用旧套件验证。图像由截图像素抠图，深色背景边缘可能有有限的白色亚像素，属于用户真机审美复核范围。
+- **旧回归时间门禁修正**：`qa-v4-dock-near-blur-press.cjs` 以前假设「今天」必有 `.dayflow-focus-title`；傍晚当前日程已结束时此按钮正确消失，旧测试在无元素场景下等 30 秒并导致总套件 31/32 失败；更新为「如今日下一日程不存在，使用事项的实际独立快捷按钮」的相同行程/按压测试，单独 Edge/WebKit **14/14 通过**。
+- **完整回归日志**：`E:/CHATGPT/work/xiaoya-v4-five-moods-parallel-20261104.{json,log}`，最新施工树全站 32/32 组 PASS，exit 0（2026-11-04）；包含新 10/10 插画专项。发布后必须进一步检查原评委固定网址是否真正加载新资源，不以 Git push 作为成功证据。

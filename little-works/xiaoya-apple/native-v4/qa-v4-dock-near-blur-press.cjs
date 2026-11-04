@@ -17,12 +17,14 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
   assert.ok(x.blur[0].includes('gradient'));
  });
  await check(name+' action text buttons have physical gentle press, no 3D shadow',async()=>{
-  const el=p.locator('.dayflow-focus-title').first();
+  const selector=await p.locator('.dayflow-focus-title').count()?'.dayflow-focus-title':'[data-add=task]';
+  if(selector==='[data-add=task]')await p.locator('.bottom-nav [data-view=items]').click();
+  const el=p.locator(selector).first();
   assert.equal(await el.getAttribute('data-press-role'),'quiet');
   const original=await el.evaluate(e=>getComputedStyle(e).transform);
   await el.scrollIntoViewIfNeeded();const box=await el.boundingBox();
   await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();
-  await p.waitForFunction(base=>{const e=document.querySelector('.dayflow-focus-title');return e?.classList.contains('xy-is-pressed')&&getComputedStyle(e).transform!==base},original,{timeout:750});
+  await p.waitForFunction(({base,selector})=>{const e=document.querySelector(selector);return e?.classList.contains('xy-is-pressed')&&getComputedStyle(e).transform!==base},{base:original,selector},{timeout:750});
   const held=await el.evaluate(e=>({transform:getComputedStyle(e).transform,pressed:e.classList.contains('xy-is-pressed')}));
   assert.ok(held.pressed);assert.notEqual(held.transform,original,'only tint, no gentle press motion '+JSON.stringify(held)+' initial='+original);
   await p.mouse.up();

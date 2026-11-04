@@ -1,0 +1,83 @@
+/* Native V4 2026-11-04: five Xiaoya mood illustrations approved in chat.
+   One transparent WebP atlas instead of five line-drawn faces, with no
+   additional shadow/cards or gestures on the five-part control. */
+#workspace .v4-mood-picker{
+  gap:0;
+  background:#fff;
+  border-radius:19px;
+  padding:3px;
+  overflow:hidden;
+}
+#workspace .v4-mood-picker::before{
+  background:#e7f2ec;
+  border-radius:16px;
+  box-shadow:none;
+}
+#workspace .v4-mood-option,
+#workspace .v4-mood-option.is-active{
+  min-width:0;
+  min-height:86px;
+  padding:4px 0 6px;
+  gap:2px;
+  justify-content:center;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+  touch-action:manipulation;
+  font-size:12px;
+  line-height:1.25;
+  white-space:nowrap;
+}
+#workspace .v4-mood-option .v4-mood-art{
+  display:block;
+  flex:0 0 auto;
+  width:min(100%,74px);
+  height:59px;
+  background-image:url('./assets/xiaoya-moods-v1.webp');
+  background-position:0% center;
+  background-repeat:no-repeat;
+  background-size:500% 100%;
+  opacity:1;
+  transform:none!important;
+  transition:none!important;
+  pointer-events:none;
+}
+#workspace .v4-mood-option .v4-mood-art-1{background-position-x:0%}
+#workspace .v4-mood-option .v4-mood-art-2{background-position-x:25%}
+#workspace .v4-mood-option .v4-mood-art-3{background-position-x:50%}
+#workspace .v4-mood-option .v4-mood-art-4{background-position-x:75%}
+#workspace .v4-mood-option .v4-mood-art-5{background-position-x:100%}
+#workspace .v4-mood-option > span:last-child{
+  font-size:12px;
+  line-height:1.15;
+  font-weight:620;
+}
+#workspace .v4-mood-option.is-active > span:last-child{
+  font-weight:730;
+  color:#245e42;
+}
+#workspace .v4-mood-option:focus-visible{
+  outline:2px solid #38825b;
+  outline-offset:-3px;
+  z-index:2;
+}
+/* Keep the group visual as a single segmented choice; no solo press scale. */
+#workspace .v4-mood-option:is(:active,.xy-is-pressed) .v4-mood-art{
+  transform:none!important;
+}
+@media(max-width:359px){
+  #workspace .v4-mood-option{min-height:78px}
+  #workspace .v4-mood-option .v4-mood-art{height:52px;width:min(100%,65px)}
+  #workspace .v4-mood-option > span:last-child{font-size:11px}
+}
+@media(prefers-color-scheme:dark){
+  #workspace .v4-mood-picker{background:#233027;border-color:#475b4b}
+  #workspace .v4-mood-picker::before{background:#365844}
+  #workspace .v4-mood-option:not(.is-active)>span:last-child{color:#c5d7c9}
+  #workspace .v4-mood-option.is-active>span:last-child{color:#f3fff5}
+}
+@media(prefers-reduced-motion:reduce){
+  #workspace .v4-mood-picker::before{transition:none!important}
+  #workspace .v4-mood-option .v4-mood-art{transition:none!important}
+}

@@ -10,7 +10,7 @@ import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
-import {renderDevelopment} from './development-view.mjs?v=4.2.0';
+import {renderDevelopment} from './development-view.mjs?v=4.9.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];

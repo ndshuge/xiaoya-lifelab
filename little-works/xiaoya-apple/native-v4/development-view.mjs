@@ -26,7 +26,7 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
   '<span class="v4-journal-row-date">'+esc(dateZh(e.date))+'</span><span class="v4-journal-row-preview">'+esc(e.note||moods.find(m=>Number(m[0])===e.mood)?.[1]||'仅记录心情')+'</span>'+
   '<span aria-hidden="true">'+ic('right')+'</span></button>').join('');
  const moodButtons=moods.map(([n,label])=>'<button type="button" class="v4-mood-option'+(saved?.mood===Number(n)?' is-active':'')+'" data-mood="'+n+'" aria-pressed="'+(saved?.mood===Number(n))+'">'+
-   '<span class="v4-mood-face v4-mood-'+n+'" aria-hidden="true"><i></i><b></b></span><span>'+label+'</span></button>').join('');
+   '<span class="v4-mood-art v4-mood-art-'+n+'" aria-hidden="true"></span><span>'+label+'</span></button>').join('');
  return '<div class="v4-development">'+
   '<header class="page-heading v4-page-heading"><div><h1>发展</h1></div></header>'+
   '<div class="v4-develop-segments" aria-label="发展分类">'+
