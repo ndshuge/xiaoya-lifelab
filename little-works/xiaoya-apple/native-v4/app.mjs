@@ -8,9 +8,12 @@ import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
+import {installTimelineScrubber} from './timeline-scrubber.mjs?v=5.0.0';
+import {installContextLongPress} from './context-longpress.mjs?v=5.0.0';
+import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.1.0';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
-import {renderDevelopment} from './development-view.mjs?v=4.9.0';
+import {renderDevelopment} from './development-view.mjs?v=5.1.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -25,6 +28,8 @@ let store,view='today',lastPrimaryView='today',itemsTab='schedule',developTab='r
 try{store=createStore({preferDemoOnFreshSession:new URLSearchParams(location.search).get('judge')==='1'})}catch(e){$('#workspace').innerHTML='<div class="page-heading"><h1>档案需要处理</h1></div><div class="group"><div class="empty-group"><strong>为了保护你的记录，小芽不会覆盖无法读取的数据</strong><p>'+esc(e.message)+'</p><a href="../index.html">打开原有完整界面以导出备份</a></div></div>';throw e}
 const state=()=>store.current();
 const journal=createJournalStore({getMode:()=>store.mode()});
+const sheetMotion=createSheetMotion();
+let journalHistory=null;
 // Preserve unsaved text in memory, scoped to mode/date; never persist it without explicit Save.
 const journalDrafts=new Map();
 const journalDraftKey=()=>store.mode()+':'+journalDate;
@@ -32,8 +37,8 @@ function clearModeDrafts(){for(const key of journalDrafts.keys())if(key.startsWi
 const assistant=createAssistant({getData:state,getMode:()=>store.mode(),navigate});
 const growthPanel=createGrowthPanel({getData:state,getMode:()=>store.mode(),replace:next=>store.replace(next),refresh:render,openSheet,closeSheet,notify,esc});
 
-function notify(s){const el=$('#toast');el.textContent=s;el.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.classList.remove('show'),2900)}
-function save(fn,successMessage='已保存到当前浏览器'){try{store.commit(fn);render();notify(successMessage);return true}catch(e){render();notify(e.message);return false}}
+function notify(s,kind='standard'){const el=$('#toast');el.textContent=s;el.dataset.kind=kind;el.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>{el.classList.remove('show');delete el.dataset.kind},2900)}
+function save(fn,successMessage='已保存到当前浏览器',kind='standard'){try{store.commit(fn);render();notify(successMessage,kind);return true}catch(e){render();notify(e.message);return false}}
 function head(title,sub='',action=''){return '<div class="page-heading"><div><span class="eyebrow">'+esc(sub)+'</span><h1>'+esc(title)+'</h1></div><div class="page-heading-right">'+action+'</div></div>'}
 function section(title,content,link='',extra=''){return '<section class="section"><div class="section-head"><h2>'+esc(title)+'</h2>'+(link?'<button class="mini-link" data-view="'+link+'">查看全部</button>':extra?'<small>'+esc(extra)+'</small>':'')+'</div><div class="group">'+content+'</div></section>'}
 function empty(text,help='',actionLabel='',action=''){return '<div class="empty-group"><div class="empty-icon">'+icon('growth')+'</div><strong>'+esc(text)+'</strong><p>'+esc(help)+'</p>'+(action?'<button class="text-action" data-action="'+action+'">'+esc(actionLabel)+' '+icon('right')+'</button>':'')+'</div>'}
@@ -49,7 +54,7 @@ function renderSuggestion(d){
 function todayView(d){return renderDayflowToday(d,now(),{isDemo:store.mode()==='demo'});}
 function itemsView(d){return renderItemsView(d,{selectedDate,weekStart,active:itemsTab,at:now()})}
 function developView(d){
- try{return renderDevelopment(d,journal.all(),{selectedDate:journalDate,at:now(),growthPlanner:growthPanel.render(),active:developTab})}
+ try{return renderDevelopment(d,journal.all(),{selectedDate:journalDate,at:now(),growthPlanner:growthPanel.render(),active:developTab,historyReturn:!!journalHistory})}
  catch(e){return head('发展','本地记录读取失败')+'<div class="group"><p class="sheet-note">'+esc(e.message)+'</p><p>为了保护日记，请勿清空浏览器数据。可先前往设置导出主档案。</p></div>'}
 }
 function tasksView(d){
@@ -151,6 +156,8 @@ function render(){
    const scroller=$('.native-timeline-scroll'),earliest=scroller?.querySelector('.native-event');
    if(earliest){const top=Number.parseFloat(earliest.style.getPropertyValue('--top'));if(Number.isFinite(top))scroller.scrollTop=Math.max(0,Math.round(top*14.4)-60)}
  }
+ installTimelineScrubber($('#workspace'));
+ installContextLongPress($('#workspace'),{onOpen:openContextActions});
  if(view==='schedule'){const scroller=$('.hourly-scroll');if(scroller){const entries=visibleOn(d);const starts=entries.map(e=>Number((e.start||'08').slice(0,2))).filter(Number.isFinite);const hour=Math.max(0,Math.min(7,...starts.map(h=>Math.max(0,h-1))));scroller.scrollTop=hour*60}}
  const pending=d.tasks.filter(t=>!t.done).length;
  // V4 has a single avatar trigger; no duplicate pet panel.
@@ -222,6 +229,7 @@ function navigate(target){
  const detailBackward=toIndex>=0&&(view==='settings'||view==='search');
  const dir=detailForward?'forward':detailBackward?'backward':fromIndex>=0&&toIndex>=0?(toIndex>=fromIndex?'forward':'backward'):'neutral';
  const primary=fromIndex>=0&&toIndex>=0&&fromIndex!==toIndex;
+ if(next!=='develop'&&view==='develop'){journalHistory=null;cancelJournalMotion()}
  if((next==='settings'||next==='search')&&fromIndex>=0)lastPrimaryView=view;
  if(toIndex>=0)lastPrimaryView=next;
  transitionContent(()=>{
@@ -231,11 +239,46 @@ function navigate(target){
 }
 function input(label,name,value='',type='text',extra=''){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><input id="fld-'+name+'" name="'+name+'" type="'+type+'" value="'+esc(value)+'" '+extra+'></div>'}
 function select(label,name,value,items){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><select name="'+name+'" id="fld-'+name+'">'+items.map(([v,l])=>'<option value="'+esc(v)+'" '+(String(v)===String(value)?'selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div>'}
-function openSheet(title,html,context,{saveLabel='保存',hideSave=false}={}){
+function openSheet(title,html,context,{saveLabel='保存',hideSave=false,source=null}={}){
  modal=context;$('#sheet-title').textContent=title;$('#sheet-fields').innerHTML='<div class="sheet-panel">'+html+'</div>';$('#sheet-save').textContent=saveLabel;$('#sheet-save').hidden=hideSave;
- const sheet=$('#editor');sheet.showModal();document.body.style.overflow='hidden';setTimeout(()=>sheet.querySelector('[data-quick-create],input:not([type=hidden]),textarea,select')?.focus(),80);
+ const sheet=$('#editor');sheetMotion.open(sheet,source);modal=context;document.body.style.overflow='hidden';setTimeout(()=>{if(sheet.open)sheet.querySelector('[data-quick-create],input:not([type=hidden]),textarea,select')?.focus()},100);
 }
-function closeSheet(){const sheet=$('#editor');if(sheet.open)sheet.close();document.body.style.overflow='';modal=null;preview=null}
+function closeSheet(){const sheet=$('#editor');sheetMotion.close(sheet);modal=null;preview=null}
+function openContextActions({kind,id,date,source}){
+ const valid=['task','course','event','journal'].includes(kind);
+ if(!valid)return;
+ const entry=kind==='journal'?journal.all().find(e=>e.date===date):state()[{task:'tasks',course:'courses',event:'events'}[kind]]?.find(e=>e.id===id);
+ if(!entry)return;
+ const title=kind==='journal'?'这一天的记录':entry.title||entry.name;
+ const options=kind==='journal'?
+   [['open-journal','查看记录'],['remove-journal','删除记录']]:
+   [['edit','编辑'],...(kind==='task'?[['toggle',entry.done?'恢复待办':'标记完成']]:[]),['delete','删除记录']];
+ const html='<div class="xy-context-actions">'+options.map(([action,label])=>
+   '<button type="button" class="xy-context-action'+(action==='delete'||action==='remove-journal'?' is-danger':'')+'" data-context-action="'+action+'">'+esc(label)+'</button>'
+ ).join('')+'</div>';
+ openSheet(title,html,{type:'context-actions',kind,id,date,source},{hideSave:true,source});
+ requestAnimationFrame(()=>$('#editor [data-context-action]')?.focus({preventScroll:true}));
+}
+function openHistoricalJournal(date,source){
+ const rect=source?.getBoundingClientRect?.()||null;
+ journalHistory={previousDate:journalDate,originDate:date,scrollY:window.scrollY};
+ journalDate=date;moodDraft=null;
+ render();
+ $('#development-journal')?.scrollIntoView({behavior:'instant',block:'start'});
+ enterJournal(rect,$('.v4-journal-paper'));
+}
+function returnFromJournal(){
+ if(!journalHistory)return;
+ const history=journalHistory;
+ const paper=$('.v4-journal-paper');
+ const target=Array.from(document.querySelectorAll('.v4-journal-row')).find(el=>el.dataset.journalDate===history.originDate);
+ const targetRect=target?.getBoundingClientRect()||null;
+ leaveJournal(paper,targetRect,()=>{
+   journalHistory=null;journalDate=history.previousDate;moodDraft=null;render();
+   window.scrollTo({top:history.scrollY,behavior:'instant'});
+   Array.from(document.querySelectorAll('.v4-journal-row')).find(el=>el.dataset.journalDate===history.originDate)?.focus({preventScroll:true});
+ });
+}
 function openQuickCreate(){
  const types=[['task','待办或截止提醒','记下要完成的事情和截止时间','list'],['event','单次活动','为选中的日期安排具体时段','clock'],['course','每周课程','创建按星期重复的课程安排','calendar']];
  const html='<p class="sheet-note">先选择记录类型，下一步再填写必要信息。截止提醒不会自动占用日程时段。</p><div class="xy-create-choices">'+types.map(([kind,title,desc,iconName])=>'<button type="button" class="xy-create-option" data-quick-create="'+kind+'">'+icon(iconName)+'<span><strong>'+title+'</strong><small>'+desc+'</small></span>'+icon('right')+'</button>').join('')+'</div>';
@@ -266,7 +309,7 @@ function editForm(kind,id='',preset={}){
     select('周次','parity',obj.parity||'all',[['all','每周'],['odd','单周'],['even','双周']]);
  }
  if(id)fields+='<div class="sheet-footer"><button type="button" class="danger" data-delete="'+kind+'" data-id="'+esc(id)+'">删除记录</button></div>';
- openSheet((id?'编辑':'新增')+({task:'提醒',goal:'目标',course:'课程',event:'活动'}[kind]),fields,{type:'edit',kind,id});
+ openSheet((id?'编辑':'新增')+({task:'提醒',goal:'目标',course:'课程',event:'活动'}[kind]),fields,{type:'edit',kind,id},{source:preset.source||null});
 }
 function saveEdit(){
  const {kind,id}=modal,key={task:'tasks',goal:'goals',course:'courses',event:'events'}[kind];
@@ -291,17 +334,17 @@ function saveEdit(){
  if(ok)closeSheet();
 }
 function complete(kind,id){
- const key=kind==='task'?'tasks':'goals',existing=state()[key].find(v=>v.id===id),wasDone=!!existing?.done;save(d=>{const x=d[key].find(v=>v.id===id);if(!x)return;x.done=!x.done;x.completedAt=x.done?new Date().toISOString():null;d.history.unshift({id:uid(),at:new Date().toISOString(),action:'completed',description:(x.done?'完成：':'恢复：')+x.title})},wasDone?'已恢复到待办':'已完成 · 继续下一项');
+ const key=kind==='task'?'tasks':'goals',existing=state()[key].find(v=>v.id===id),wasDone=!!existing?.done;save(d=>{const x=d[key].find(v=>v.id===id);if(!x)return;x.done=!x.done;x.completedAt=x.done?new Date().toISOString():null;d.history.unshift({id:uid(),at:new Date().toISOString(),action:'completed',description:(x.done?'完成：':'恢复：')+x.title})},wasDone?'已恢复到待办':'已完成 · 继续下一项',wasDone?'standard':'complete');
 }
-function openCheckin(goalId){
+function openCheckin(goalId,source=null){
  const goal=state().goals.find(x=>x.id===goalId);if(!goal)return;
  openSheet('记录一次真实行动','<p class="sheet-note">为「'+esc(goal.title)+'」留下确实发生的行动，而不是自动打卡。</p>'+input('时间','at',localStamp(now()),'datetime-local','required')+input('分钟（0–1440）','minutes',20,'number','min="0" max="1440" required')+
- '<div class="field"><label for="fld-note">记录内容</label><textarea id="fld-note" name="note" maxlength="500" placeholder="这次做了什么？" required></textarea></div>',{type:'checkin',goalId});
+ '<div class="field"><label for="fld-note">记录内容</label><textarea id="fld-note" name="note" maxlength="500" placeholder="这次做了什么？" required></textarea></div>',{type:'checkin',goalId},{source});
 }
 function saveCheckin(){
  const f=Object.fromEntries(new FormData($('#sheet-body'))),t=new Date(f.at),minutes=Number(f.minutes);
  if(!Number.isFinite(+t)||t>now()||!Number.isInteger(minutes)||minutes<0||minutes>1440||!f.note?.trim())return notify('请填写有效的时间、分钟和行动内容');
- const ok=save(d=>{d.checkins.push({id:uid(),goalId:modal.goalId,at:t.toISOString(),minutes,note:f.note.trim().slice(0,500)});d.history.unshift({id:uid(),at:now().toISOString(),action:'checkin',description:'记录行动：'+f.note.trim().slice(0,90)})});if(ok)closeSheet();
+ const ok=save(d=>{d.checkins.push({id:uid(),goalId:modal.goalId,at:t.toISOString(),minutes,note:f.note.trim().slice(0,500)});d.history.unshift({id:uid(),at:now().toISOString(),action:'checkin',description:'记录行动：'+f.note.trim().slice(0,90)})},'已记录真实行动','checkin');if(ok)closeSheet();
 }
 function confirmDelete(kind,id){
  const key={task:'tasks',goal:'goals',course:'courses',event:'events'}[kind],x=state()[key]?.find(v=>v.id===id);if(!x)return;
@@ -329,7 +372,8 @@ function runAction(action,source){
  case 'add':editForm(view==='develop'?'goal':view==='items'&&itemsTab==='schedule'?'event':'task');break;
  case 'add-task':editForm('task');break;
  case 'open-add-menu':openQuickCreate();break;
- case 'journal-today':journalDate=dateKey(now());moodDraft=null;render();break;
+ case 'journal-today':journalHistory=null;cancelJournalMotion();journalDate=dateKey(now());moodDraft=null;render();break;
+ case 'journal-back':returnFromJournal();break;
  case 'go-schedule':navigate('schedule');break;
  case 'add-event':editForm('event');break;
  case 'prev-week':weekStart=plusDays(weekStart,-7);selectedDate=dateKey(weekStart);render();break;
@@ -349,6 +393,19 @@ function runAction(action,source){
 }
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.contextAction){
+  const action=t.dataset.contextAction,context=modal;
+  if(!context||context.type!=='context-actions')return;
+  closeSheet();
+  if(action==='edit')editForm(context.kind,context.id,{source:context.source});
+  else if(action==='toggle')complete('task',context.id);
+  else if(action==='delete')confirmDelete(context.kind,context.id);
+  else if(action==='open-journal')openHistoricalJournal(context.date,context.source);else if(action==='remove-journal'&&confirm('删除这一天的心情与日记记录？')){
+   try{journal.remove(context.date);journalDrafts.delete(store.mode()+':'+context.date);
+    moodDraft=null;render();notify('记录已删除')}catch(error){notify(error.message)}
+  }
+  return;
+ }
  if(growthPanel.handle(t))return;
  if(t.dataset.quickCreate){const kind=t.dataset.quickCreate;closeSheet();editForm(kind,'',{date:selectedDate,...(kind==='task'?{due:selectedDate+'T23:59'}:{})});return;}
  if(t.dataset.itemsTab){
@@ -389,12 +446,12 @@ document.addEventListener('click',e=>{
    const status=$('#journal-status');if(status)status.textContent='未保存';
    return;
  }
- if(t.dataset.journalDate){journalDate=t.dataset.journalDate;moodDraft=null;render();document.getElementById('development-mood')?.scrollIntoView({block:'start'});return}
+ if(t.dataset.journalDate){openHistoricalJournal(t.dataset.journalDate,t);return}
  if(t.id==='journal-save'){
    try{
     const current=journal.all().find(e=>e.date===journalDate);
     journal.save({date:journalDate,mood:moodDraft??current?.mood??null,note:$('#journal-note').value,tags:current?.tags||[]});
-    journalDrafts.delete(journalDraftKey());moodDraft=null;render();$('#journal-status').textContent='已保存到当前浏览器';notify('日记已保存');
+    journalDrafts.delete(journalDraftKey());moodDraft=null;render();$('#journal-status').textContent='已保存到当前浏览器';notify('日记已保存','saved');
    }catch(e){notify(e.message)}
    return;
  }
@@ -404,22 +461,27 @@ document.addEventListener('click',e=>{
    return;
  }
  if(t.dataset.view)return navigate(t.dataset.view);
- if(t.dataset.add)return editForm(t.dataset.add,'',t.dataset.dueDate?{due:t.dataset.dueDate+'T23:59'}:{});
- if(t.dataset.edit)return editForm(t.dataset.edit,t.dataset.id);
+ if(t.dataset.add)return editForm(t.dataset.add,'',{...(t.dataset.dueDate?{due:t.dataset.dueDate+'T23:59'}:{}),source:t});
+ if(t.dataset.edit)return editForm(t.dataset.edit,t.dataset.id,{source:t});
  if(t.dataset.toggle)return complete(t.dataset.toggle,t.dataset.id);
  if(t.dataset.action)return runAction(t.dataset.action,t);
  if(t.dataset.filter){filter=t.dataset.filter;render();return}
  if(t.dataset.day){selectedDate=t.dataset.day;render();return}
- if(t.dataset.checkin)return openCheckin(t.dataset.checkin);
+ if(t.dataset.checkin)return openCheckin(t.dataset.checkin,t);
  if(t.dataset.delete)return confirmDelete(t.dataset.delete,t.dataset.id);
  if(t.dataset.suggest)return openSuggestion(t.dataset.suggest);
  if(t.dataset.reject)return rejectSuggestion(t.dataset.reject);
  if(t.dataset.undo){try{store.replace(undoTransaction(state(),t.dataset.undo));render();notify('操作已撤销')}catch(e){notify(e.message)}}
 });
+installEdgePop({
+ enabled:()=>$('#editor').open||(view==='develop'&&!!journalHistory),
+ surface:()=>$('#editor').open?$('#editor .sheet-frame'):$('.v4-journal-paper'),
+ onPop:()=>{if($('#editor').open)closeSheet();else returnFromJournal()}
+});
 $('#sheet-body').addEventListener('submit',submitSheet);
 // Native cancel can hide the dialog before close dispatches; release scroll synchronously.
 $('#editor').addEventListener('cancel',e=>{e.preventDefault();closeSheet()});
-$('#editor').addEventListener('close',()=>{document.body.style.overflow='';modal=null});
+$('#editor').addEventListener('close',()=>{if(!$('#editor').open){document.body.style.overflow='';modal=null}});
 $('#editor').addEventListener('click',e=>{if(e.target===$('#editor'))closeSheet()});
 document.addEventListener('keydown',e=>{
  // Escape belongs to an open editor or the assistant first; otherwise dismiss pushed destinations.

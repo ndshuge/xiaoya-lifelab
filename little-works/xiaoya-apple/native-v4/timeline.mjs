@@ -44,6 +44,8 @@ export function buildDayTimeline(events,{date=localDay(new Date()),nowDate=new D
   const at=nowDate.getHours()*60+nowDate.getMinutes();
   const marker=today?'<div class="native-now" style="--at:'+(at/1440*100).toFixed(5)+'"><b>'+pad(nowDate.getHours())+':'+pad(nowDate.getMinutes())+'</b><span></span></div>':'';
   const placeholder=events.length?'':'<div class="timeline-empty">今天没有安排<br><small>点击右上角「添加活动」创建日程</small></div>';
-  return '<div class="native-timeline-scroll" aria-label="24小时时间轴" tabindex="0">'+
-    '<div class="native-timeline-canvas">'+ticks+entries+marker+placeholder+'</div></div>';
+  return '<div class="native-timeline-frame" data-date="'+escapeHtml(date)+'"><div id="xy-timeline-scroll" class="native-timeline-scroll" aria-label="24小时时间轴" tabindex="0">'+
+    '<div class="native-timeline-canvas">'+ticks+entries+marker+placeholder+'</div></div>'+
+    '<div class="xy-timeline-scrub" role="scrollbar" tabindex="0" aria-label="拖动定位日程时间" aria-controls="xy-timeline-scroll" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">'+
+    '<div class="xy-timeline-thumb" aria-hidden="true"></div></div></div>';
 }

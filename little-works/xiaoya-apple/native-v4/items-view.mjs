@@ -31,7 +31,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
   '</div>'+
   '<div id="items-schedule" class="calendar-day calendar-day-timeline">'+
   (slots.length?buildDayTimeline(slots,{date:selectedDate,nowDate:at})+
-  '<div class="calendar-caption">时间轴可滚动查看全天</div>':
+  '<div class="calendar-caption">拖动右侧时间条，或上下滚动查看全天</div>':
   '<div class="v4-no-schedule"><span aria-hidden="true">'+ic('clock')+'</span><div><strong>这一天暂时没有课程或活动</strong><p>添加课程或活动后，这里会按时间显示。</p></div></div>')+'</div>'+
   '<details class="v4-semantic-note"><summary>截止日期与日程的区别</summary><p>截止日期表示最后期限，不会自动安排学习时段。</p></details>'+
   '<div class="v4-calendar-import"><button data-action="calendar-import">'+ic('archive')+' 导入课表</button><button data-action="export-ics">'+ic('export')+' 导出日历</button></div></section>';
