@@ -45,7 +45,12 @@ export function createSheetMotion(){
   focusTarget=source?.isConnected?source:document.activeElement;
   dialog.showModal();
   const frame=dialog.querySelector('.sheet-frame');
-  if(!frame||!originRect||reduced())return;
+  if(!frame||reduced())return;
+  if(!originRect){
+    motion=frame.animate([{opacity:.62},{opacity:1}],{duration:270,easing:'cubic-bezier(.2,.82,.3,1)',fill:'both'});
+    const current=motion;current.onfinish=()=>{if(motion===current)stop()};
+    return;
+  }
   const rect=frame.getBoundingClientRect(),from=transformBetween(originRect,rect);
   if(!from)return;
   motion=frame.animate([{opacity:.8},{opacity:1}],{
@@ -62,7 +67,14 @@ export function createSheetMotion(){
   if(!dialog.open)return;
   if(closing)return;
   const frame=dialog.querySelector('.sheet-frame');
-  if(instant||reduced()||!frame||!originRect||performance.now()-openedAt<140){settle(dialog);return}
+  if(instant||reduced()||!frame||performance.now()-openedAt<140){settle(dialog);return}
+  if(!originRect){
+    stop();closing=true;frame.style.pointerEvents='none';const token=++session;
+    motion=frame.animate([{opacity:1},{opacity:.62}],{duration:220,easing:'cubic-bezier(.32,0,.25,1)',fill:'both'});
+    motion.onfinish=()=>{if(session===token)settle(dialog)};
+    closeTimer=setTimeout(()=>{if(session===token)settle(dialog)},275);
+    return;
+  }
   stop();
   const rect=frame.getBoundingClientRect();
   const targetRect=origin?.isConnected?origin.getBoundingClientRect():originRect;

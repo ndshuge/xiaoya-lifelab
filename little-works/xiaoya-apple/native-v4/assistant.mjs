@@ -62,15 +62,17 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
  provider.addEventListener('change',()=>{model.value=providers[provider.value]?.model||'';feedback.textContent=''});
  function addMessage(message,kind='bot'){const n=node('div','assistant-message '+kind,String(message));log.append(n);log.scrollTop=log.scrollHeight;return n}
  function status(){const label=api?'AI 已连接 · '+api.model:'本地规则 · 未连接 AI';$('#assistant-status').textContent=label;$('#assistant-footnote').textContent=api?'仅发送你在对话框中输入的内容 · 不自动读取私人档案':'离线时为本地规则引导 · 不自动上传私人档案'}
- let panelMotion=null,lastTrigger=null,lastOrigin='translate(0px, -20px) scale(.87)';
+ let panelMotion=null,panelCloseTimer=null,lastTrigger=null,lastOrigin='translate(0px, -12px) scale(.965)';
  const motionDisabled=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||!!getData()?.settings?.reducedMotion;
  const cancelMotion=()=>{if(panelMotion){panelMotion.cancel();panelMotion=null}};
  function finishClose(){
+   clearTimeout(panelCloseTimer);panelCloseTimer=null;
    panel.hidden=true;panel.style.pointerEvents='';
    document.body.classList.remove('assistant-is-open');
    if(lastTrigger?.isConnected)lastTrigger.focus({preventScroll:true});
  }
  function open(source){
+   clearTimeout(panelCloseTimer);panelCloseTimer=null;
    const wasHidden=panel.hidden;
    if(wasHidden)lastTrigger=source instanceof HTMLElement?source:(document.activeElement instanceof HTMLElement?document.activeElement:null);
    const previousTransform=!wasHidden?getComputedStyle(panel).transform:'none';
@@ -79,14 +81,14 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
    const origin=source instanceof HTMLElement?source:lastTrigger;
    if(origin?.isConnected){
      const a=origin.getBoundingClientRect(),b=panel.getBoundingClientRect();
-     const x=Math.round(Math.max(-130,Math.min(130,(a.left+a.width/2)-(b.left+b.width/2))));
-     const y=Math.round(Math.max(-145,Math.min(145,(a.top+a.height/2)-(b.top+b.height/2))));
-     lastOrigin='translate('+x+'px,'+y+'px) scale(.87)';
+     const x=Math.round(Math.max(-84,Math.min(84,(a.left+a.width/2)-(b.left+b.width/2))));
+     const y=Math.round(Math.max(-92,Math.min(92,(a.top+a.height/2)-(b.top+b.height/2))));
+     lastOrigin='translate('+x+'px,'+y+'px) scale(.965)';
    }
    if(!motionDisabled()&&typeof panel.animate==='function'){
      const start=previousTransform!=='none'?previousTransform:lastOrigin;
-     panelMotion=panel.animate([{opacity:wasHidden?.22:.7,transform:start},{opacity:1,transform:'translate(0px,0px) scale(1)'}],
-       {duration:380,easing:'cubic-bezier(.2,.85,.25,1)',fill:'both'});
+     panelMotion=panel.animate([{opacity:wasHidden?.82:.9,transform:start},{opacity:1,transform:'translate(0px,0px) scale(1)'}],
+       {duration:420,easing:'cubic-bezier(.16,.91,.28,1)',fill:'both'});
      const current=panelMotion;
      current.onfinish=()=>{if(panelMotion===current){current.cancel();panelMotion=null}};
    }
@@ -101,11 +103,34 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
    panel.style.pointerEvents='none';
    const from=previousTransform!=='none'?previousTransform:'translate(0px,0px) scale(1)';
    panelMotion=panel.animate([{opacity:1,transform:from},{opacity:.18,transform:lastOrigin}],
-     {duration:300,easing:'cubic-bezier(.32,0,.25,1)',fill:'both'});
+     {duration:310,easing:'cubic-bezier(.3,0,.24,1)',fill:'both'});
    const current=panelMotion;
    current.onfinish=()=>{if(panelMotion===current){current.cancel();panelMotion=null;finishClose()}};
+   panelCloseTimer=setTimeout(()=>{if(panelMotion===current){current.cancel();panelMotion=null;finishClose()}},380);
  }
- function toggleConfig(){if(panel.hidden)open();$('#assistant-config').hidden=!$('#assistant-config').hidden}
+ let configMotion=null,configToken=0,configTimer=null;
+ function toggleConfig(){
+   if(panel.hidden)open();
+   const cfg=$('#assistant-config');const closing=!cfg.hidden;
+   ++configToken;const token=configToken;
+   clearTimeout(configTimer);configTimer=null;
+   if(configMotion){configMotion.onfinish=null;configMotion.cancel();configMotion=null}
+   if(!closing)cfg.hidden=false;
+   if(motionDisabled()||typeof cfg.animate!=='function'){cfg.hidden=closing;cfg.style.removeProperty('overflow');return}
+   const h=Math.max(0,cfg.scrollHeight);
+   cfg.style.overflow='hidden';
+   configMotion=cfg.animate(closing?
+      [{height:h+'px',opacity:1,transform:'translateY(0)'},{height:'0px',opacity:0,transform:'translateY(-9px)'}]:
+      [{height:'0px',opacity:0,transform:'translateY(-9px)'},{height:h+'px',opacity:1,transform:'translateY(0)'}],
+     {duration:300,easing:'cubic-bezier(.22,.8,.25,1)',fill:'both'});
+   const animation=configMotion;
+   const settle=()=>{if(configToken!==token)return;
+      clearTimeout(configTimer);configTimer=null;
+      configMotion=null;animation.onfinish=null;animation.cancel();
+      cfg.hidden=closing;cfg.style.removeProperty('overflow')};
+   animation.onfinish=settle;
+   configTimer=setTimeout(settle,365);
+ }
  $('#assistant-close').addEventListener('click',close);
  $('#assistant-config-toggle').addEventListener('click',toggleConfig);
  panel.addEventListener('click',e=>{
