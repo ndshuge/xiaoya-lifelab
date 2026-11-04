@@ -23,7 +23,7 @@ async function size(page,selector){return page.locator(selector).first().evaluat
   await page.locator('.bottom-nav [data-view=today]').click();
   await check('today primary and secondary actions have 44px touch height',async()=>{const focus=await page.locator('.dayflow-focus-complete').count()?'.dayflow-complete-row button':'.dayflow-focus-bottom button';for(const sel of ['.topbar .glass-btn[data-view=settings]',focus,'.dayflow-advice-actions button','.dayflow-section-head button','.dayflow-task-main>button','.dayflow-task-row .circle-check']){const [w,h]=await size(page,sel);assert.ok(w>=40&&h>=44,sel+' '+w+'x'+h)}});
   await page.locator('.bottom-nav [data-view=items]').click();
-  await check('items has 44px action targets and visible week controls',async()=>{for(const sel of ['.v4-item-segments button','.v4-week-tools button','.v4-section-title button','.v4-calendar-actions button','.v4-calendar-import button']){const [w,h]=await size(page,sel);assert.ok(w>=44&&h>=44,sel+' '+w+'x'+h)}});
+  await check('items has 44px action targets and visible week controls',async()=>{for(const sel of ['.v4-item-segments button','.v4-week-tools button','.v4-section-title button','.xy-action-main','.v4-calendar-import button']){const [w,h]=await size(page,sel);assert.ok(w>=44&&h>=44,sel+' '+w+'x'+h)}});
   await check('calendar auto scrolls to nearest actual appointment',async()=>{
     const sc=page.locator('.native-timeline-scroll');
     await page.waitForTimeout(200);

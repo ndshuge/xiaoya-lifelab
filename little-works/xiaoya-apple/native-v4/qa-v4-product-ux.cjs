@@ -51,14 +51,14 @@ const server=http.createServer((req,res)=>{
   const dock=await page.locator('#bottom-nav').boundingBox();
   assert.ok(first&&dock&&first.y<dock.y-10,'class '+first?.y+' dock '+dock?.y);
  });
- await check('items header has no global add, creation actions are contextual',async()=>{
-  assert.equal(await page.locator('.v4-page-heading [data-add=task]').count(),0);
+ await check('items header has one primary add, contextual deadline remains',async()=>{
+  assert.equal(await page.locator('.v4-page-heading [data-action=open-add-menu]').count(),1);
   assert.equal(await page.locator('#items-date-deadlines [data-add=task]').count(),1);
   await page.locator('.v4-item-segments [data-items-tab=inbox]').click();
-  assert.equal(await page.locator('#items-undated [data-add=task]').count(),1);
+  assert.equal(await page.locator('.v4-page-heading [data-action=add-task]').count(),1);
  });
  await check('quick new reminder only exposes title/due, advanced properties are disclosure',async()=>{
-  await page.locator('#items-undated [data-add=task]').click();
+  await page.locator('[data-action=add-task]').click();
   assert.equal(await page.locator('#fld-title').isVisible(),true);
   assert.equal(await page.locator('#fld-due').isVisible(),true);
   assert.equal(await page.locator('#fld-type').isVisible(),false);
@@ -80,7 +80,7 @@ const server=http.createServer((req,res)=>{
   assert.ok((await page.locator('#fld-due').inputValue()).endsWith('T23:59'));
   await page.locator('.sheet-cancel').click();
   await page.locator('.v4-item-segments [data-items-tab=inbox]').click();
-  await page.locator('#items-undated [data-add=task]').click();
+  await page.locator('[data-action=add-task]').click();
   assert.equal(await page.locator('#fld-due').inputValue(),'');
   await page.locator('.sheet-cancel').click();
  });

@@ -15,7 +15,7 @@ function focusCard(model,at){
     '<div class="dayflow-focus-main"><div class="dayflow-focus-icon">'+icon(current.kind==='course'?'calendar':'clock')+'</div>'+
     '<div class="dayflow-focus-body"><button class="dayflow-focus-title" data-edit="'+esc(current.kind)+'" data-id="'+esc(current.id)+'">'+esc(current.name)+'</button>'+
     '<p>'+esc(current.place||'未设置地点')+' · '+(current.kind==='course'?'课程':'活动')+'</p></div></div>'+
-    '<div class="dayflow-focus-bottom"><span>'+model.schedule.length+' 项今日日程</span><button data-view="schedule">查看完整计划 '+icon('right')+'</button></div></section>';
+    '<div class="dayflow-focus-bottom"><span>'+model.schedule.length+' 项今日日程</span><button data-view="schedule">查看日程 '+icon('right')+'</button></div></section>';
  }
  const next=model.nextUpcoming;
  const upcoming=next?
@@ -55,7 +55,7 @@ function timeline(model){
    '<small>'+esc(item.end)+' 结束 · '+esc(item.place||'未设置地点')+'</small></button></li>').join('');
  const allFinished=model.schedule.length>0&&model.schedule.every(x=>x.isFinished);
  return '<section class="dayflow-timeline" id="dayflow-today-schedule"><div class="dayflow-section-head"><div>'+
-   '<h2>今日日程</h2></div><button data-view="schedule">查看计划 '+icon('right')+'</button></div>'+
+   '<h2>今日日程</h2></div></div>'+
    (model.schedule.length?(allFinished?'<details class="dayflow-past-details"><summary>已结束的日程 · '+model.schedule.length+' 项</summary><ol class="dayflow-timeline-list">'+rows+'</ol></details>':'<ol class="dayflow-timeline-list">'+rows+'</ol>'):
      '<div class="dayflow-timeline-empty"><span>'+icon('clock')+'</span><div><strong>今天还没有排入课程或活动</strong>'+
      '<p>有新安排时，再添加到日程。</p></div></div>')+'</section>';

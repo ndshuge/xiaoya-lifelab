@@ -65,7 +65,7 @@ await check('closing assistant and restoring viewport reveals stable dock',async
 await check('modal editor moves within visible viewport on simulated keyboard',async()=>{
  await page.locator('#bottom-nav [data-view=items]').click();
  await page.locator('.v4-item-segments [data-items-tab=inbox]').click();
- await page.locator('#items-undated [data-add=task]').click();
+ await page.locator('[data-action=add-task]').click();
  await page.locator('#fld-title').focus();
  await page.evaluate(()=>{window.__xySimVisualHeight=410;window.visualViewport.dispatchEvent(new Event('resize'))});
  await page.waitForTimeout(70);

@@ -28,7 +28,7 @@ try{for(const [label,engine] of [['Edge',chromium],['WebKit',webkit]]){
   const n=p.locator('.v4-record-empty');if(await n.count()){const c=lightness(await bg('.v4-record-empty'));assert.ok(scheme==='dark'?c<105:c>165,c)}
  });
  await p.locator('.bottom-nav [data-view=items]').click();await p.locator('[data-items-tab=inbox]').click();
- await p.locator('#items-undated [data-add=task]').click();
+ await p.locator('[data-action=add-task]').click();
  await check(label+' '+scheme+' editor surface',async()=>{const c=lightness(await bg('.sheet-frame'));assert.ok(scheme==='dark'?c<100:c>160,c)});
  await p.keyboard.press('Escape');
  await check(label+' '+scheme+' no runtime errors or horizontal overflow',async()=>{assert.deepEqual(errors,[]);assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1))});

@@ -3,7 +3,7 @@ import {dateKey,weekday,monday,plusDays,teachingWeek,occurrences,growth,checkSch
 import {createSpring} from '../glass/liquid-glass.js';
 import '../glass/components.js'; // Original liquidglass.dev optical controls, self-hosted (MIT).
 import './viewport-guard.mjs?v=4.5.3';
-import './press-feedback.mjs?v=4.7.1';
+import './press-system.mjs?v=4.8.0';
 import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
@@ -33,7 +33,7 @@ const assistant=createAssistant({getData:state,getMode:()=>store.mode(),navigate
 const growthPanel=createGrowthPanel({getData:state,getMode:()=>store.mode(),replace:next=>store.replace(next),refresh:render,openSheet,closeSheet,notify,esc});
 
 function notify(s){const el=$('#toast');el.textContent=s;el.classList.add('show');clearTimeout(toastTimeout);toastTimeout=setTimeout(()=>el.classList.remove('show'),2900)}
-function save(fn){try{store.commit(fn);render();notify('已保存到当前浏览器');return true}catch(e){render();notify(e.message);return false}}
+function save(fn,successMessage='已保存到当前浏览器'){try{store.commit(fn);render();notify(successMessage);return true}catch(e){render();notify(e.message);return false}}
 function head(title,sub='',action=''){return '<div class="page-heading"><div><span class="eyebrow">'+esc(sub)+'</span><h1>'+esc(title)+'</h1></div><div class="page-heading-right">'+action+'</div></div>'}
 function section(title,content,link='',extra=''){return '<section class="section"><div class="section-head"><h2>'+esc(title)+'</h2>'+(link?'<button class="mini-link" data-view="'+link+'">查看全部</button>':extra?'<small>'+esc(extra)+'</small>':'')+'</div><div class="group">'+content+'</div></section>'}
 function empty(text,help='',actionLabel='',action=''){return '<div class="empty-group"><div class="empty-icon">'+icon('growth')+'</div><strong>'+esc(text)+'</strong><p>'+esc(help)+'</p>'+(action?'<button class="text-action" data-action="'+action+'">'+esc(actionLabel)+' '+icon('right')+'</button>':'')+'</div>'}
@@ -215,7 +215,6 @@ function navigate(target){
  const from=target;let next=target;
  if(target==='schedule'||target==='tasks'){itemsTab=target==='tasks'?'inbox':'schedule';next='items'}
  if(target==='goals'||target==='review'){developTab=target==='goals'?'goals':'record';next='develop'}
- if(target==='develop'&&view!=='develop')developTab='record';
  if(next===view&&from===view)return;
  const order=['today','items','develop'];
  const fromIndex=order.indexOf(view),toIndex=order.indexOf(next);
@@ -234,9 +233,14 @@ function input(label,name,value='',type='text',extra=''){return '<div class="fie
 function select(label,name,value,items){return '<div class="field"><label for="fld-'+name+'">'+esc(label)+'</label><select name="'+name+'" id="fld-'+name+'">'+items.map(([v,l])=>'<option value="'+esc(v)+'" '+(String(v)===String(value)?'selected':'')+'>'+esc(l)+'</option>').join('')+'</select></div>'}
 function openSheet(title,html,context,{saveLabel='保存',hideSave=false}={}){
  modal=context;$('#sheet-title').textContent=title;$('#sheet-fields').innerHTML='<div class="sheet-panel">'+html+'</div>';$('#sheet-save').textContent=saveLabel;$('#sheet-save').hidden=hideSave;
- const sheet=$('#editor');sheet.showModal();document.body.style.overflow='hidden';setTimeout(()=>sheet.querySelector('input:not([type=hidden]),textarea,select')?.focus(),80);
+ const sheet=$('#editor');sheet.showModal();document.body.style.overflow='hidden';setTimeout(()=>sheet.querySelector('[data-quick-create],input:not([type=hidden]),textarea,select')?.focus(),80);
 }
 function closeSheet(){const sheet=$('#editor');if(sheet.open)sheet.close();document.body.style.overflow='';modal=null;preview=null}
+function openQuickCreate(){
+ const types=[['task','待办或截止提醒','记下要完成的事情和截止时间','list'],['event','单次活动','为选中的日期安排具体时段','clock'],['course','每周课程','创建按星期重复的课程安排','calendar']];
+ const html='<p class="sheet-note">先选择记录类型，下一步再填写必要信息。截止提醒不会自动占用日程时段。</p><div class="xy-create-choices">'+types.map(([kind,title,desc,iconName])=>'<button type="button" class="xy-create-option" data-quick-create="'+kind+'">'+icon(iconName)+'<span><strong>'+title+'</strong><small>'+desc+'</small></span>'+icon('right')+'</button>').join('')+'</div>';
+ openSheet('添加到事项',html,{type:'create-choice'},{hideSave:true});
+}
 function editForm(kind,id='',preset={}){
  const key={task:'tasks',goal:'goals',course:'courses',event:'events'}[kind],obj=state()[key].find(x=>x.id===id)||{};
  let fields='';
@@ -255,9 +259,9 @@ function editForm(kind,id='',preset={}){
     input('每周期望次数','weeklyTarget',obj.weeklyTarget||1,'number','min="1" max="7"')+select('跟踪类型','kind',obj.kind||'goal',[['goal','长期目标'],['habit','日常习惯']]);
  }else {
   fields=input('名称','name',obj.name||'','text','required maxlength="160"')+
-    select('星期','day',obj.day??weekday(new Date()),DAYS.map((name,i)=>[String(i),name]))+
+    select('星期','day',obj.day??weekday(dateFor(preset.date||selectedDate)),DAYS.map((name,i)=>[String(i),name]))+
     '<div class="fieldrow">'+input('开始时间','start',obj.start||'09:00','time','required')+input('结束时间','end',obj.end||'10:30','time','required')+'</div>'+
-    input('地点（可选）','place',obj.place||'')+input('单次日期（可选）','date',obj.date||'','date')+
+    input('地点（可选）','place',obj.place||'')+input('单次日期（可选）','date',obj.date||(kind==='event'?preset.date||selectedDate:''),'date')+
     '<div class="fieldrow">'+input('教学起始周','weekStart',obj.weekStart||1,'number','min="1" max="54"')+input('教学结束周','weekEnd',obj.weekEnd||18,'number','min="1" max="54"')+'</div>'+
     select('周次','parity',obj.parity||'all',[['all','每周'],['odd','单周'],['even','双周']]);
  }
@@ -287,7 +291,7 @@ function saveEdit(){
  if(ok)closeSheet();
 }
 function complete(kind,id){
- const key=kind==='task'?'tasks':'goals';save(d=>{const x=d[key].find(v=>v.id===id);if(!x)return;x.done=!x.done;x.completedAt=x.done?new Date().toISOString():null;d.history.unshift({id:uid(),at:new Date().toISOString(),action:'completed',description:(x.done?'完成：':'恢复：')+x.title})});
+ const key=kind==='task'?'tasks':'goals',existing=state()[key].find(v=>v.id===id),wasDone=!!existing?.done;save(d=>{const x=d[key].find(v=>v.id===id);if(!x)return;x.done=!x.done;x.completedAt=x.done?new Date().toISOString():null;d.history.unshift({id:uid(),at:new Date().toISOString(),action:'completed',description:(x.done?'完成：':'恢复：')+x.title})},wasDone?'已恢复到待办':'已完成 · 继续下一项');
 }
 function openCheckin(goalId){
  const goal=state().goals.find(x=>x.id===goalId);if(!goal)return;
@@ -324,6 +328,8 @@ function runAction(action,source){
  switch(action){
  case 'add':editForm(view==='develop'?'goal':view==='items'&&itemsTab==='schedule'?'event':'task');break;
  case 'add-task':editForm('task');break;
+ case 'open-add-menu':openQuickCreate();break;
+ case 'journal-today':journalDate=dateKey(now());moodDraft=null;render();break;
  case 'go-schedule':navigate('schedule');break;
  case 'add-event':editForm('event');break;
  case 'prev-week':weekStart=plusDays(weekStart,-7);selectedDate=dateKey(weekStart);render();break;
@@ -344,6 +350,7 @@ function runAction(action,source){
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;
  if(growthPanel.handle(t))return;
+ if(t.dataset.quickCreate){const kind=t.dataset.quickCreate;closeSheet();editForm(kind,'',{date:selectedDate,...(kind==='task'?{due:selectedDate+'T23:59'}:{})});return;}
  if(t.dataset.itemsTab){
    const target=t.dataset.itemsTab;if(target===itemsTab)return;
    const dir=target==='inbox'?'forward':'backward';

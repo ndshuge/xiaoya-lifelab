@@ -28,7 +28,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
   (overdue.length?'<p class="v4-overdue-note">'+overdue.length+' 件此前逾期的事项仍未完成。<button data-items-tab="inbox">查看待办</button></p>':'')+
   '</section>'+
   '<section class="v4-items-calendar"><div class="v4-section-title"><div><h2>课程与活动</h2></div>'+
-  '<div class="v4-calendar-actions"><button data-add="event">添加活动</button><button data-add="course">添加课程</button></div></div>'+
+  '</div>'+
   '<div id="items-schedule" class="calendar-day calendar-day-timeline">'+
   (slots.length?buildDayTimeline(slots,{date:selectedDate,nowDate:at})+
   '<div class="calendar-caption">时间轴可滚动查看全天</div>':
@@ -37,7 +37,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
   '<div class="v4-calendar-import"><button data-action="calendar-import">'+ic('archive')+' 导入课表</button><button data-action="export-ics">'+ic('export')+' 导出日历</button></div></section>';
  }else{
   const done=(d.tasks||[]).filter(t=>t.done).slice(-8).reverse();
-  content='<section id="items-undated" class="v4-inbox-group"><div class="v4-section-title"><div><h2>独立待办 <span class="v4-inline-count">'+undated.length+'</span></h2></div><button data-add="task">添加待办</button></div>'+
+  content='<section id="items-undated" class="v4-inbox-group"><div class="v4-section-title"><div><h2>独立待办 <span class="v4-inline-count">'+undated.length+'</span></h2></div></div>'+
    '<div class="v4-unified-list">'+(undated.length?undated.map(taskRow).join(''):'<p class="v4-list-empty">暂无无期限待办。</p>')+'</div></section>'+
    '<section class="v4-inbox-group"><div class="v4-section-title"><div><h2>有截止日期 <span class="v4-inline-count">'+dated.length+'</span></h2></div></div>'+
    '<div class="v4-unified-list">'+(dated.length?dated.map(taskRow).join(''):'<p class="v4-list-empty">没有待截止的事项。</p>')+'</div></section>'+
@@ -46,7 +46,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
     '</div></details>':'');
  }
  return '<div class="v4-items"><header class="page-heading v4-page-heading"><div><h1>事项</h1><p class="v4-subtitle">'+
-  total+' 件待办</p></div></header>'+
+  total+' 件待办</p></div><div class="xy-page-primary">'+(active==='schedule'?'<button class="xy-action-main" data-action="open-add-menu">'+ic('plus')+' 添加</button>':'<button class="xy-action-main" data-action="add-task">'+ic('plus')+' 新建待办</button>')+'</div></header>'+
   '<div class="v4-item-segments" aria-label="事项视图"><button class="'+(active==='schedule'?'is-active':'')+'" data-items-tab="schedule" aria-pressed="'+(active==='schedule')+'"><b class=\"xy-elastic-face\">日程</b></button>'+
   '<button class="'+(active==='inbox'?'is-active':'')+'" data-items-tab="inbox" aria-pressed="'+(active==='inbox')+'"><b class=\"xy-elastic-face\">待办 <span>'+total+'</span></b></button></div>'+
   content+'</div>';

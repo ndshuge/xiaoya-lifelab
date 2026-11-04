@@ -14,7 +14,7 @@ const base='http://127.0.0.1:'+server.address().port+'/xiaoya-lifelab/?judge=1';
 await page.goto(base,{waitUntil:'networkidle'});
 await page.locator('.bottom-nav [data-view=items]').click();
 await page.locator('.v4-item-segments [data-items-tab=inbox]').click();
-const trigger=page.locator('#items-undated [data-add=task]');
+const trigger=page.locator('[data-action=add-task]');
 await trigger.click();
 await check('sheet action targets meet 44px touch size',async()=>{
  for(const sel of ['.sheet-cancel','#sheet-save']){const box=await page.locator(sel).boundingBox();assert.ok(box.height>=44&&box.width>=44,sel+' '+JSON.stringify(box))}
@@ -24,7 +24,7 @@ await check('sheet opens with first real input focused',async()=>{
 });
 await check('Escape closes editor and restores trigger focus',async()=>{
  await page.keyboard.press('Escape');await page.locator('#editor').evaluate(e=>{if(e.open)throw Error('modal remained open')});
- assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('data-add')),'task');
+ assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('data-action')),'add-task');
  assert.equal(await page.evaluate(()=>document.body.style.overflow),'','closing with Escape must unlock document scroll');
 });
 await trigger.click();await page.locator('#fld-title').fill('检查临时提示的位置');
@@ -57,7 +57,7 @@ await check('assistant Escape restores focus to single Xiaoya avatar',async()=>{
 });
 await check('text fields keep real associated accessible names',async()=>{
  await page.locator('.topbar .toolbar-actions button[aria-label^="完成设置"]').click();
- await page.locator('.bottom-nav [data-view=items]').click();await page.locator('.v4-item-segments [data-items-tab=inbox]').click();await page.locator('#items-undated [data-add=task]').click();
+ await page.locator('.bottom-nav [data-view=items]').click();await page.locator('.v4-item-segments [data-items-tab=inbox]').click();await page.locator('[data-action=add-task]').click();
  for(const name of ['title','due']){const linked=await page.locator('#fld-'+name).evaluate(e=>e.labels?.length||0);assert.ok(linked>0,'no label for '+name)}
 });
 await check('no page JS errors and no horizontal clipping',async()=>{assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true)});

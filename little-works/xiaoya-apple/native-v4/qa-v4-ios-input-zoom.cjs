@@ -32,7 +32,7 @@ const editable='input:not([type=checkbox]):not([type=radio]):not([type=hidden]):
    await page.locator('.topbar .toolbar-actions button').click();
    await page.locator('.bottom-nav [data-view=items]').click();
    await page.locator('[data-items-tab=inbox]').click();
-   await page.locator('#items-undated [data-add=task]').click();
+   await page.locator('[data-action=add-task]').click();
    await audit(page,width+' task sheet');
    await page.keyboard.press('Escape');
    await page.keyboard.press('/');

@@ -1,0 +1,116 @@
+/* Single Duolingo-inspired tactile language, scoped by explicit control role.
+   Grouped navigation and swipe/segmented controls never receive extruded depth. */
+:root{
+ --xy-key-motion-in:cubic-bezier(.22,.65,.2,1);
+ --xy-key-motion-out:cubic-bezier(.24,1.08,.35,1);
+ --xy-key-elevation:3px;
+}
+#workspace .v4-page-heading:has(.xy-page-primary){
+ display:flex;align-items:center;justify-content:space-between;gap:14px;
+}
+#workspace .xy-page-primary{flex:0 0 auto;align-self:center}
+#workspace .xy-action-main{
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ min-height:45px;padding:0 17px;border:1px solid #378157;
+ border-radius:14px;background:#34865c;color:#fff;font-size:14px;font-weight:740;
+ box-shadow:0 4px 0 #246c48;
+}
+#workspace .xy-action-main svg{width:18px;height:18px}
+#workspace button[data-press-role=solo],
+.sheet button[data-press-role=solo],
+.assistant-panel button[data-press-role=solo]{
+ transform:translateY(0);
+ transition:transform 210ms var(--xy-key-motion-out),box-shadow 210ms var(--xy-key-motion-out),filter 160ms ease!important;
+ touch-action:manipulation;
+ transform-origin:center center;
+}
+#workspace button[data-press-role=solo]:is(:active,.xy-is-pressed),
+.sheet button[data-press-role=solo]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role=solo]:is(:active,.xy-is-pressed){
+ transform:translateY(var(--xy-key-elevation))!important;
+ box-shadow:0 0 0 var(--xy-key-edge-current,#267044)!important;
+ filter:brightness(.96);
+ transition-duration:70ms,70ms,80ms!important;
+ transition-timing-function:var(--xy-key-motion-in)!important;
+}
+#workspace button[data-press-role=solo] > *,
+.sheet button[data-press-role=solo] > *,
+.assistant-panel button[data-press-role=solo] > *{
+ transform:none!important;
+}
+#workspace button[data-press-role=quiet],
+.sheet button[data-press-role=quiet],
+.assistant-panel button[data-press-role=quiet]{
+ transition:opacity 180ms ease,filter 180ms ease,background-color 180ms ease!important;
+ touch-action:manipulation;
+}
+#workspace button[data-press-role=quiet]:is(:active,.xy-is-pressed),
+.sheet button[data-press-role=quiet]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role=quiet]:is(:active,.xy-is-pressed){
+ filter:brightness(.91);opacity:.74;
+ transition-duration:85ms!important;
+}
+#workspace button[data-press-role=icon] svg,
+.topbar button[data-press-role=icon] svg,
+.assistant-panel button[data-press-role=icon] svg{
+ transition:transform 220ms var(--xy-key-motion-out),opacity 220ms ease!important;
+}
+#workspace button[data-press-role=icon]:is(:active,.xy-is-pressed) svg,
+.topbar button[data-press-role=icon]:is(:active,.xy-is-pressed) svg,
+.assistant-panel button[data-press-role=icon]:is(:active,.xy-is-pressed) svg{
+ transform:scale(.9)!important;
+ transition-duration:90ms!important;
+}
+#workspace button[data-press-role=check]{
+ transition:filter 170ms ease!important;
+}
+#workspace button[data-press-role=check]:is(:active,.xy-is-pressed){
+ filter:brightness(.88);background-color:#d5eede;
+}
+#workspace button[data-press-role=group]{touch-action:manipulation}
+/* Quick-add is a choice of data semantics, not a hidden catch-all creation. */
+.sheet .xy-create-choices{display:grid;gap:11px;margin:15px 0 6px}
+.sheet .xy-create-option{
+ display:grid;grid-template-columns:35px minmax(0,1fr) 20px;align-items:center;gap:12px;
+ width:100%;min-height:76px;text-align:left;padding:15px 14px;
+ border:1px solid #dce9df;border-radius:17px;background:#fff;
+ box-shadow:0 3px 0 #bfcfc2;color:#254532;
+}
+.sheet .xy-create-option > svg:first-child{
+ width:24px;height:24px;color:#31845b
+}
+.sheet .xy-create-option > svg:last-child{width:16px;height:16px;color:#7b9482}
+.sheet .xy-create-option span{display:grid;gap:4px;min-width:0}
+.sheet .xy-create-option strong{font-size:15px;font-weight:720}
+.sheet .xy-create-option small{font-size:12px;color:#6b7c70;line-height:1.45}
+.sheet .xy-create-option:focus-visible{outline:3px solid #35895f;outline-offset:3px}
+#workspace .xy-journal-return{
+ border:0;background:none;font-size:13px;font-weight:650;color:#287c52;
+ min-height:44px;padding:6px 10px;
+}
+#workspace .v4-development-intro{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#workspace .v4-development-intro h2{min-width:0}
+@media(max-width:359px){
+ #workspace .xy-action-main{padding:0 11px;font-size:13px}
+ #workspace .v4-page-heading{gap:9px}
+}
+@media(prefers-color-scheme:dark){
+ #workspace .xy-action-main{background:#34744e;border-color:#679879;box-shadow:0 4px 0 #214c34}
+ .sheet .xy-create-option{background:#273a2d;color:#eef7f0;border-color:#59735f;box-shadow:0 3px 0 #1d2d22}
+ .sheet .xy-create-option small{color:#a8c0b0}
+ .sheet .xy-create-option > svg:first-child{color:#92d8aa}
+ .sheet .xy-create-option > svg:last-child{color:#acc3b0}
+}
+@media(prefers-reduced-motion:reduce){
+ #workspace button[data-press-role],.sheet button[data-press-role],.assistant-panel button[data-press-role],
+ #workspace button[data-press-role] svg,.topbar button[data-press-role] svg{
+  transform:none!important;transition:none!important
+ }
+}
+body.reduce-motion button[data-press-role],
+body.reduce-motion button[data-press-role] svg{
+ transform:none!important;transition:none!important
+}
+@media(forced-colors:active){
+ #workspace .xy-action-main,.sheet .xy-create-option{forced-color-adjust:auto;border:2px solid ButtonText;box-shadow:none!important}
+}

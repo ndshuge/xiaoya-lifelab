@@ -7,7 +7,7 @@ const dateZh=s=>new Date(s+'T12:00:00').toLocaleDateString('zh-CN',{month:'long'
 export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPlanner='',active='record'}={}){
  const saved=entries.find(e=>e.date===selectedDate)||null;
  const stats=analyzeJournal(entries,at),recent=entries.slice(0,8);
- const today=dateZh(selectedDate);
+ const today=dateZh(selectedDate),isToday=selectedDate===at.toLocaleDateString('sv-SE');
  const current=new Date(at);current.setHours(0,0,0,0);
  const pastWeek=new Date(current);pastWeek.setDate(current.getDate()-6);
  const goals=(d.goals||[]).filter(g=>!g.done);
@@ -33,7 +33,7 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
   '<button type="button" data-develop-tab="record" aria-pressed="'+(active==='record')+'" class="'+(active==='record'?'is-active':'')+'"><b class=\"xy-elastic-face\">记录</b></button>'+
   '<button type="button" data-develop-tab="goals" aria-pressed="'+(active==='goals')+'" class="'+(active==='goals'?'is-active':'')+'"><b class=\"xy-elastic-face\">目标</b></button></div>'+
   '<div data-develop-panel="record"'+(active==='record'?'':' hidden')+'>'+
-  '<div class="v4-development-intro"><h2>今天，感觉怎么样？</h2>'+
+  '<div class="v4-development-intro"><h2>'+(isToday?'今天，感觉怎么样？':'那天感觉怎么样？')+'</h2>'+(isToday?'':'<button class="xy-journal-return" data-action="journal-today">回到今天</button>')+
   '</div>'+
   '<section id="development-mood" class="v4-mood-section" aria-labelledby="v4-mood-label">'+
   '<h3 id="v4-mood-label" class="v4-visually-hidden">记录心情</h3><div class="v4-mood-picker" role="group" aria-labelledby="v4-mood-label">'+moodButtons+'</div></section>'+

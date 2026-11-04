@@ -1,0 +1,35 @@
+/* Primary action on creation sheets must actually look pressable.
+   The former Save button was text-only despite having a solo press role. */
+#editor .sheet-save[data-press-role="solo"]{
+  min-height:44px;
+  min-width:63px;
+  padding:7px 12px;
+  border-radius:12px;
+  border:1px solid #2b784f;
+  background:#31865a;
+  color:#fff;
+  font-size:14px;
+  font-weight:730;
+  box-shadow:0 3px 0 #205d3e;
+}
+#editor .sheet-save[data-press-role="solo"]:is(.xy-is-pressed,:active){
+  box-shadow:0 0 0 #205d3e!important;
+}
+#editor .sheet-save:disabled{
+  opacity:.45;filter:saturate(.4);cursor:default;
+}
+#editor .sheet-cancel[data-press-role="quiet"]{
+  min-height:44px;border-radius:12px;
+}
+.assistant-panel #assistant-send[data-press-role="solo"]{
+  box-shadow:0 3px 0 #286f4b;
+}
+.assistant-panel #assistant-send[data-press-role="solo"]:is(.xy-is-pressed,:active){
+  box-shadow:0 0 0 #286f4b!important;
+}
+@media(prefers-color-scheme:dark){
+ #editor .sheet-save[data-press-role=solo]{background:#397a55;border-color:#599b70;box-shadow:0 3px 0 #1c4b32;color:#fff}
+}
+@media(forced-colors:active){
+ #editor .sheet-save[data-press-role=solo]{background:ButtonFace;color:ButtonText;border:2px solid ButtonText;box-shadow:none!important}
+}
