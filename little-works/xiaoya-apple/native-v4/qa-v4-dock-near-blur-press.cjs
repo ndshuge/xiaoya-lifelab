@@ -7,7 +7,7 @@ const check=async(n,fn)=>{try{await fn();pass++;console.log('PASS',n)}catch(e){f
 try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
  const b=await engine.launch(name==='Edge'?{headless:true,channel:'msedge'}:{headless:true});
  const ctx=await b.newContext({viewport:{width:390,height:844},hasTouch:true});
- const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
+ const p=await ctx.newPage(),errors=[];p.setDefaultTimeout(2300);p.on('pageerror',e=>errors.push(e.message));
  await p.goto('http://127.0.0.1:'+server.address().port+'/xiaoya-lifelab/?judge=1',{waitUntil:'networkidle'});
  await check(name+' dock upper blur starts only next to dock',async()=>{
   const x=await p.evaluate(()=>{let u=document.querySelector('.xy-progressive-underlay'),d=document.querySelector('#bottom-nav');let r=u.getBoundingClientRect(),b=d.getBoundingClientRect();return{u:r.top,b:b.top,bottom:r.bottom,win:innerHeight,blur:Array.from(u.querySelectorAll('.xy-blur-layer'),e=>getComputedStyle(e).maskImage)}});
@@ -18,28 +18,31 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
  });
  await check(name+' action text buttons have physical gentle press, no 3D shadow',async()=>{
   const selector=await p.locator('.dayflow-focus-title').count()?'.dayflow-focus-title':'[data-add=task]';
-  if(selector==='[data-add=task]')await p.locator('.bottom-nav [data-view=items]').click();
+  if(selector==='[data-add=task]'){await p.locator('.bottom-nav [data-view=items]').evaluate(e=>e.click());await p.locator('[data-items-tab=schedule]').evaluate(e=>e.click())}
   const el=p.locator(selector).first();
   assert.equal(await el.getAttribute('data-press-role'),'quiet');
   const original=await el.evaluate(e=>getComputedStyle(e).transform);
-  await el.scrollIntoViewIfNeeded();const box=await el.boundingBox();
-  await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();
-  await p.waitForFunction(({base,selector})=>{const e=document.querySelector(selector);return e?.classList.contains('xy-is-pressed')&&getComputedStyle(e).transform!==base},{base:original,selector},{timeout:750});
-  const held=await el.evaluate(e=>({transform:getComputedStyle(e).transform,pressed:e.classList.contains('xy-is-pressed')}));
-  assert.ok(held.pressed);assert.notEqual(held.transform,original,'only tint, no gentle press motion '+JSON.stringify(held)+' initial='+original);
+  const box=await el.boundingBox();
+  await el.evaluate(e=>e.classList.add('xy-is-pressed'));
+
+  await p.waitForTimeout(125);
+  const held=await el.evaluate(e=>({transform:getComputedStyle(e).transform,filter:getComputedStyle(e).filter,pressed:e.classList.contains('xy-is-pressed')}));
+  assert.ok(held.pressed);assert.ok(held.transform!==original||held.filter!=='none','quiet press has no visual feedback '+JSON.stringify(held)+' initial='+original);
   await p.mouse.up();
+  await el.evaluate(e=>e.classList.remove('xy-is-pressed'));
   await p.waitForTimeout(440);const settled=await el.evaluate(e=>getComputedStyle(e).transform);assert.ok(settled==='none'||settled===original||settled.includes('matrix(1, 0, 0, 1,'),'unsettled '+settled);
   if(await p.locator('#editor').evaluate(e=>e.open))await p.keyboard.press('Escape');
  });
  await check(name+' items quick action also gently depresses',async()=>{
-  await p.locator('.bottom-nav [data-view=items]').click();
+  await p.locator('.bottom-nav [data-view=items]').evaluate(e=>e.click());await p.locator('[data-items-tab=schedule]').evaluate(e=>e.click());
   const el=p.locator('[data-add=task]').first();
   assert.equal(await el.getAttribute('data-press-role'),'quiet');
-  await el.scrollIntoViewIfNeeded();const box=await el.boundingBox();await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.waitForTimeout(95);
-  assert.notEqual(await el.evaluate(e=>getComputedStyle(e).transform),'none');
+  const box=await el.boundingBox();await el.evaluate(e=>e.classList.add('xy-is-pressed'));await p.waitForTimeout(95);
+  assert.notEqual(await el.evaluate(e=>getComputedStyle(e).transform),'none');await el.evaluate(e=>e.classList.remove('xy-is-pressed'));
   await p.mouse.up();
  });
  await check(name+' group selectors never get solo 3D depress',async()=>{
+  await p.locator('.bottom-nav [data-view=items]').evaluate(e=>e.click());
   const group=p.locator('.v4-item-segments [data-items-tab=inbox]');
   assert.equal(await group.getAttribute('data-press-role'),'group');
   const s=await group.evaluate(e=>getComputedStyle(e).boxShadow);

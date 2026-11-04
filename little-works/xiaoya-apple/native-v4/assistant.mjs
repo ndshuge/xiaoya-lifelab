@@ -27,7 +27,7 @@ export function offlineAnswer(question,d){
  }
  return '我在这里。你可以问我“今天先做什么”“查看成长目标”或“导入课表”。现在用的是本地规则助手；如需开放式 AI 对话，可以点击右上角“连接 AI”自行验证模型。';
 }
-export function createAssistant({getData,getMode,navigate}){
+export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
  let api=null,history=[],busy=false;
  const panel=node('section','assistant-panel');panel.id='xiaoya-assistant';panel.hidden=true;
  panel.setAttribute('role','dialog');panel.setAttribute('aria-label','与小芽对话');panel.setAttribute('aria-modal','false');
@@ -134,7 +134,8 @@ export function createAssistant({getData,getMode,navigate}){
   input.value='';addMessage(question,'user');
   if(!api){
    const d=getData(),snapshot={tasks:d.tasks,goals:d.goals,_synthetic:getMode()==='demo'};
-   addMessage(offlineAnswer(question,snapshot));return;
+   const contextual=typeof getAgentReply==='function'?getAgentReply(question):null;
+   addMessage(contextual||offlineAnswer(question,snapshot));return;
   }
   const pending=addMessage('正在思考…');busy=true;send.disabled=true;
   const messages=[{role:'system',content:'你是小芽，一位务实、简洁的大学生生活与学习助手。不声称自动读取用户档案或执行任何操作。不要诊断心理或健康问题。'},...history.slice(-10),{role:'user',content:question}];
