@@ -31,7 +31,10 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
   await p.mouse.up();
   await el.evaluate(e=>e.classList.remove('xy-is-pressed'));
   await p.waitForTimeout(440);const settled=await el.evaluate(e=>getComputedStyle(e).transform);assert.ok(settled==='none'||settled===original||settled.includes('matrix(1, 0, 0, 1,'),'unsettled '+settled);
-  if(await p.locator('#editor').evaluate(e=>e.open))await p.keyboard.press('Escape');
+  if(await p.locator('#editor').evaluate(e=>e.open)){
+   await p.keyboard.press('Escape');
+   await p.waitForFunction(()=>!document.querySelector('#editor')?.open);
+  }
  });
  await check(name+' items quick action also gently depresses',async()=>{
   await p.locator('.bottom-nav [data-view=items]').evaluate(e=>e.click());await p.locator('[data-items-tab=schedule]').evaluate(e=>e.click());
@@ -54,13 +57,21 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
   assert.ok(dur.split(',').every(x=>Number.parseFloat(x)<.05),'reduced-motion transition '+dur);
  });
  await check(name+' label-only settings dismissal still has an elastic press',async()=>{
-  if(await p.locator('#editor').evaluate(e=>e.open))await p.keyboard.press('Escape');
+  if(await p.locator('#editor').evaluate(e=>e.open)){
+   await p.keyboard.press('Escape');
+   await p.waitForFunction(()=>!document.querySelector('#editor')?.open);
+  }
   await p.emulateMedia({reducedMotion:'no-preference'});
-  await p.locator('.topbar .toolbar-actions button').click();
+  // Navigate synchronously: WebKit smooth scroll can keep the toolbar moving
+  // while Playwright waits for a stable locator, unrelated to press behavior.
+  await p.locator('.topbar .toolbar-actions button').evaluate(e=>e.click());
   const el=p.locator('.topbar .glass-btn.is-detail-done');
   assert.equal(await el.getAttribute('data-press-role'),'icon');
   const initial=await el.evaluate(e=>getComputedStyle(e).transform);
-  await el.hover();const rect=await el.boundingBox();
+  // Drive the real pointer directly; Playwright hover's actionability check
+  // can oscillate while WebKit animates a sticky toolbar after route change.
+  await p.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  const rect=await el.boundingBox();assert.ok(rect&&rect.y>=0&&rect.y<844,'toolbar outside viewport');
   await p.mouse.move(rect.x+rect.width/2,rect.y+rect.height/2);await p.mouse.down();await p.waitForTimeout(110);
   assert.notEqual(await el.evaluate(e=>getComputedStyle(e).transform),initial,'label-only icon did not move');
   await p.mouse.up();

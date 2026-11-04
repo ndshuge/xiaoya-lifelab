@@ -31,6 +31,7 @@ export function createSheetMotion(){
   const frame=dialog.querySelector('.sheet-frame');
   if(frame)frame.style.pointerEvents='';
   if(dialog.open)dialog.close();
+  dialog.removeAttribute('data-xy-closing');
   if(focusTarget?.isConnected)focusTarget.focus({preventScroll:true});
   focusTarget=null;origin=null;originRect=null;
  };
@@ -43,11 +44,16 @@ export function createSheetMotion(){
   origin=card?.isConnected?card:null;
   originRect=origin?origin.getBoundingClientRect():null;
   focusTarget=source?.isConnected?source:document.activeElement;
+  dialog.removeAttribute('data-xy-closing');
   dialog.showModal();
   const frame=dialog.querySelector('.sheet-frame');
   if(!frame||reduced())return;
   if(!originRect){
-    motion=frame.animate([{opacity:.62},{opacity:1}],{duration:270,easing:'cubic-bezier(.2,.82,.3,1)',fill:'both'});
+    motion=frame.animate([
+      {clipPath:'inset(100% 0 0 0 round 24px 24px 0 0)',opacity:.95},
+      {clipPath:'inset(0 0 0 0 round 24px 24px 0 0)',opacity:1}
+    ],{duration:310,easing:'cubic-bezier(.18,.86,.3,1)',fill:'both'});
+    motion.id='xy-video-sheet';
     const current=motion;current.onfinish=()=>{if(motion===current)stop()};
     return;
   }
@@ -69,8 +75,11 @@ export function createSheetMotion(){
   const frame=dialog.querySelector('.sheet-frame');
   if(instant||reduced()||!frame||performance.now()-openedAt<140){settle(dialog);return}
   if(!originRect){
-    stop();closing=true;frame.style.pointerEvents='none';const token=++session;
-    motion=frame.animate([{opacity:1},{opacity:.62}],{duration:220,easing:'cubic-bezier(.32,0,.25,1)',fill:'both'});
+    stop();closing=true;dialog.dataset.xyClosing='true';frame.style.pointerEvents='none';const token=++session;
+    motion=frame.animate([
+      {clipPath:'inset(0 0 0 0 round 24px 24px 0 0)',opacity:1},
+      {clipPath:'inset(100% 0 0 0 round 24px 24px 0 0)',opacity:.95}
+    ],{duration:230,easing:'cubic-bezier(.32,0,.25,1)',fill:'both'});
     motion.onfinish=()=>{if(session===token)settle(dialog)};
     closeTimer=setTimeout(()=>{if(session===token)settle(dialog)},275);
     return;

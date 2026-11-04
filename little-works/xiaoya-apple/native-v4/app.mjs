@@ -10,7 +10,7 @@ import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
 import {installTimelineScrubber} from './timeline-scrubber.mjs?v=5.0.0';
 import {installContextLongPress} from './context-longpress.mjs?v=5.0.0';
-import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.3.0';
+import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.4.0';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=5.1.0';
@@ -226,6 +226,15 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
       duration:380,easing:'cubic-bezier(.2,.81,.25,1)'
     });
     animation.id='xy-page-motion';
+  }
+  // Academy 4.64-5.10s: stagger incoming content, leaving real hitboxes fixed.
+  const host=page?.querySelector('.v4-items')||page?.querySelector('.v4-development')||page?.querySelector('.dayflow-home')||page;
+  for(const [index,element] of Array.from(host?.children||[]).slice(0,5).entries()){
+    if(typeof element.animate!=='function')continue;
+    const a=element.animate([{opacity:.64,filter:'saturate(.94)'},{opacity:1,filter:'saturate(1)'}],{
+      delay:index*38,duration:238,easing:'cubic-bezier(.2,.82,.3,1)',fill:'both'
+    });
+    a.id='xy-video-stagger';a.onfinish=()=>a.cancel();
   }
   const title=document.querySelector('#workspace .page-heading h1');
   title?.animate?.(

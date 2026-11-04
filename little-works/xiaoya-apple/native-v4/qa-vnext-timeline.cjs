@@ -22,6 +22,10 @@ const server=http.createServer((req,res)=>{
    const page=await ctx.newPage(),errors=[];page.setDefaultTimeout(5000);page.on('pageerror',e=>errors.push(e.message));
    await page.goto('http://127.0.0.1:'+server.address().port+'/xiaoya-lifelab/?judge=1',{waitUntil:'networkidle'});
    await page.locator('.bottom-nav [data-view=items]').evaluate(e=>e.click());await page.waitForTimeout(120);
+   // The demo timetable has fixed weekdays; 'today' can legitimately be empty.
+   const scheduledDate=await page.locator('[data-day]').evaluateAll(xs=>xs.find(x=>new Date(x.dataset.day+'T12:00:00').getDay()===3)?.dataset.day);
+   assert.ok(scheduledDate,'the current demo week should include Wednesday');
+   await page.locator('[data-day="'+scheduledDate+'"]').evaluate(e=>e.click());
    const rail=page.locator('.xy-timeline-scrub');
    const scroller=page.locator('.native-timeline-scroll');
    await check(name+' visible functional timeline thumb',async()=>{
