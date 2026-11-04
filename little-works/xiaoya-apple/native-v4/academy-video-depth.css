@@ -1,0 +1,26 @@
+/* Video-verified reference: SHUGE Academy screen recording 2026-11-04,
+   26.54–27.28s: dim first, reveal bottom sheet; 12.70–13.24s: modal depth.
+   This file intentionally contains zero Dock / avatar / task data styling. */
+/* Native dialog top:0/bottom:0 can stretch a short sheet to 92dvh,
+   leaving a transparent hole below the real content. Pin the visible frame
+   to the viewport bottom instead, as seen at 26.9s in the recording. */
+#editor.sheet{top:auto;bottom:0;height:fit-content;max-height:min(92dvh,850px);margin:0 auto}
+#editor[open]::backdrop{
+ animation:xy-video-backdrop-in 245ms cubic-bezier(.19,.83,.3,1) both;
+}
+#editor[open][data-xy-closing]::backdrop{
+ animation:xy-video-backdrop-out 230ms cubic-bezier(.32,0,.28,1) both;
+}
+@keyframes xy-video-backdrop-in {
+ from{background-color:rgba(24,26,28,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)}
+ to{background-color:rgba(24,26,28,.32);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+}
+@keyframes xy-video-backdrop-out {
+ from{background-color:rgba(24,26,28,.32);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
+ to{background-color:rgba(24,26,28,0);backdrop-filter:blur(0px);-webkit-backdrop-filter:blur(0px)}
+}
+@media(prefers-reduced-motion:reduce){
+ #editor[open]::backdrop,#editor[open][data-xy-closing]::backdrop{animation:none!important}
+}
+body.reduce-motion #editor[open]::backdrop,
+body.reduce-motion #editor[open][data-xy-closing]::backdrop{animation:none!important}

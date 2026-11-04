@@ -61,7 +61,7 @@ const srv=http.createServer((req,res)=>{const url=new URL(req.url,'http://localh
    const before=await b.evaluate(e=>({rect:e.getBoundingClientRect().width,scale:getComputedStyle(e).transform,shadow:getComputedStyle(e).boxShadow}));
    await b.evaluate(e=>e.classList.add('xy-is-pressed'));await page.waitForTimeout(120);
    const down=await b.evaluate(e=>({rect:e.getBoundingClientRect().width,scale:getComputedStyle(e).transform,shadow:getComputedStyle(e).boxShadow}));
-   assert.ok(down.shadow!==before.shadow||down.scale!==before.scale,'solo missing tactile feedback');
+   assert.ok(down.shadow!==before.shadow||down.scale!==before.scale,'solo missing tactile feedback before='+JSON.stringify(before)+' down='+JSON.stringify(down)+' role='+await b.getAttribute('data-press-role'));
    assert.ok(Math.abs(down.rect-before.rect)<1,'button hitbox width jumped');
    await b.evaluate(e=>e.classList.remove('xy-is-pressed'));await page.waitForTimeout(420);
    const after=await b.evaluate(e=>getComputedStyle(e).transform);
