@@ -30,8 +30,8 @@ export function renderDevelopment(d,entries,{selectedDate,at=new Date(),growthPl
  return '<div class="v4-development">'+
   '<header class="page-heading v4-page-heading"><div><h1>发展</h1></div></header>'+
   '<div class="v4-develop-segments" aria-label="发展分类">'+
-  '<button type="button" data-develop-tab="record" aria-pressed="'+(active==='record')+'" class="'+(active==='record'?'is-active':'')+'">记录</button>'+
-  '<button type="button" data-develop-tab="goals" aria-pressed="'+(active==='goals')+'" class="'+(active==='goals'?'is-active':'')+'">目标</button></div>'+
+  '<button type="button" data-develop-tab="record" aria-pressed="'+(active==='record')+'" class="'+(active==='record'?'is-active':'')+'"><b class=\"xy-elastic-face\">记录</b></button>'+
+  '<button type="button" data-develop-tab="goals" aria-pressed="'+(active==='goals')+'" class="'+(active==='goals'?'is-active':'')+'"><b class=\"xy-elastic-face\">目标</b></button></div>'+
   '<div data-develop-panel="record"'+(active==='record'?'':' hidden')+'>'+
   '<div class="v4-development-intro"><h2>今天，感觉怎么样？</h2>'+
   '</div>'+

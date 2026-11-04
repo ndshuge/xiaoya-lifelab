@@ -1,0 +1,156 @@
+/* Screen contents stay opaque while the inert old screen exits.
+   Touch feedback moves only painted descendants/pseudo-surfaces, never the hit target. */
+:root{
+  --xy-elastic-settle:linear(0, .58 12%, 1.52 41%, .88 66%, 1.06 83%, 1 100%);
+  --xy-elastic-press:cubic-bezier(.25,.85,.25,1);
+}
+/* 130ms to compress, 520ms to return with a visible but damped spring.
+   Keep button geometry fixed to protect touch targets and rapid repeated taps. */
+.bottom-nav .tab > svg,
+.bottom-nav .tab > span,
+.v4-week-tools .calendar-arrow button > svg,
+.v4-week-rail .day-pill > small,
+.v4-week-rail .day-pill > strong,
+.v4-mood-option > .v4-mood-face,
+.v4-mood-option > span:last-child,
+.v4-item-segments button > .xy-elastic-face,
+.v4-develop-segments button > .xy-elastic-face,
+.topbar .glass-btn > svg,
+.v4-journal-save > svg {
+  transform:scale(1);
+  transition:transform 520ms var(--xy-elastic-settle);
+  transform-origin:center;
+}
+.bottom-nav .tab:active > svg,
+.bottom-nav .tab:active > span,
+.v4-week-tools .calendar-arrow button:active > svg,
+.v4-week-rail .day-pill:active > small,
+.v4-week-rail .day-pill:active > strong,
+.v4-mood-option:active > .v4-mood-face,
+.v4-mood-option:active > span:last-child,
+.v4-item-segments button:active > .xy-elastic-face,
+.v4-develop-segments button:active > .xy-elastic-face,
+.topbar .glass-btn:active > svg,
+.v4-journal-save:active > svg {
+  transform:scale(.89);
+  transition-duration:140ms;
+  transition-timing-function:var(--xy-elastic-press);
+}
+.v4-item-segments .xy-elastic-face,
+.v4-develop-segments .xy-elastic-face{
+  display:inline-flex;align-items:center;justify-content:center;gap:4px;
+  font-weight:inherit;
+  pointer-events:none;
+}
+.v4-item-segments .xy-elastic-face span{font-weight:inherit}
+/* Button background comes in quickly, then persists into the spring settle.
+   The base is a pseudo layer so borders and the actual click target do not move. */
+.v4-item-segments>button::after,
+.v4-develop-segments>button::after,
+.v4-week-tools .calendar-arrow button::after,
+.v4-week-rail .day-pill::after,
+.v4-section-title button::after,
+.bottom-nav .tab::after,
+.topbar .glass-btn:not(.is-detail-done)::after,
+.v4-journal-save::after{
+  transform:scale(1);
+  transition:opacity 300ms var(--xy-elastic-settle),transform 520ms var(--xy-elastic-settle);
+}
+.v4-item-segments>button:active::after,
+.v4-develop-segments>button:active::after,
+.v4-week-tools .calendar-arrow button:active::after,
+.v4-week-rail .day-pill:active::after,
+.v4-section-title button:active::after,
+.bottom-nav .tab:active::after,
+.topbar .glass-btn:not(.is-detail-done):active::after,
+.v4-journal-save:active::after{
+  transform:scale(.92);
+  transition-duration:90ms,140ms;
+  transition-timing-function:var(--xy-elastic-press);
+}
+@media (prefers-reduced-motion:reduce){
+  .bottom-nav .tab > svg,.bottom-nav .tab > span,
+  .v4-week-tools .calendar-arrow button > svg,
+  .v4-week-rail .day-pill > small,.v4-week-rail .day-pill > strong,
+  .v4-mood-option > .v4-mood-face,.v4-mood-option > span:last-child,
+  .v4-item-segments button > .xy-elastic-face,
+  .v4-develop-segments button > .xy-elastic-face,
+  .topbar .glass-btn > svg,.v4-journal-save > svg{
+    transition:none!important;transform:none!important
+  }
+  .v4-item-segments>button::after,.v4-develop-segments>button::after,
+  .v4-week-tools .calendar-arrow button::after,.v4-week-rail .day-pill::after,
+  .v4-section-title button::after,.bottom-nav .tab::after,
+  .topbar .glass-btn::after,.v4-journal-save::after{
+    transition:none!important;transform:none!important
+  }
+}
+/* Pointerdown state is held by a small vanilla-JS bridge, including WebKit's
+   occasional :active release during touch hold. This class never changes hitboxes. */
+.bottom-nav .tab.xy-is-pressed > svg,
+.bottom-nav .tab.xy-is-pressed > span,
+.v4-week-tools .calendar-arrow button.xy-is-pressed > svg,
+.v4-week-rail .day-pill.xy-is-pressed > small,
+.v4-week-rail .day-pill.xy-is-pressed > strong,
+.v4-mood-option.xy-is-pressed > .v4-mood-face,
+.v4-mood-option.xy-is-pressed > span:last-child,
+.v4-item-segments button.xy-is-pressed > .xy-elastic-face,
+.v4-develop-segments button.xy-is-pressed > .xy-elastic-face,
+.topbar .glass-btn.xy-is-pressed > svg,
+.v4-journal-save.xy-is-pressed > svg{
+  transform:scale(.89);
+  transition-duration:140ms;
+  transition-timing-function:var(--xy-elastic-press);
+}
+.v4-item-segments>button.xy-is-pressed::after,
+.v4-develop-segments>button.xy-is-pressed::after,
+.v4-week-tools .calendar-arrow button.xy-is-pressed::after,
+.v4-week-rail .day-pill.xy-is-pressed::after,
+.v4-section-title button.xy-is-pressed::after,
+.bottom-nav .tab.xy-is-pressed::after,
+.topbar .glass-btn:not(.is-detail-done).xy-is-pressed::after,
+.v4-journal-save.xy-is-pressed::after{
+  opacity:1;transform:scale(.92);
+  transition-duration:90ms,140ms;
+  transition-timing-function:var(--xy-elastic-press);
+}
+@media(prefers-reduced-motion:reduce){
+  .bottom-nav .tab.xy-is-pressed > svg,
+  .bottom-nav .tab.xy-is-pressed > span,
+  .v4-week-tools .calendar-arrow button.xy-is-pressed > svg,
+  .v4-week-rail .day-pill.xy-is-pressed > small,
+  .v4-week-rail .day-pill.xy-is-pressed > strong,
+  .v4-mood-option.xy-is-pressed > .v4-mood-face,
+  .v4-mood-option.xy-is-pressed > span:last-child,
+  .v4-item-segments button.xy-is-pressed > .xy-elastic-face,
+  .v4-develop-segments button.xy-is-pressed > .xy-elastic-face,
+  .topbar .glass-btn.xy-is-pressed > svg,
+  .v4-journal-save.xy-is-pressed > svg{
+    transform:none!important;transition:none!important
+  }
+}
+/* Respect Xiaoya's own "减少动效" toggle in addition to the OS setting. */
+body.reduce-motion .bottom-nav .tab > svg,
+body.reduce-motion .bottom-nav .tab > span,
+body.reduce-motion .v4-week-tools .calendar-arrow button > svg,
+body.reduce-motion .v4-week-rail .day-pill > small,
+body.reduce-motion .v4-week-rail .day-pill > strong,
+body.reduce-motion .v4-mood-option > span,
+body.reduce-motion .v4-item-segments button > .xy-elastic-face,
+body.reduce-motion .v4-develop-segments button > .xy-elastic-face,
+body.reduce-motion .topbar .glass-btn > svg,
+body.reduce-motion .v4-journal-save > svg{
+  transform:none!important;
+  transition:none!important;
+}
+body.reduce-motion .v4-item-segments>button::after,
+body.reduce-motion .v4-develop-segments>button::after,
+body.reduce-motion .v4-week-tools .calendar-arrow button::after,
+body.reduce-motion .v4-week-rail .day-pill::after,
+body.reduce-motion .v4-section-title button::after,
+body.reduce-motion .bottom-nav .tab::after,
+body.reduce-motion .topbar .glass-btn::after,
+body.reduce-motion .v4-journal-save::after{
+  transform:none!important;
+  transition:none!important;
+}

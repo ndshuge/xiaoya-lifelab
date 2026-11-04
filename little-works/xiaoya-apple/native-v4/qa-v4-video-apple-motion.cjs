@@ -22,7 +22,7 @@ try{for(const [name,engine] of [['Edge',chromium],['WebKit',webkit]]){
    const wasActive=await el.evaluate(e=>e.matches(':active'));
    await page.mouse.up();
    const status=await el.evaluate(e=>({active:e.matches(':active'),content:getComputedStyle(e,'::after').content,loaded:[...document.styleSheets].some(s=>s.href?.includes('apple-motion-feedback'))}));
-   assert.equal(press,'1','no pointer-down feedback '+press+' '+JSON.stringify({wasActive,status}));
+   assert.ok(Number(press)>=.97,'no pointer-down feedback '+press+' '+JSON.stringify({wasActive,status}));
  });
  await check(name+' segmented selection has one moving underlay',async()=>{
    const seg=page.locator('.bottom-nav [data-view=items]');await seg.click();

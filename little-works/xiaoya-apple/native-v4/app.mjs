@@ -3,6 +3,7 @@ import {dateKey,weekday,monday,plusDays,teachingWeek,occurrences,growth,checkSch
 import {createSpring} from '../glass/liquid-glass.js';
 import '../glass/components.js'; // Original liquidglass.dev optical controls, self-hosted (MIT).
 import './viewport-guard.mjs?v=4.5.3';
+import './press-feedback.mjs?v=4.6.3';
 import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
@@ -239,17 +240,15 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
  const current=$('#workspace');
  document.body.classList.add('xy-motion-active');
  const sign=direction==='backward'?-1:1;
- const incoming=current.animate([
-   {opacity:.48},
-   {opacity:1}
- ],{duration:240,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
+ // Keep the live workspace fully opaque: animating it from 48% made the
+ // iPhone Safari recording flash pale between fast tab switches.
  const outgoing=ghost.animate([
    {opacity:1,transform:'translate3d(0,0,0)'},
    {opacity:0,transform:'translate3d('+(-sign*20)+'px,0,0)'}
  ],{duration:180,easing:'cubic-bezier(.25,1,.5,1)',fill:'both'});
  const heading=current.querySelector('.page-heading h1');
- const headingMotion=heading?.animate([{opacity:.65,transform:'translate3d(0,7px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:250,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
- const currentMotion={ghost,animations:[incoming,outgoing,...(headingMotion?[headingMotion]:[])]};
+ const headingMotion=heading?.animate([{transform:'translate3d(0,5px,0)'},{transform:'translate3d(0,0,0)'}],{duration:320,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
+ const currentMotion={ghost,animations:[outgoing,...(headingMotion?[headingMotion]:[])]};
  routeMotion=currentMotion;
  // The ghost is needed only for the 180ms outgoing spatial exit, not for the full incoming transition.
  // Bounded cleanup even if a backgrounded browser throttles WAAPI finish events.
@@ -258,7 +257,7 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
    ghost.remove();
    if(routeMotion===currentMotion)currentMotion.ghost=null;
  });
- incoming.finished.catch(()=>{}).finally(()=>{
+ (headingMotion||outgoing).finished.catch(()=>{}).finally(()=>{
    if(routeMotion===currentMotion)stopRouteMotion();
  });
 }

@@ -47,7 +47,7 @@ export function renderItemsView(d,{selectedDate,weekStart,active='schedule',at=n
  }
  return '<div class="v4-items"><header class="page-heading v4-page-heading"><div><h1>事项</h1><p class="v4-subtitle">'+
   total+' 件待办</p></div></header>'+
-  '<div class="v4-item-segments" aria-label="事项视图"><button class="'+(active==='schedule'?'is-active':'')+'" data-items-tab="schedule" aria-pressed="'+(active==='schedule')+'">日程</button>'+
-  '<button class="'+(active==='inbox'?'is-active':'')+'" data-items-tab="inbox" aria-pressed="'+(active==='inbox')+'">待办 <span>'+total+'</span></button></div>'+
+  '<div class="v4-item-segments" aria-label="事项视图"><button class="'+(active==='schedule'?'is-active':'')+'" data-items-tab="schedule" aria-pressed="'+(active==='schedule')+'"><b class=\"xy-elastic-face\">日程</b></button>'+
+  '<button class="'+(active==='inbox'?'is-active':'')+'" data-items-tab="inbox" aria-pressed="'+(active==='inbox')+'"><b class=\"xy-elastic-face\">待办 <span>'+total+'</span></b></button></div>'+
   content+'</div>';
 }
