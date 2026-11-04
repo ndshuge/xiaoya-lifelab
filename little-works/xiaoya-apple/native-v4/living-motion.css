@@ -1,0 +1,69 @@
+/* VNext scope: day timeline and non-Dock quiet controls only.
+   Dock elements, Dock materials, and fixed navigation remain untouched. */
+.native-timeline-frame{position:relative;min-width:0}
+.native-timeline-frame .native-timeline-scroll{
+ padding-right:26px;scrollbar-width:none;-ms-overflow-style:none;
+}
+.native-timeline-frame .native-timeline-scroll::-webkit-scrollbar{display:none}
+.xy-timeline-scrub{
+ position:absolute;top:4px;bottom:4px;right:2px;width:23px;
+ border:1px solid rgba(79,119,93,.17);background:rgba(75,123,92,.095);
+ border-radius:18px;touch-action:none;cursor:grab;z-index:8;
+ user-select:none;-webkit-user-select:none;box-sizing:border-box;
+}
+.xy-timeline-scrub:focus-visible{outline:3px solid #579c77;outline-offset:2px}
+.xy-timeline-scrub.is-dragging{cursor:grabbing;background:rgba(75,123,92,.16)}
+.xy-timeline-scrub .xy-timeline-thumb{
+ position:absolute;left:3px;top:0;width:15px;min-height:36px;
+ box-sizing:border-box;border-radius:14px;background:#6eaf89;
+ border:1px solid rgba(34,83,54,.18);
+ box-shadow:0 1px 3px rgba(27,70,47,.16);
+ pointer-events:none;will-change:transform;
+}
+.xy-timeline-scrub .xy-timeline-thumb::after{
+ content:'';position:absolute;left:50%;top:50%;
+ transform:translate(-50%,-50%);height:25px;width:3px;border-radius:3px;
+ background:rgba(255,255,255,.88);
+}
+.xy-timeline-scrub.is-static{opacity:.45;cursor:default}
+@media(prefers-color-scheme:dark){
+ .xy-timeline-scrub{background:rgba(114,172,137,.17);border-color:rgba(155,207,175,.26)}
+ .xy-timeline-scrub .xy-timeline-thumb{background:#7fc19a;box-shadow:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .xy-timeline-scrub .xy-timeline-thumb{transition:none!important}
+}
+/* Context actions have explicit 44px+ targets. No backdrop changes to Dock. */
+.xy-context-actions{display:grid;gap:1px;margin:4px 0 0;border-radius:15px;overflow:hidden;background:var(--sep,rgba(60,60,67,.14))}
+.xy-context-action{display:flex;width:100%;min-height:52px;align-items:center;padding:12px 16px;border:0;border-radius:0;text-align:left;font:inherit;font-weight:560;color:var(--ink,#26392d);background:var(--card,#fff)}
+.xy-context-action.is-danger{color:#bb453d}
+.xy-context-action:focus-visible{outline:3px solid #6eaf89;outline-offset:-3px}
+.xy-context-action:active{filter:brightness(.95)}
+/* Quiet actions keep a tiny tactile displacement with paint feedback.
+   Remove rubber-band scaling that looked like an electrical jolt. */
+#workspace button[data-press-role="quiet"],
+.sheet button[data-press-role="quiet"],
+.assistant-panel button[data-press-role="quiet"]{
+ transform:translate3d(0,0,0)!important;
+ transition:transform 150ms ease-out,filter 160ms ease-out,
+  opacity 160ms ease-out,background-color 160ms ease-out,
+  box-shadow 160ms ease-out!important;
+}
+#workspace button[data-press-role="quiet"]:is(:active,.xy-is-pressed),
+.sheet button[data-press-role="quiet"]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role="quiet"]:is(:active,.xy-is-pressed){
+ transform:translate3d(0,.75px,0)!important;
+ filter:brightness(.97);
+ transition-duration:75ms!important;
+}
+@media(prefers-reduced-motion:reduce){
+ #workspace button[data-press-role="quiet"],
+ .sheet button[data-press-role="quiet"],
+ .assistant-panel button[data-press-role="quiet"]{transition:none!important;transform:none!important}
+ #workspace button[data-press-role="quiet"]:is(:active,.xy-is-pressed),
+ .sheet button[data-press-role="quiet"]:is(:active,.xy-is-pressed),
+ .assistant-panel button[data-press-role="quiet"]:is(:active,.xy-is-pressed){transform:none!important}
+}
+body.reduce-motion #workspace button[data-press-role="quiet"],
+body.reduce-motion .sheet button[data-press-role="quiet"],
+body.reduce-motion .assistant-panel button[data-press-role="quiet"]{transition:none!important;transform:none!important}

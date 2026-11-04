@@ -8,6 +8,8 @@ import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
+import {installTimelineScrubber} from './timeline-scrubber.mjs?v=5.0.0';
+import {installContextLongPress} from './context-longpress.mjs?v=5.0.0';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=4.9.0';
@@ -151,6 +153,8 @@ function render(){
    const scroller=$('.native-timeline-scroll'),earliest=scroller?.querySelector('.native-event');
    if(earliest){const top=Number.parseFloat(earliest.style.getPropertyValue('--top'));if(Number.isFinite(top))scroller.scrollTop=Math.max(0,Math.round(top*14.4)-60)}
  }
+ installTimelineScrubber($('#workspace'));
+ installContextLongPress($('#workspace'),{onOpen:openContextActions});
  if(view==='schedule'){const scroller=$('.hourly-scroll');if(scroller){const entries=visibleOn(d);const starts=entries.map(e=>Number((e.start||'08').slice(0,2))).filter(Number.isFinite);const hour=Math.max(0,Math.min(7,...starts.map(h=>Math.max(0,h-1))));scroller.scrollTop=hour*60}}
  const pending=d.tasks.filter(t=>!t.done).length;
  // V4 has a single avatar trigger; no duplicate pet panel.
@@ -236,6 +240,21 @@ function openSheet(title,html,context,{saveLabel='保存',hideSave=false}={}){
  const sheet=$('#editor');sheet.showModal();document.body.style.overflow='hidden';setTimeout(()=>sheet.querySelector('[data-quick-create],input:not([type=hidden]),textarea,select')?.focus(),80);
 }
 function closeSheet(){const sheet=$('#editor');if(sheet.open)sheet.close();document.body.style.overflow='';modal=null;preview=null}
+function openContextActions({kind,id,date}){
+ const valid=['task','course','event','journal'].includes(kind);
+ if(!valid)return;
+ const entry=kind==='journal'?journal.all().find(e=>e.date===date):state()[{task:'tasks',course:'courses',event:'events'}[kind]]?.find(e=>e.id===id);
+ if(!entry)return;
+ const title=kind==='journal'?'这一天的记录':entry.title||entry.name;
+ const options=kind==='journal'?
+   [['open-journal','查看记录'],['remove-journal','删除记录']]:
+   [['edit','编辑'],...(kind==='task'?[['toggle',entry.done?'恢复待办':'标记完成']]:[]),['delete','删除记录']];
+ const html='<div class="xy-context-actions">'+options.map(([action,label])=>
+   '<button type="button" class="xy-context-action'+(action==='delete'||action==='remove-journal'?' is-danger':'')+'" data-context-action="'+action+'">'+esc(label)+'</button>'
+ ).join('')+'</div>';
+ openSheet(title,html,{type:'context-actions',kind,id,date},{hideSave:true});
+ requestAnimationFrame(()=>$('#editor [data-context-action]')?.focus({preventScroll:true}));
+}
 function openQuickCreate(){
  const types=[['task','待办或截止提醒','记下要完成的事情和截止时间','list'],['event','单次活动','为选中的日期安排具体时段','clock'],['course','每周课程','创建按星期重复的课程安排','calendar']];
  const html='<p class="sheet-note">先选择记录类型，下一步再填写必要信息。截止提醒不会自动占用日程时段。</p><div class="xy-create-choices">'+types.map(([kind,title,desc,iconName])=>'<button type="button" class="xy-create-option" data-quick-create="'+kind+'">'+icon(iconName)+'<span><strong>'+title+'</strong><small>'+desc+'</small></span>'+icon('right')+'</button>').join('')+'</div>';
@@ -349,6 +368,21 @@ function runAction(action,source){
 }
 document.addEventListener('click',e=>{
  const t=e.target.closest('button');if(!t)return;
+ if(t.dataset.contextAction){
+  const action=t.dataset.contextAction,context=modal;
+  if(!context||context.type!=='context-actions')return;
+  closeSheet();
+  if(action==='edit')editForm(context.kind,context.id);
+  else if(action==='toggle')complete('task',context.id);
+  else if(action==='delete')confirmDelete(context.kind,context.id);
+  else if(action==='open-journal'){
+   journalDate=context.date;moodDraft=null;render();$('#development-mood')?.scrollIntoView({block:'start'});
+  }else if(action==='remove-journal'&&confirm('删除这一天的心情与日记记录？')){
+   try{journal.remove(context.date);journalDrafts.delete(store.mode()+':'+context.date);
+    moodDraft=null;render();notify('记录已删除')}catch(error){notify(error.message)}
+  }
+  return;
+ }
  if(growthPanel.handle(t))return;
  if(t.dataset.quickCreate){const kind=t.dataset.quickCreate;closeSheet();editForm(kind,'',{date:selectedDate,...(kind==='task'?{due:selectedDate+'T23:59'}:{})});return;}
  if(t.dataset.itemsTab){
