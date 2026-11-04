@@ -35,30 +35,6 @@ document.addEventListener('keyup',e=>{
   e.target.closest?.('button')?.classList.remove('xy-is-pressed');
 },{capture:true});
 
-// Clicking a calendar date or a segmented control can replace the original
-// button immediately. Rebind the spring to its newly rendered counterpart,
-// otherwise a quick tap removes the visual feedback before it has time to settle.
-document.addEventListener('click',e=>{
-  const button=e.target.closest?.('button');
-  if(!button)return;
-  let selector='';
-  if(button.dataset.itemsTab)selector='[data-items-tab="'+CSS.escape(button.dataset.itemsTab)+'"]';
-  else if(button.dataset.day)selector='[data-day="'+CSS.escape(button.dataset.day)+'"]';
-  else if(['prev-week','next-week','now-week'].includes(button.dataset.action)){
-    selector='[data-action="'+CSS.escape(button.dataset.action)+'"]';
-  }
-  if(!selector||matchMedia('(prefers-reduced-motion:reduce)').matches||document.body.classList.contains('reduce-motion'))return;
-  requestAnimationFrame(()=>{
-    const successor=document.querySelector('#workspace button'+selector);
-    if(!successor||successor===button)return;
-    const face=successor.querySelector('.xy-elastic-face,svg,strong,span');
-    if(!face||typeof face.animate!=='function')return;
-    face.animate([
-      {transform:'scale(.9)',offset:0},
-      {transform:'scale(1.045)',offset:.42},
-      {transform:'scale(.986)',offset:.67},
-      {transform:'scale(1.004)',offset:.84},
-      {transform:'scale(1)',offset:1}
-    ],{duration:520,easing:'cubic-bezier(.32,.72,0,1)'});
-  });
-},{capture:true});
+// Lateral navigation and grouped choices intentionally do not inherit
+// a 520ms Duolingo-style bounce after their DOM is re-rendered. Their shared
+// selection indicator supplies the feedback; solo actions retain pressed class.

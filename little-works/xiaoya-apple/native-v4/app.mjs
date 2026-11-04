@@ -3,7 +3,7 @@ import {dateKey,weekday,monday,plusDays,teachingWeek,occurrences,growth,checkSch
 import {createSpring} from '../glass/liquid-glass.js';
 import '../glass/components.js'; // Original liquidglass.dev optical controls, self-hosted (MIT).
 import './viewport-guard.mjs?v=4.5.3';
-import './press-feedback.mjs?v=4.6.5';
+import './press-feedback.mjs?v=4.7.1';
 import {createStore} from './store.mjs?v=3.1.1';
 import {createAssistant} from './assistant.mjs?v=20261102';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';

@@ -31,16 +31,22 @@ const server=http.createServer((req,res)=>{
   });
   await check('mobile dock uses a translucent lens without opaque white veil',async()=>{
    const info=await page.evaluate(()=>{
-    const back=getComputedStyle(document.querySelector('.app-frame'),'::after');
+    const underlay=document.querySelector('.xy-progressive-underlay');
+    const layers=[...underlay.querySelectorAll('.xy-blur-layer')];
     const nav=getComputedStyle(document.querySelector('.bottom-nav'));
-    return {veil:back.backgroundImage,veilMask:back.webkitMaskImage||back.maskImage,veilBlur:back.webkitBackdropFilter||back.backdropFilter,
-     navColor:nav.backgroundColor,navBlur:nav.webkitBackdropFilter||nav.backdropFilter,pointerEvents:back.pointerEvents};
+    return {overlay:getComputedStyle(document.querySelector('.app-frame'),'::after').content,
+     legacy:getComputedStyle(document.querySelector('.bottom-nav'),'::after').content,
+     layers:layers.map(el=>({blur:getComputedStyle(el).backdropFilter,mask:getComputedStyle(el).maskImage})),
+     navColor:nav.backgroundColor,navBlur:nav.webkitBackdropFilter||nav.backdropFilter,
+     pointerEvents:getComputedStyle(underlay).pointerEvents};
    });
-   assert.match(info.veilMask,/gradient/);assert.match(info.veilBlur,/blur/);
+   assert.equal(info.overlay,'none','old app-frame blur must be disabled');
+   assert.equal(info.legacy,'none','old dock-edge blur must be disabled');
+   assert.equal(info.layers.length,4);
+   for(const layer of info.layers){assert.match(layer.mask,/gradient/);assert.match(layer.blur,/blur/)}
    assert.match(info.navBlur,/blur/);assert.equal(info.pointerEvents,'none');
    const rgba=info.navColor.match(/rgba?\([^,]+,[^,]+,[^,]+,\s*([0-9.]+)\)/);
    assert.ok(rgba&&Number(rgba[1])<0.52,'nav opaque alpha '+info.navColor);
-   assert.ok(!info.veil.includes('0.96')&&!info.veil.includes('0.75'),'heavy white veil '+info.veil);
   });
   await check('main tab changes synchronously without cloned ghost layers',async()=>{
    const origin=await page.locator('#bottom-nav').evaluate(e=>{window.__NAV_NODE=e;return e.id});

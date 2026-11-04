@@ -1,0 +1,140 @@
+/* Xiaoya V4: ONE continuous blur compositor from content into the device-safe bottom.
+ * Old .app-frame::after and .bottom-nav::after were two separate blur boundaries.
+ * Four masked layers progressively raise effective blur; no hard hand-off under dock. */
+@media(max-width:700px){
+  .app-frame::after,.bottom-nav::after{content:none!important;display:none!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
+  .xy-progressive-underlay{
+    position:fixed;left:0;right:0;bottom:0;
+    height:calc(196px + env(safe-area-inset-bottom,0px));
+    z-index:30;pointer-events:none;overflow:hidden;
+    /* Avoid creating an isolated backdrop root: WebKit must sample page content. */
+  }
+  .xy-progressive-underlay .xy-blur-layer,
+  .xy-progressive-underlay .xy-blur-scrim{position:absolute;inset:0;pointer-events:none}
+  .xy-progressive-underlay .xy-blur-layer{
+    background:transparent;
+    -webkit-backdrop-filter:blur(var(--xy-blur)) saturate(1.06);
+    backdrop-filter:blur(var(--xy-blur)) saturate(1.06);
+    mask-image:var(--xy-mask);-webkit-mask-image:var(--xy-mask);
+  }
+  .xy-blur-layer:nth-child(1){--xy-blur:3px;--xy-mask:linear-gradient(to bottom,transparent 1%,#000 28%,#000 39%,transparent 59%)}
+  .xy-blur-layer:nth-child(2){--xy-blur:7px;--xy-mask:linear-gradient(to bottom,transparent 34%,#000 53%,#000 64%,transparent 79%)}
+  .xy-blur-layer:nth-child(3){--xy-blur:13px;--xy-mask:linear-gradient(to bottom,transparent 57%,#000 74%,#000 85%,transparent 98%)}
+  .xy-blur-layer:nth-child(4){--xy-blur:22px;--xy-mask:linear-gradient(to bottom,transparent 76%,#000 97%,#000 100%)}
+  .xy-progressive-underlay .xy-blur-scrim{
+    background:linear-gradient(to bottom,transparent 0%,rgba(245,245,247,.012) 23%,rgba(245,245,247,.04) 47%,rgba(245,245,247,.10) 71%,rgba(245,245,247,.22) 100%);
+  }
+  body[data-view="settings"] .xy-progressive-underlay,
+  body[data-view="search"] .xy-progressive-underlay,
+  body.xy-keyboard-occluded .xy-progressive-underlay{display:none!important}
+}
+@media(max-width:700px) and (prefers-color-scheme:dark){
+  .xy-progressive-underlay .xy-blur-scrim{background:linear-gradient(to bottom,transparent 0%,rgba(17,23,19,.012) 23%,rgba(17,23,19,.06) 47%,rgba(17,23,19,.15) 71%,rgba(17,23,19,.32) 100%)}
+}
+@media(max-width:700px) and (prefers-reduced-transparency:reduce),
+       (max-width:700px) and (prefers-contrast:more){
+  .xy-progressive-underlay .xy-blur-layer{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  .xy-progressive-underlay .xy-blur-scrim{background:linear-gradient(to bottom,transparent 0%,var(--ground,#f5f5f7) 100%)}
+}
+@media(min-width:701px){.xy-progressive-underlay{display:none!important}}
+/* Solo-action affordance only: slide/segmented selectors and global Dock are NOT 3D keys.
+ * Shadow is the stationary lower ledge; content settles quickly (no 520ms
+ * global spring fighting the pressed face). */
+#workspace .v4-mood-option,
+#workspace .v4-mood-option.is-active,
+#workspace .v4-mood-option:is(:active,.xy-is-pressed),
+#workspace .v4-week-tools .calendar-arrow button,
+#workspace .v4-week-tools .calendar-arrow button:is(:active,.xy-is-pressed),
+#workspace .v4-week-rail .day-pill,
+#workspace .v4-week-rail .day-pill:is(:active,.xy-is-pressed){
+  box-shadow:none!important;
+}
+#workspace .v4-mood-option > .v4-mood-face,
+#workspace .v4-mood-option > span:last-child,
+#workspace .v4-week-tools .calendar-arrow button > svg,
+#workspace .v4-week-rail .day-pill > strong,
+#workspace .v4-week-rail .day-pill > small{
+  transform:none!important;transition:opacity 125ms ease!important;
+}
+#workspace .v4-mood-option:is(:active,.xy-is-pressed),
+#workspace .v4-week-rail .day-pill:is(:active,.xy-is-pressed){
+  filter:brightness(.96);
+}
+#workspace .v4-mood-option.is-active{
+  background:var(--mint,#d9ece0)!important;
+  border-color:var(--accent,#70ad8b)!important;
+}
+/* A short 55ms downstroke and 225ms release, with precise matched
+ * 3.5px depression and shadow travel. No overshoot on ordinary buttons. */
+:root{--xy-solo-press-in:cubic-bezier(.2,.8,.2,1);--xy-solo-release:cubic-bezier(.2,1,.35,1)}
+#workspace .v4-journal-save,
+#workspace .v4-goal-checkin,
+#workspace .dayflow-focus-bottom button,
+.sheet .sheet-save,
+.assistant-shortcuts button,
+.assistant-config-actions button{
+  --xy-solo-depth:3.5px;
+  box-shadow:0 var(--xy-solo-depth) 0 var(--xy-key-edge-current,var(--xy-key-edge-green));
+  transition:box-shadow 225ms var(--xy-solo-release),background-color 170ms ease!important;
+}
+#workspace .v4-journal-save:is(:active,.xy-is-pressed),
+#workspace .v4-goal-checkin:is(:active,.xy-is-pressed),
+#workspace .dayflow-focus-bottom button:is(:active,.xy-is-pressed),
+.sheet .sheet-save:is(:active,.xy-is-pressed),
+.assistant-shortcuts button:is(:active,.xy-is-pressed),
+.assistant-config-actions button:is(:active,.xy-is-pressed){
+  box-shadow:0 0 0 var(--xy-key-edge-current,var(--xy-key-edge-green));
+  transition-duration:55ms,170ms!important;
+  transition-timing-function:var(--xy-solo-press-in),ease!important;
+}
+#workspace .v4-journal-save > *,
+#workspace .v4-goal-checkin > *,
+#workspace .dayflow-focus-bottom button > *,
+.sheet .sheet-save > *,
+.assistant-shortcuts button > *,
+.assistant-config-actions button > *{
+  transition:transform 225ms var(--xy-solo-release)!important;
+}
+#workspace .v4-journal-save:is(:active,.xy-is-pressed) > *,
+#workspace .v4-goal-checkin:is(:active,.xy-is-pressed) > *,
+#workspace .dayflow-focus-bottom button:is(:active,.xy-is-pressed) > *,
+.sheet .sheet-save:is(:active,.xy-is-pressed) > *,
+.assistant-shortcuts button:is(:active,.xy-is-pressed) > *,
+.assistant-config-actions button:is(:active,.xy-is-pressed) > *{
+  transform:translateY(2px) scale(1)!important;
+  transition-duration:55ms!important;
+}
+@media(prefers-reduced-motion:reduce){
+  #workspace .v4-journal-save,#workspace .v4-goal-checkin,
+  #workspace .dayflow-focus-bottom button,.sheet .sheet-save,
+  .assistant-shortcuts button,.assistant-config-actions button,
+  #workspace .v4-journal-save > *,#workspace .v4-goal-checkin > *{
+    transition:none!important
+  }
+}
+body.reduce-motion #workspace .v4-journal-save,
+body.reduce-motion #workspace .v4-goal-checkin,
+body.reduce-motion .sheet .sheet-save{transition:none!important}
+
+/* Tabs, date navigation and segmented selectors move laterally; they are
+   not physical push-buttons. Preserve brief tap acknowledgment only. */
+.bottom-nav .tab > svg,.bottom-nav .tab > span,
+#workspace .v4-item-segments .xy-elastic-face,
+#workspace .v4-develop-segments .xy-elastic-face{
+  transform:scale(1);
+  transition:transform 180ms cubic-bezier(.25,1,.5,1)!important;
+}
+.bottom-nav .tab:is(:active,.xy-is-pressed) > svg,
+.bottom-nav .tab:is(:active,.xy-is-pressed) > span,
+#workspace .v4-item-segments button:is(:active,.xy-is-pressed) > .xy-elastic-face,
+#workspace .v4-develop-segments button:is(:active,.xy-is-pressed) > .xy-elastic-face{
+  transform:scale(.975)!important;
+  transition-duration:65ms!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .bottom-nav .tab > svg,.bottom-nav .tab > span,
+ #workspace .v4-item-segments .xy-elastic-face,
+ #workspace .v4-develop-segments .xy-elastic-face{transition:none!important;transform:none!important}
+}
+body.reduce-motion .bottom-nav .tab > svg,
+body.reduce-motion .bottom-nav .tab > span{transition:none!important;transform:none!important}

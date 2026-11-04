@@ -21,31 +21,18 @@ for(const [label,engine] of [['Edge',chromium],['WebKit',webkit]]){
   assert.ok(Math.abs((await page.locator('#workspace').evaluate(e=>e.getBoundingClientRect().x))-old)<1);
   await page.waitForTimeout(350);
  });
- await check(label+' persistent dock press, held elastic scale and return overshoot',async()=>{
-  const el=page.locator('.bottom-nav [data-view=develop]'),icon=el.locator('svg');const box=await el.boundingBox();
-  const before=await el.boundingBox();await el.hover();await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(170);
-  const hold=scaleOf(await icon.evaluate(e=>getComputedStyle(e).transform));
-  assert.equal(await el.evaluate(e=>e.classList.contains('xy-is-pressed')),true,'pointerdown must retain held state even in WebKit');
-  const holdState=await el.evaluate(e=>({active:e.matches(':active'),hit:document.elementFromPoint(e.getBoundingClientRect().x+e.offsetWidth/2,e.getBoundingClientRect().y+e.offsetHeight/2)?.closest('button')?.getAttribute('data-view')}));
-  assert.ok(hold<=.965&&hold>.84,'Duolingo physical press scale '+hold+' '+JSON.stringify(holdState));
-  await page.mouse.up();
-  assert.equal(await el.evaluate(e=>e.classList.contains('xy-is-pressed')),false,'pointer release must settle');
-  // A 520ms CSS spring can be skipped by a throttled headless compositor;
-  // assert the configured overshooting curve and real transition, not a
-  // single impossible-to-guarantee peak sample at one raf timestamp.
-  const spring=await icon.evaluate(e=>{
-    const css=getComputedStyle(e);
-    return {duration:css.transitionDuration,curve:css.transitionTimingFunction,
-      transforms:e.getAnimations().flatMap(a=>a.effect?.getKeyframes?.()||[])
-        .map(f=>f.transform).filter(Boolean)};
-  });
-  assert.ok(spring.duration.includes('0.52s'),'release transition must settle 520ms: '+JSON.stringify(spring));
-  assert.ok(spring.curve.includes('1.52'),'release must use overshoot spring: '+JSON.stringify(spring));
-  const during=await el.boundingBox();
-  assert.ok(Math.abs(before.x-during.x)<.5&&Math.abs(before.width-during.width)<.5,'hitbox moved');
-  await page.waitForTimeout(370);
-  const end=scaleOf(await icon.evaluate(e=>getComputedStyle(e).transform));
-  assert.ok(Math.abs(end-1)<.007,'settle '+end);
+ await check(label+' dock navigation gives brief feedback but no long overshoot',async()=>{
+   const el=page.locator('.bottom-nav [data-view=develop]'),icon=el.locator('svg');
+   const box=await el.boundingBox();await el.hover();
+   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(90);
+   assert.equal(await el.evaluate(e=>e.classList.contains('xy-is-pressed')),true);
+   const hold=scaleOf(await icon.evaluate(e=>getComputedStyle(e).transform));
+   assert.ok(hold>=.96&&hold<1,'subtle grouped/navigation tap scale '+hold);
+   await page.mouse.up();await page.waitForTimeout(270);
+   const end=scaleOf(await icon.evaluate(e=>getComputedStyle(e).transform));
+   assert.ok(Math.abs(end-1)<.007,'lateral nav should settle without bounce '+end);
+   const actual=await el.boundingBox();
+   assert.ok(Math.abs(actual.x-box.x)<.5&&Math.abs(actual.width-box.width)<.5,'hitbox changed');
  });
  await check(label+' pressing date control keeps 44px hitbox and elastic visible content',async()=>{
   await page.locator('.bottom-nav [data-view=items]').click();
@@ -54,28 +41,23 @@ for(const [label,engine] of [['Edge',chromium],['WebKit',webkit]]){
   await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();await page.waitForTimeout(150);
   const icon=el.locator('svg');
   const s=scaleOf(await icon.evaluate(e=>getComputedStyle(e).transform));
-  assert.ok(s<.96,'date hold scale '+s);
+  assert.ok(s>=.98,'calendar navigation must not get a 3D squash '+s);
   await page.mouse.up();
   const newBox=await el.boundingBox();
   assert.ok(Math.abs(box.width-newBox.width)<.6,'button changed hit width');
  });
- await check(label+' re-rendered segmented button inherits release spring',async()=>{
-  await page.locator('#workspace [data-items-tab=inbox]').evaluate(e=>e.click());
-  await page.waitForTimeout(50);
-  await page.waitForFunction(()=>[...document.querySelector('#workspace [data-items-tab=inbox] .xy-elastic-face')?.getAnimations()||[]].some(a=>a.effect?.getTiming()?.duration>=420),null,{timeout:950});
-  const count=await page.locator('#workspace [data-items-tab=inbox] .xy-elastic-face').evaluate(e=>e.getAnimations().filter(a=>a.effect?.getTiming()?.duration>=420).length);
-  assert.ok(count>=1,'new segmented button lost spring after DOM replacement');
-});
-await check(label+' re-rendered date retains press release animation',async()=>{
-  await page.locator('#workspace [data-items-tab=schedule]').click();
-  const button=page.locator('.v4-week-rail .day-pill').first();
-  const day=await button.getAttribute('data-day');
-  await button.evaluate(e=>e.click());
-  await page.waitForTimeout(50);
-  await page.waitForFunction(d=>[...document.querySelector('.v4-week-rail .day-pill[data-day="'+d+'"] strong')?.getAnimations()||[]].some(a=>a.effect?.getTiming()?.duration>=420),day,{timeout:950});
-  const count=await page.locator('.v4-week-rail .day-pill[data-day="'+day+'"] strong').evaluate(e=>e.getAnimations().filter(a=>a.effect?.getTiming()?.duration>=420).length);
-  assert.ok(count>=1,'date button lost spring after rerender');
-});
+ await check(label+' re-rendered grouped selectors have no 520ms solo spring',async()=>{
+   await page.locator('#workspace [data-items-tab=inbox]').click();
+   const segment=page.locator('#workspace [data-items-tab=inbox] .xy-elastic-face');
+   assert.equal(await segment.count(),1);
+   const durations=await segment.evaluate(e=>e.getAnimations().map(a=>a.effect?.getTiming()?.duration));
+   assert.ok(durations.every(d=>d<400),'grouped tab inherited long bounce: '+durations);
+   await page.locator('#workspace [data-items-tab=schedule]').click();
+   const button=page.locator('.v4-week-rail .day-pill').first();
+   await button.click();
+   const dayDuration=await page.locator('.v4-week-rail .day-pill').first().evaluate(e=>e.getAnimations({subtree:true}).map(a=>a.effect?.getTiming()?.duration));
+   assert.ok(dayDuration.every(d=>d<400),'calendar date inherited long bounce: '+dayDuration);
+ });
 await check(label+' in-app Reduced Motion switch also disables spring',async()=>{
   await page.evaluate(()=>document.body.classList.add('reduce-motion'));
   const el=page.locator('.bottom-nav [data-view=develop] svg');

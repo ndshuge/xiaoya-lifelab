@@ -21,33 +21,32 @@ await check(name+' no old-screen clone at any navigation frame',async()=>{
  }
  await p.waitForTimeout(230);assert.equal(await p.locator('.xy-route-ghost').count(),0);
 });
-await check(name+' mood button is raised, goes down and returns',async()=>{
+await check(name+' mood selection press stays flat while keeping hit feedback',async()=>{
  await p.locator('#bottom-nav [data-view=develop]').click();
  await p.locator('#bottom-nav [data-view=develop]').click();
  const mood=p.locator('.v4-mood-option').nth(3);
  const rest=await mood.evaluate(e=>({shadow:getComputedStyle(e).boxShadow,pad:e.getBoundingClientRect().height}));
- assert.match(rest.shadow,/2px|3px|4px/,'mood has no tactile depth '+rest.shadow);
+ assert.equal(rest.shadow,'none','group option must stay flat');
  const box=await mood.boundingBox();
  await mood.hover();await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.waitForTimeout(75);
  const held=await mood.evaluate(e=>({pressed:e.classList.contains('xy-is-pressed'),shadow:getComputedStyle(e).boxShadow}));
- assert.equal(held.pressed,true);assert.notEqual(held.shadow,rest.shadow,'depth stays raised on press');
+ assert.equal(held.pressed,true);assert.equal(held.shadow,rest.shadow,'group selection must not act like a solo key');
  await p.mouse.up();await p.waitForTimeout(90);
  assert.equal(await p.locator('.v4-mood-option').nth(3).getAttribute('aria-pressed'),'true');
- const active=await p.locator('.v4-mood-option').nth(3).evaluate(e=>e.getAnimations({subtree:true}).filter(a=>a.effect?.getTiming().duration>=230).length);
- assert.ok(active>0,'mood feedback lost on re-render');
+ assert.equal(await p.locator('.v4-mood-option').nth(3).getAttribute('aria-pressed'),'true');
 });
-await check(name+' mood selection is the one emphasized 3D key',async()=>{
+await check(name+' mood selection highlights without tactile 3D depth',async()=>{
  const chosen=p.locator('.v4-mood-option.is-active');
  const other=p.locator('.v4-mood-option:not(.is-active)').first();
  assert.equal(await chosen.count(),1);
  const chosenLip=await chosen.evaluate(e=>getComputedStyle(e).boxShadow);
  const otherLip=await other.evaluate(e=>getComputedStyle(e).boxShadow);
- assert.match(chosenLip,/4px/,chosenLip);
- assert.ok(otherLip==='none'||/2px/.test(otherLip),'all mood keys look equally heavy: '+otherLip);
+ assert.equal(chosenLip,'none');
+ assert.equal(otherLip,'none');
 });
 await check(name+' primary journal action has tangible shadow and held press',async()=>{
  const c=p.locator('#journal-save');await c.scrollIntoViewIfNeeded();
- const initial=await c.evaluate(e=>getComputedStyle(e).boxShadow);assert.match(initial,/3px|4px/,'no depth '+initial);
+ const initial=await c.evaluate(e=>getComputedStyle(e).boxShadow);assert.match(initial,/3.5px|4px/,'no depth '+initial);
  await c.hover();const bb=await c.boundingBox();await p.mouse.move(bb.x+bb.width/2,bb.y+bb.height/2);
  await p.mouse.down();await p.waitForTimeout(100);
  assert.notEqual(await c.evaluate(e=>getComputedStyle(e).boxShadow),initial,'journal action shadow unchanged');
