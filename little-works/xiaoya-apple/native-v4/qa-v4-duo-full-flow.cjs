@@ -48,6 +48,7 @@ await check(engine+' inbox creates task with a single top action, no duplicated 
  assert.equal(await p.locator('#sheet-title').innerText(),'新增提醒');
  await p.locator('#sheet-body input[name=title]').fill('整理第一章笔记');
  await p.locator('#sheet-save').click();
+ await p.waitForFunction(()=>!document.querySelector('#editor')?.open);
  assert.equal(await p.locator('#editor').evaluate(e=>e.open),false);
  assert.ok(await p.getByText('整理第一章笔记').count()>0);
 });

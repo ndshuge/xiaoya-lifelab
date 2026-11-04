@@ -5,17 +5,18 @@ import '../glass/components.js'; // Original liquidglass.dev optical controls, s
 import './viewport-guard.mjs?v=4.5.3';
 import './press-system.mjs?v=4.8.0';
 import {createStore} from './store.mjs?v=3.1.1';
-import {createAssistant} from './assistant.mjs?v=20261102';
+import {createAssistant} from './assistant.mjs?v=5.3.0';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
 import {installTimelineScrubber} from './timeline-scrubber.mjs?v=5.0.0';
 import {installContextLongPress} from './context-longpress.mjs?v=5.0.0';
-import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.1.0';
+import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.3.0';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=5.1.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
 import {createAgentBridge} from './agent-bridge.mjs?v=5.2.0';
+import {installSpatialSwipe} from './spatial-swipe.mjs?v=5.3.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const icon=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
@@ -215,6 +216,17 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
   const reduced=matchMedia('(prefers-reduced-motion:reduce)').matches||
     !!state().settings.reducedMotion;
   if(!animate||reduced)return;
+  // Academy-style push / push-back, but rendered within the one real page.
+  // The clip reveals content without moving live button hitboxes or cloning routes.
+  const page=document.querySelector('#workspace .page');
+  if(page?.animate){
+    page.getAnimations().forEach(a=>{if(a.id==='xy-page-motion')a.cancel()});
+    const edge=direction==='backward'?'inset(0 7% 0 0 round 18px)':'inset(0 0 0 7% round 18px)';
+    const animation=page.animate([{clipPath:edge,opacity:.65},{clipPath:'inset(0 0 0 0 round 0px)',opacity:1}],{
+      duration:380,easing:'cubic-bezier(.2,.81,.25,1)'
+    });
+    animation.id='xy-page-motion';
+  }
   const title=document.querySelector('#workspace .page-heading h1');
   title?.animate?.(
     [{transform:'translate3d(0,4px,0)'},{transform:'translate3d(0,0,0)'}],
@@ -246,7 +258,7 @@ function openSheet(title,html,context,{saveLabel='保存',hideSave=false,source=
  modal=context;$('#sheet-title').textContent=title;$('#sheet-fields').innerHTML='<div class="sheet-panel">'+html+'</div>';$('#sheet-save').textContent=saveLabel;$('#sheet-save').hidden=hideSave;
  const sheet=$('#editor');sheetMotion.open(sheet,source);modal=context;document.body.style.overflow='hidden';setTimeout(()=>{if(sheet.open)sheet.querySelector('[data-quick-create],input:not([type=hidden]),textarea,select')?.focus()},100);
 }
-function closeSheet(){const sheet=$('#editor');sheetMotion.close(sheet);modal=null;preview=null}
+function closeSheet({instant=false}={}){const sheet=$('#editor');sheetMotion.close(sheet,{instant});modal=null;preview=null}
 function openContextActions({kind,id,date,source}){
  const valid=['task','course','event','journal'].includes(kind);
  if(!valid)return;
@@ -336,7 +348,7 @@ function saveEdit(){
  const ok=save(d=>{if(id)d[key]=d[key].map(x=>x.id===id?next:x);else d[key].push(next);
    d.history.unshift({id:uid(),at:new Date().toISOString(),action:id?'edited':'added',description:(id?'更新':'新增')+'：'+(next.title||next.name)});
  });
- if(ok)closeSheet();
+ if(ok)closeSheet({instant:true});
 }
 function complete(kind,id){
  const key=kind==='task'?'tasks':'goals',existing=state()[key].find(v=>v.id===id),wasDone=!!existing?.done;save(d=>{const x=d[key].find(v=>v.id===id);if(!x)return;x.done=!x.done;x.completedAt=x.done?new Date().toISOString():null;d.history.unshift({id:uid(),at:new Date().toISOString(),action:'completed',description:(x.done?'完成：':'恢复：')+x.title})},wasDone?'已恢复到待办':'已完成 · 继续下一项',wasDone?'standard':'complete');
@@ -349,12 +361,12 @@ function openCheckin(goalId,source=null){
 function saveCheckin(){
  const f=Object.fromEntries(new FormData($('#sheet-body'))),t=new Date(f.at),minutes=Number(f.minutes);
  if(!Number.isFinite(+t)||t>now()||!Number.isInteger(minutes)||minutes<0||minutes>1440||!f.note?.trim())return notify('请填写有效的时间、分钟和行动内容');
- const ok=save(d=>{d.checkins.push({id:uid(),goalId:modal.goalId,at:t.toISOString(),minutes,note:f.note.trim().slice(0,500)});d.history.unshift({id:uid(),at:now().toISOString(),action:'checkin',description:'记录行动：'+f.note.trim().slice(0,90)})},'已记录真实行动','checkin');if(ok)closeSheet();
+ const ok=save(d=>{d.checkins.push({id:uid(),goalId:modal.goalId,at:t.toISOString(),minutes,note:f.note.trim().slice(0,500)});d.history.unshift({id:uid(),at:now().toISOString(),action:'checkin',description:'记录行动：'+f.note.trim().slice(0,90)})},'已记录真实行动','checkin');if(ok)closeSheet({instant:true});
 }
 function confirmDelete(kind,id){
  const key={task:'tasks',goal:'goals',course:'courses',event:'events'}[kind],x=state()[key]?.find(v=>v.id===id);if(!x)return;
  if(!confirm('确定删除「'+(x.title||x.name)+'」？可在复盘中撤销最近操作。'))return;
- const ok=save(d=>{d[key]=d[key].filter(v=>v.id!==id);if(kind==='goal')d.checkins=d.checkins.filter(c=>c.goalId!==id);d.history.unshift({id:uid(),at:now().toISOString(),action:'deleted',description:'删除：'+(x.title||x.name)})});if(ok)closeSheet();
+ const ok=save(d=>{d[key]=d[key].filter(v=>v.id!==id);if(kind==='goal')d.checkins=d.checkins.filter(c=>c.goalId!==id);d.history.unshift({id:uid(),at:now().toISOString(),action:'deleted',description:'删除：'+(x.title||x.name)})});if(ok)closeSheet({instant:true});
 }
 function openSuggestion(id){
  const s=suggestions(state()).find(x=>x.id===id);if(!s?.action)return notify('建议已过期，请重新分析');
@@ -366,7 +378,7 @@ function submitSheet(e){
  if(modal.type==='edit')saveEdit();
  else if(modal.type==='checkin')saveCheckin();
  else if(modal.type==='approval'){
-   try{const result=executePlan(state(),modal.suggestion);store.replace(result.next);closeSheet();render();notify('已批准并保存日程')}catch(e){notify('安排未执行：'+e.message)}
+   try{const result=executePlan(state(),modal.suggestion);store.replace(result.next);closeSheet({instant:true});render();notify('已批准并保存日程')}catch(e){notify('安排未执行：'+e.message)}
  }else if(modal.type==='growth')growthPanel.approve(modal);
  else if(modal.type==='pet')closeSheet();
 }
@@ -413,7 +425,7 @@ document.addEventListener('click',e=>{
   return;
  }
  if(growthPanel.handle(t))return;
- if(t.dataset.quickCreate){const kind=t.dataset.quickCreate;closeSheet();editForm(kind,'',{date:selectedDate,...(kind==='task'?{due:selectedDate+'T23:59'}:{})});return;}
+ if(t.dataset.quickCreate){const kind=t.dataset.quickCreate;closeSheet({instant:true});editForm(kind,'',{date:selectedDate,...(kind==='task'?{due:selectedDate+'T23:59'}:{})});return;}
  if(t.dataset.itemsTab){
    const target=t.dataset.itemsTab;if(target===itemsTab)return;
    const dir=target==='inbox'?'forward':'backward';
@@ -519,6 +531,12 @@ $('#calendar-file').addEventListener('change',async e=>{
 window.addEventListener('storage',e=>{if(e.key===store.key()){try{store.refresh();render();notify('已读取另一标签页更新的记录')}catch(err){notify(err.message)}}});
 window.__XY_NATIVE_V3={version:'4.2',getMode:()=>store.mode(),getData:()=>state(),navigate,render,store};
 window.__XY_NATIVE_V4=window.__XY_NATIVE_V3;
+installSpatialSwipe({
+ getRoute:()=>({view,itemsTab,developTab}),
+ onNavigate:target=>navigate(target),
+ onSegment:(kind,target)=>document.querySelector(kind==='items'?'.v4-item-segments [data-items-tab="'+target+'"]':'.v4-develop-segments [data-develop-tab="'+target+'"]')?.click(),
+ disabled:()=>!!modal||assistant.isOpen()||!!journalHistory
+});
 // Preserve the original spring engine only for the avatar; navigation hitboxes must never move on press.
 for(const btn of $$('#xiaoya-avatar')){
  const spring=createSpring(0,v=>{btn.style.setProperty('--avatar-scale',String(1-.045*v))},{stiffness:460,damping:36});

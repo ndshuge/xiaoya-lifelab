@@ -1,0 +1,140 @@
+/* Xiaoya 5.3: SHUGE Academy-derived touch semantics, without route ghosts.
+   No changes to Dock geometry, bottom blur, mascot art or floating position. */
+#workspace{overscroll-behavior-x:contain}
+#workspace .page-heading{touch-action:pan-y pinch-zoom}
+.xy-swipe-surface{
+ --xy-swipe-progress:0;--xy-swipe-translate:0px;
+ position:fixed;z-index:52;top:42%;left:12px;
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ gap:6px;min-width:65px;min-height:82px;padding:8px 12px;
+ border:1px solid rgba(88,141,102,.25);border-radius:23px;
+ color:#286c47;background:linear-gradient(145deg,rgba(242,255,246,.96),rgba(218,238,224,.84));
+ box-shadow:0 13px 30px rgba(36,91,55,.13),inset 0 1px 0 rgba(255,255,255,.92);
+ backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+ opacity:0;pointer-events:none;user-select:none;
+ transform:translate3d(calc(var(--xy-swipe-translate) * .6),0,0) scale(.92);
+ will-change:opacity,transform;
+}
+.xy-swipe-surface[data-side=right]{left:auto;right:12px}
+.xy-swipe-surface[data-active=true]{
+ opacity:calc(var(--xy-swipe-progress) * .94);
+ transform:translate3d(var(--xy-swipe-translate),0,0) scale(calc(.92 + .08 * var(--xy-swipe-progress)));
+}
+.xy-swipe-surface .xy-swipe-arrow{font-size:29px;line-height:1;font-weight:350}
+.xy-swipe-surface .xy-swipe-name{font-size:11px;line-height:1.4;font-weight:660;white-space:nowrap}
+@media(prefers-color-scheme:dark){
+ .xy-swipe-surface{background:linear-gradient(145deg,rgba(46,80,58,.95),rgba(22,48,33,.91));
+ color:#daf7e3;border-color:rgba(153,203,166,.28);box-shadow:0 12px 30px rgba(0,0,0,.23),inset 0 1px 0 rgba(224,255,235,.16)}
+}
+@media(prefers-reduced-motion:reduce){
+ .xy-swipe-surface{opacity:0!important;transition:none!important;transform:none!important}
+}
+body.reduce-motion .xy-swipe-surface{opacity:0!important;transition:none!important;transform:none!important}
+
+/* Only stand-alone actions receive tactile depth. Group tabs remain planar.
+   Distinct press/settle curves keep the touch fast and the return elastic. */
+:root{--xy-refine-ease:cubic-bezier(.18,1.22,.35,1)}
+#workspace button[data-press-role=solo],
+.sheet button[data-press-role=solo],
+.assistant-panel button[data-press-role=solo]{
+ -webkit-tap-highlight-color:transparent;
+ transition:transform .28s var(--xy-refine-ease),box-shadow .28s var(--xy-refine-ease),
+   filter .18s ease,background-color .18s ease!important;
+ backface-visibility:hidden;
+}
+#workspace button[data-press-role=solo]:is(:active,.xy-is-pressed),
+.sheet button[data-press-role=solo]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role=solo]:is(:active,.xy-is-pressed){
+ transform:translate3d(0,2px,0)!important;
+ filter:brightness(.955) saturate(1.07);
+ transition:transform 90ms cubic-bezier(.25,.5,.24,1),
+   box-shadow 95ms ease,filter 90ms ease!important;
+}
+#workspace button[data-press-role=solo]:not(:disabled):focus-visible,
+.sheet button[data-press-role=solo]:not(:disabled):focus-visible,
+.assistant-panel button[data-press-role=solo]:not(:disabled):focus-visible{
+ outline:3px solid rgba(69,141,92,.68);outline-offset:3px
+}
+/* Text and secondary controls: color/contrast first, no electric scale effect. */
+#workspace button[data-press-role=quiet],
+.sheet button[data-press-role=quiet],
+.assistant-panel button[data-press-role=quiet]{
+ -webkit-tap-highlight-color:transparent;
+ transition:transform .23s var(--xy-refine-ease),background-color .2s ease,
+  border-color .2s ease,filter .2s ease,box-shadow .23s var(--xy-refine-ease)!important
+}
+#workspace button[data-press-role=quiet]:is(:active,.xy-is-pressed),
+.sheet button[data-press-role=quiet]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role=quiet]:is(:active,.xy-is-pressed){
+ filter:brightness(.955) saturate(1.025);
+ transform:translate3d(0,1px,0)!important;
+ transition-duration:85ms!important
+}
+@media(hover:hover) and (pointer:fine){
+ #workspace button[data-press-role=solo]:not(:disabled):hover,
+ .sheet button[data-press-role=solo]:not(:disabled):hover{filter:brightness(1.035) saturate(1.06)}
+ #workspace button[data-press-role=quiet]:not(:disabled):hover,
+ .sheet button[data-press-role=quiet]:not(:disabled):hover{filter:brightness(1.04)}
+ #workspace button[data-press-role=solo]:is(:active,.xy-is-pressed),
+ .sheet button[data-press-role=solo]:is(:active,.xy-is-pressed){filter:brightness(.955) saturate(1.07)}
+}
+#workspace .xy-action-main:not(:disabled){
+ background-image:linear-gradient(175deg,rgba(255,255,255,.18),rgba(255,255,255,0) 45%);
+ box-shadow:0 3px 0 #246c48,0 1px 4px rgba(30,100,55,.07);
+}
+#workspace .xy-action-main:is(:active,.xy-is-pressed){
+ box-shadow:0 1px 0 #246c48,0 1px 3px rgba(30,100,55,.09)!important
+}
+#workspace .xy-agent-action:not(.quiet):not(:disabled){
+ box-shadow:0 2px 0 rgba(54,125,75,.17);background-image:linear-gradient(165deg,rgba(255,255,255,.18),transparent 65%)
+}
+#workspace .xy-agent-action:not(.quiet):is(:active,.xy-is-pressed){
+ box-shadow:0 0 0 rgba(54,125,75,0)!important
+}
+#workspace button[data-press-role=icon]:focus-visible,
+.topbar button[data-press-role=icon]:focus-visible,
+.assistant-panel button[data-press-role=icon]:focus-visible{
+ outline:3px solid rgba(72,149,96,.6);outline-offset:3px
+}
+@media(prefers-color-scheme:dark){
+ #workspace .xy-action-main:not(:disabled){box-shadow:0 3px 0 #204930,0 1px 4px rgba(0,0,0,.16)}
+ #workspace .xy-action-main:is(:active,.xy-is-pressed){box-shadow:0 1px 0 #204930!important}
+}
+/* Card hierarchy: the source rows have soft touch shading; no card-scale
+   jump that would separate fingers from real hit targets. */
+#workspace :is(.v4-task-row,.v4-journal-row,.v4-goal-row,.dayflow-task-row,.native-event){
+ transition:background-color .2s ease,box-shadow .28s cubic-bezier(.2,.8,.25,1),filter .18s ease;
+ -webkit-tap-highlight-color:transparent
+}
+#workspace :is(.v4-task-row,.v4-journal-row,.v4-goal-row,.dayflow-task-row,.native-event):active{
+ filter:brightness(.972) saturate(1.015)
+}
+#workspace :is(.v4-task-row,.v4-journal-row,.v4-goal-row,.dayflow-task-row,.native-event):focus-visible{
+ outline:3px solid rgba(73,145,94,.64);outline-offset:3px
+}
+/* Smaller standalone header controls follow Academy's paint-first touch:
+   no oversized jumps for settings, search, assistant actions. */
+.topbar button[data-press-role=icon],
+.assistant-panel button[data-press-role=icon]{
+ transition:background-color .18s ease,filter .16s ease,box-shadow .25s ease!important;
+}
+.topbar button[data-press-role=icon]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role=icon]:is(:active,.xy-is-pressed){
+ filter:brightness(.925) saturate(1.06);
+ box-shadow:inset 0 1px 3px rgba(32,69,45,.12)
+}
+.sheet .xy-create-option:not(:disabled){
+ transition:background-color .16s ease,box-shadow .25s cubic-bezier(.2,.8,.25,1),
+  transform .25s cubic-bezier(.16,1.18,.4,1)!important;
+}
+.sheet .xy-create-option:is(:active,.xy-is-pressed){
+ transform:translate3d(0,1.5px,0)!important;
+ filter:brightness(.957)
+}
+@media(prefers-reduced-motion:reduce){
+ #workspace button[data-press-role],.sheet button[data-press-role],
+ .assistant-panel button[data-press-role]{transition:none!important;transform:none!important}
+}
+body.reduce-motion #workspace button[data-press-role],
+body.reduce-motion .sheet button[data-press-role],
+body.reduce-motion .assistant-panel button[data-press-role]{transition:none!important;transform:none!important}
