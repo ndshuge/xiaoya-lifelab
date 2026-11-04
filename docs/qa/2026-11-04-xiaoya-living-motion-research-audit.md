@@ -1,5 +1,5 @@
 # 小芽 Living Motion VNext｜三层研究与页面/交互审计
-日期：2026-11-04。研究和验证针对独立分支 `feature/xiaoya-living-motion-vnext-20261104`，基线 `d7e733e`。与较完整的上一轮 [全站审计](./2026-11-03-xiaoya-full-apple-product-audit.md) 配套，不重复改造合格组件。
+日期：2026-11-04。研究和验证针对独立分支 `feature/xiaoya-living-motion-vnext-20261104`，起点基线 `d7e733e`；后续远程 main 新增高清五种形象提交 `05d48f6`，已在本分支合并，两者同时继承。与较完整的上一轮 [全站审计](./2026-11-03-xiaoya-full-apple-product-audit.md) 配套，不重复改造合格组件。
 
 ## 第一层：产品逻辑——证据与取舍
 | 来源（实际核查文档/工程） | 可转移的具体机制 | 小芽决策 |
@@ -28,7 +28,7 @@
 - Dock 及其 `motion-dock.css`、`dock-near-blur-press.css`、`unified-dock-and-press.css` 没有直接修改；Dock 上方清晰区域、原有 blur/scrim、导航位置仍保持。
 - 时间条在内容的右侧，宽 23px，最小 thumb 高度 36px；通过浅绿底和单一对比明显的绿色滑块提供可抓取性。没有塑料 3D 质感、无意义星芒或通用弹跳。
 - 390px 亮色、390px 深色且 Reduced Motion、1440px 桌面均已运行截图；新旧 390px 在相同演示档案和滚动定位下对照。图证见 `docs/qa/evidence/2026-11-04-xiaoya-living-motion/`。
-- 五种小芽形象仍来自原有 `assets/xiaoya-moods-v1.webp`，不替换素材，不自动更改心情选择数据。
+- 五种角色保留原始 `assets/xiaoya-moods-v1.webp` 作基础兼容，同时继承 2026-11-04 `05d48f6` 新加入的五张高清原始角色资源以及 `five-mood-hi-assets.css`，不自动更改心情选择数据。
 
 ## 当前逐页面审计状态
 | 页面/组件 | 已核查能力与证据 | 结论/剩余风险 |

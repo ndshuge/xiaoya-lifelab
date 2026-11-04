@@ -4,6 +4,7 @@
 ## 1. 最新版及基线
 - 产品：小芽（大学生生活管理 AI Agent），独立仓库 `https://github.com/ndshuge/xiaoya-lifelab`；评委正式入口 `https://ndshuge.github.io/xiaoya-lifelab/?judge=1`。
 - 最新版发现：2026-11-04 19:00:39 +08:00，`git-safe-https.ps1 -Action Fetch` 返回远程 `origin/main=d7e733e854fd5c6644098cc7373122002b9a0b14`。此前用户提供的 `b31c961` 是较早提交；`d7e733e` 已包含五种原定心情立绘。
+- **并行施工追踪（20:00 左右）**：远程 main 另新增 `05d48f6a380014bd796aa26b0d2fd9799c54c5ed`，替换为五张原始高清角色图；本 VNext 已将这笔提交以非快进合并方式纳入独立工作树，冲突仅发生在 `index.html` 的两个独立 CSS link，已同时保留 `five-mood-hi-assets.css` 和 `living-motion.css`。最终 HEAD 应包含 `05d48f6` 与本轮交互提交 `f93d07c`。
 - 独立 worktree：`E:\CHATGPT\projects\_xiaoya_living_motion_vnext_20261104`；分支 `feature/xiaoya-living-motion-vnext-20261104`，起点 `d7e733e`。**交付的实际 HEAD 请在该工作树执行 `git rev-parse HEAD`，不可用原起点代替。**
 - 实际入口：`little-works/xiaoya-apple/native-v4/index.html`（静态 Pages + ES Modules）。老项目 `projects/opc-agent` 不是 Git 仓库，不可当作最终网页工作树。原所有施工 worktree、dirty 文件与 V3 档案均保持原样。
 - 未发布：当前 `main` 和正式 Pages 入口未修改，未变更评委链接。后续切换线上版本必须单独明确授权。
@@ -11,7 +12,7 @@
 ## 2. 施工约束
 **永久禁止意外修改：**
 - Dock 本体、dock 渐变模糊、Dock 上方清晰区、大小/位置/动画、底栏显示隐藏机制；尤其 `motion-dock.css`、`dock-near-blur-press.css`、`unified-dock-and-press.css`。
-- 已确定的五种小芽角色立绘 `assets/xiaoya-moods-v1.webp`；不得换 Emoji、改脸或丢失排列。
+- 五种小芽情绪角色：原合成图 `assets/xiaoya-moods-v1.webp` 保留；最新版另外使用 `assets/xiaoya-mood-{1..5}-hi*.webp` 与 `five-mood-hi-assets.css` 覆盖显示，高清素材优先且不可回退为旧精度；不得换 Emoji、改脸或丢失排列。
 - 今天 / 事项 / 发展三大入口、唯一头像进入 AI、心情日记、成长记录/目标/习惯、提醒、日程、搜索设置、模式隔离/隐私/导入导出、V3 参赛档案。
 - 不将日记自动发给 AI，不把 deadline 变成课程时间块。
 - 不重引旧整页截图 ghost、全屏 View Transition 或给 `#workspace` 的实时命中目标整体平移；之前 iPhone Safari 实测出现过严重残影。
