@@ -82,3 +82,10 @@ node little-works/xiaoya-apple/native-v4/qa-vnext-visual.cjs
 - 此前 qa-vnext-timeline 12、qa-vnext-longpress 10、qa-v4-three-tab 13、qa-v4-five-mood-sprites 10、qa-timeline 和 qa-v4-journal-items 共 9、qa-v4-dock-near-blur-press 14 全部通过。
 
 合计 **151/151 条断言通过**，部分属于重叠回归场景；WebKit 测试仍不等同 iPhone Safari 真机。实测脚本已输出六张视觉证据，最终人工逐帧审查仍未完成。
+
+## 9. 19:59 后并行高分辨率资产整合（本段优先于早期 baseline 说明）
+远程 main 在本轮施工期间更新到 05d48f6（五张原版高清小芽心情形象，单图 512×512，独立 CSS five-mood-hi-assets.css）。已在本独立分支合并主线，并保留 living-motion.css，未改写正式 main 或 Dock。
+- 合并 HEAD：c8ca2d6619b628c9586cacf12361c3acee9f99ca；合并前动效提交 f93d07c。
+- Git 确认 origin/main 是本分支 HEAD 的祖先；合并后 worktree 干净，远程 main 不含本次动效代码。
+- 对整合后的五张高清资源、时间轴、长按和旧 Dock 动效重新实跑 42/42 通过（10 + 12 + 10 + 10）。
+- 项目仍未进行真 iPhone Safari 测试、Magic Move/Interactive Pop 和全站人工验收。此合并不等于批准发布。
