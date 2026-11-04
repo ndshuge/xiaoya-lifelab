@@ -9,7 +9,7 @@ const ctx=await b.newContext({viewport:{width:390,height:844},hasTouch:true});co
 await p.goto('http://127.0.0.1:'+server.address().port+'/xiaoya-lifelab/?judge=1',{waitUntil:'networkidle'});
 await check(label+' a single continuous dock-underlay starts above dock and ends at viewport bottom',async()=>{
  const data=await p.evaluate(()=>{const el=document.querySelector('.xy-progressive-underlay');if(!el)return null;const r=el.getBoundingClientRect();return {r:{top:r.top,bottom:r.bottom},dockTop:document.querySelector('#bottom-nav').getBoundingClientRect().top,height:innerHeight,old:getComputedStyle(document.querySelector('.app-frame'),'::after').content,extra:getComputedStyle(document.querySelector('.bottom-nav'),'::after').content,layers:[...el.querySelectorAll('.xy-blur-layer')].map(n=>({blur:getComputedStyle(n).backdropFilter,mask:getComputedStyle(n).maskImage}))}});
- assert.ok(data,'missing unified blur region');assert.ok(data.r.top<data.dockTop-35,JSON.stringify(data));assert.ok(Math.abs(data.r.bottom-data.height)<1,JSON.stringify(data));assert.equal(data.old,'none');assert.equal(data.extra,'none');
+ assert.ok(data,'missing unified blur region');assert.ok(data.dockTop-data.r.top>=10&&data.dockTop-data.r.top<=55,'blur begins too far above Dock: '+JSON.stringify(data));assert.ok(Math.abs(data.r.bottom-data.height)<1,JSON.stringify(data));assert.equal(data.old,'none');assert.equal(data.extra,'none');
  assert.ok(data.layers.length>=4);
  for(const [i,x] of data.layers.entries()){assert.match(x.blur,/blur\(/,'no blur on '+i);assert.match(x.mask,/gradient/,'no gradient mask '+i)}
 });

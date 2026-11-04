@@ -1,0 +1,102 @@
+/* 2026-11-04 iPhone 16:36 review: content above Dock should stay clear.
+ * The previous 196px underlay began 117px above the Dock.
+ * This ~114px zone starts only ~35px above the Dock at 390x844.
+ * Most of the upper 35px is fully transparent; the weak 2px frost
+ * only materializes in the final ~12px before the Dock.
+ * Lower area proceeds to viewport bottom with overlapped masks (no seam). */
+@media(max-width:700px){
+  .xy-progressive-underlay{
+    height:calc(114px + env(safe-area-inset-bottom,0px))!important;
+  }
+  .xy-progressive-underlay .xy-blur-layer:nth-child(1){
+    --xy-blur:2px;
+    --xy-mask:linear-gradient(to bottom,transparent 13%,rgba(0,0,0,.16) 23%,rgba(0,0,0,.52) 35%,rgba(0,0,0,.9) 48%,rgba(0,0,0,.7) 61%,transparent 78%);
+  }
+  .xy-progressive-underlay .xy-blur-layer:nth-child(2){
+    --xy-blur:6px;
+    --xy-mask:linear-gradient(to bottom,transparent 38%,rgba(0,0,0,.25) 48%,#000 71%,rgba(0,0,0,.64) 82%,transparent 96%);
+  }
+  .xy-progressive-underlay .xy-blur-layer:nth-child(3){
+    --xy-blur:12px;
+    --xy-mask:linear-gradient(to bottom,transparent 62%,rgba(0,0,0,.28) 70%,#000 90%,#000 100%);
+  }
+  .xy-progressive-underlay .xy-blur-layer:nth-child(4){
+    --xy-blur:20px;
+    --xy-mask:linear-gradient(to bottom,transparent 80%,rgba(0,0,0,.42) 88%,#000 100%);
+  }
+  .xy-progressive-underlay .xy-blur-scrim{
+    background:linear-gradient(to bottom,transparent 0%,transparent 35%,rgba(245,245,247,.014) 48%,rgba(245,245,247,.045) 63%,rgba(245,245,247,.11) 83%,rgba(245,245,247,.22) 100%);
+  }
+}
+@media(max-width:700px) and (prefers-color-scheme:dark){
+  .xy-progressive-underlay .xy-blur-scrim{
+    background:linear-gradient(to bottom,transparent 0%,transparent 35%,rgba(17,23,19,.014) 48%,rgba(17,23,19,.06) 63%,rgba(17,23,19,.16) 83%,rgba(17,23,19,.32) 100%);
+  }
+}
+@media(max-width:700px) and (prefers-reduced-transparency:reduce),
+       (max-width:700px) and (prefers-contrast:more){
+ .xy-progressive-underlay .xy-blur-layer{
+   backdrop-filter:none!important;-webkit-backdrop-filter:none!important
+ }
+ .xy-progressive-underlay .xy-blur-scrim{
+   background:linear-gradient(to bottom,transparent 0%,transparent 35%,var(--ground,#f5f5f7) 100%)!important
+ }
+}
+/* All independent low-priority actions deserve a small real press/settle cycle.
+ * Do not extend it to grouped sliders, week choices, navigation, or checkboxes.
+ * Preserve the no-thick-underline treatment of text-style controls.
+ */
+#workspace button[data-press-role=quiet],
+.sheet button[data-press-role=quiet],
+.assistant-panel button[data-press-role=quiet]{
+  transform:translate3d(0,0,0) scale(1);
+  transform-origin:center center;
+  transition:
+    transform 310ms linear(0,.48 17%,1.1 50%,.974 75%,1 100%),
+    filter 170ms ease,
+    opacity 170ms ease,
+    background-color 170ms ease!important;
+  will-change:auto;
+}
+#workspace button[data-press-role=quiet]:is(:active,.xy-is-pressed),
+.sheet button[data-press-role=quiet]:is(:active,.xy-is-pressed),
+.assistant-panel button[data-press-role=quiet]:is(:active,.xy-is-pressed){
+  transform:translate3d(0,1.25px,0) scale(.972)!important;
+  transition-duration:75ms,75ms,75ms,75ms!important;
+  transition-timing-function:cubic-bezier(.2,.8,.2,1)!important;
+  filter:brightness(.96);
+  opacity:.92;
+}
+/* Keep the live native touch hit box visually stable on solo primary keys.
+ * Their existing paint-only depth remains; tabs/segmented selectors unchanged. */
+@media(prefers-reduced-motion:reduce){
+ #workspace button[data-press-role=quiet],
+ .sheet button[data-press-role=quiet],
+ .assistant-panel button[data-press-role=quiet]{
+  transform:none!important;transition:none!important
+ }
+}
+body.reduce-motion #workspace button[data-press-role=quiet],
+body.reduce-motion .sheet button[data-press-role=quiet],
+body.reduce-motion .assistant-panel button[data-press-role=quiet]{
+  transform:none!important;transition:none!important
+}
+/* Icon-role controls with a text label (for example the secondary
+   page's 完成) had no SVG to animate and therefore felt inert. */
+.topbar button[data-press-role=icon]:not(:has(svg)){
+  transform:translate3d(0,0,0) scale(1);
+  transition:transform 290ms linear(0,.5 19%,1.09 50%,.978 78%,1 100%),opacity 180ms ease!important;
+}
+.topbar button[data-press-role=icon]:not(:has(svg)):is(:active,.xy-is-pressed){
+  transform:translate3d(0,1px,0) scale(.976)!important;
+  transition-duration:75ms,75ms!important;
+  transition-timing-function:cubic-bezier(.2,.8,.2,1)!important;
+}
+@media(prefers-reduced-motion:reduce){
+ .topbar button[data-press-role=icon]:not(:has(svg)){
+  transform:none!important;transition:none!important
+ }
+}
+body.reduce-motion .topbar button[data-press-role=icon]:not(:has(svg)){
+ transform:none!important;transition:none!important
+}
