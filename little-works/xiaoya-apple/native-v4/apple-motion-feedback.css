@@ -1,0 +1,92 @@
+/* Native V4 motion refinement, grounded in the user's Nov 4 Safari recording.
+   Press the paint layer, never move the live hitbox. The app is vanilla JS:
+   use interruptible CSS + WAAPI rather than importing React/Motion+ merely for an effect. */
+:root{
+  --xy-press-ink:rgba(35,96,61,.12);
+  --xy-item-indicator:#fff;
+}
+@media(prefers-color-scheme:dark){
+  :root{--xy-press-ink:rgba(168,230,186,.16);--xy-item-indicator:#3a5742}
+}
+/* Register a scalar so the indicator can animate across rerendered segment DOM. */
+@property --xy-items-index {
+  syntax:"<number>";
+  inherits:true;
+  initial-value:0;
+}
+.v4-item-segments{
+  --xy-items-index:0;
+  position:relative;
+  isolation:isolate;
+}
+.v4-item-segments:has([data-items-tab="inbox"].is-active){--xy-items-index:1}
+.v4-item-segments::before{
+  content:"";
+  position:absolute;left:4px;top:4px;bottom:4px;
+  width:calc((100% - 8px)/2);
+  border-radius:12px;
+  background:var(--xy-item-indicator);
+  box-shadow:0 1px 9px rgba(26,43,31,.085);
+  transform:translateX(calc(var(--xy-items-index) * 100%));
+  pointer-events:none;
+}
+.v4-item-segments>button{
+  position:relative;
+  z-index:1;
+}
+.v4-item-segments>button.is-active{
+  background:transparent!important;
+  box-shadow:none!important;
+}
+/* Pointerdown, held, release/cancel: surface tint is a paint-only overlay.
+   No scale on the interactive element, no layout movement or changed hitbox. */
+.v4-item-segments>button,
+.v4-develop-segments>button,
+.v4-week-tools .calendar-arrow button,
+.v4-week-rail .day-pill,
+.v4-section-title button,
+.bottom-nav .tab,
+.topbar .glass-btn,
+.v4-journal-save{position:relative;isolation:isolate}
+.v4-item-segments>button::after,
+.v4-develop-segments>button::after,
+.v4-week-tools .calendar-arrow button::after,
+.v4-week-rail .day-pill::after,
+.v4-section-title button::after,
+.bottom-nav .tab::after,
+.topbar .glass-btn:not(.is-detail-done)::after,
+.v4-journal-save::after{
+  content:"";
+  position:absolute;inset:0;z-index:2;
+  border-radius:inherit;
+  background:var(--xy-press-ink);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 140ms cubic-bezier(.25,1,.5,1);
+}
+.v4-item-segments>button:active::after,
+.v4-develop-segments>button:active::after,
+.v4-week-tools .calendar-arrow button:active::after,
+.v4-week-rail .day-pill:active::after,
+.v4-section-title button:active::after,
+.bottom-nav .tab:active::after,
+.topbar .glass-btn:not(.is-detail-done):active::after,
+.v4-journal-save:active::after{
+  opacity:1;transition-duration:50ms;
+}
+@media(prefers-reduced-motion:reduce){
+  .v4-item-segments>button::after,
+  .v4-develop-segments>button::after,
+  .v4-week-tools .calendar-arrow button::after,
+  .v4-week-rail .day-pill::after,
+  .v4-section-title button::after,
+  .bottom-nav .tab::after,
+  .topbar .glass-btn::after,
+  .v4-journal-save::after{transition:none!important}
+}
+@media(forced-colors:active){
+  .v4-item-segments::before{background:Highlight}
+  .v4-item-segments>button.is-active{color:HighlightText}
+  .v4-item-segments>button:active::after,
+  .v4-develop-segments>button:active::after{outline:2px solid Highlight}
+}

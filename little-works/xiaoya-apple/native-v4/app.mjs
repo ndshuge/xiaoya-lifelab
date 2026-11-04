@@ -240,18 +240,20 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
  document.body.classList.add('xy-motion-active');
  const sign=direction==='backward'?-1:1;
  const incoming=current.animate([
-   {opacity:0},
+   {opacity:.48},
    {opacity:1}
- ],{duration:170,delay:70,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
+ ],{duration:240,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
  const outgoing=ghost.animate([
    {opacity:1,transform:'translate3d(0,0,0)'},
-   {opacity:0,transform:'translate3d('+(-sign*7)+'px,0,0)'}
- ],{duration:90,easing:'cubic-bezier(.4,0,.8,.5)',fill:'both'});
- const currentMotion={ghost,animations:[incoming,outgoing]};
+   {opacity:0,transform:'translate3d('+(-sign*20)+'px,0,0)'}
+ ],{duration:180,easing:'cubic-bezier(.25,1,.5,1)',fill:'both'});
+ const heading=current.querySelector('.page-heading h1');
+ const headingMotion=heading?.animate([{opacity:.65,transform:'translate3d(0,7px,0)'},{opacity:1,transform:'translate3d(0,0,0)'}],{duration:250,easing:'cubic-bezier(.32,.72,0,1)',fill:'both'});
+ const currentMotion={ghost,animations:[incoming,outgoing,...(headingMotion?[headingMotion]:[])]};
  routeMotion=currentMotion;
- // The ghost is needed only for the 90ms outgoing fade, not for the full incoming transition.
+ // The ghost is needed only for the 180ms outgoing spatial exit, not for the full incoming transition.
  // Bounded cleanup even if a backgrounded browser throttles WAAPI finish events.
- setTimeout(()=>{ghost.remove();if(routeMotion===currentMotion)currentMotion.ghost=null},125);
+ setTimeout(()=>{ghost.remove();if(routeMotion===currentMotion)currentMotion.ghost=null},210);
  outgoing.finished.catch(()=>{}).finally(()=>{
    ghost.remove();
    if(routeMotion===currentMotion)currentMotion.ghost=null;
@@ -396,8 +398,18 @@ document.addEventListener('click',e=>{
  if(t.dataset.itemsTab){
    const target=t.dataset.itemsTab;if(target===itemsTab)return;
    const dir=target==='inbox'?'forward':'backward';
+   const oldIndex=itemsTab==='inbox'?1:0;
    transitionContent(()=>{
      rememberScroll();itemsTab=target;view='items';render();restoreScroll();
+     // The segments are recreated by render(). Retarget their registered
+     // scalar property from the previous selection to the new one.
+     const group=$('.v4-item-segments');
+     if(group&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&!state().settings.reducedMotion){
+       group.animate([
+         {'--xy-items-index':String(oldIndex)},
+         {'--xy-items-index':target==='inbox'?'1':'0'}
+       ],{duration:310,easing:'cubic-bezier(.32,.72,0,1)'});
+     }
    },{direction:dir});return;
  }
  if(t.dataset.developTab){
