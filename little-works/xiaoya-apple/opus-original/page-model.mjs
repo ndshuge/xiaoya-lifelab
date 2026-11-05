@@ -222,6 +222,27 @@ export function headline(data,day,{now=new Date(),pencils=[],context=null}={}){
  if(context?.weather&&day.isToday){const w=context.weather.days.find(x=>x.date===context.tomorrow);if(w&&w.precipitationProbabilityMax>=60)parts.push(context.weather.cityLabel+'明天降水概率 '+w.precipitationProbabilityMax+'%')}
  return {text:parts.slice(0,3).join('，')+'。',tone};
 }
+/** What was actually inked on a given local date. Derived only from saved timestamps. */
+export function dayRecap(data,date){
+ const on=s=>{if(!s)return false;const d=new Date(s);return Number.isFinite(+d)&&dateKey(d)===date};
+ const completed=data.tasks.filter(t=>t.done&&on(t.completedAt)).map(t=>t.title);
+ const goalsDone=data.goals.filter(g=>g.done&&on(g.completedAt)).map(g=>g.title);
+ const checkins=data.checkins.filter(c=>on(c.at));
+ // An approved suggestion that was later erased keeps its decision record; it must not count as ink.
+ const undone=new Set(data.transactions.filter(t=>t.status==='undone').map(t=>t.id));
+ const approved=data.decisions.filter(d=>d.status==='executed'&&on(d.at)&&!undone.has(d.transactionId)).length;
+ const strokes=data.transactions.filter(t=>t.status==='executed'&&on(t.at)).length;
+ return {completed,goalsDone,checkinCount:checkins.length,checkinMinutes:checkins.reduce((n,c)=>n+c.minutes,0),approved,strokes,
+  empty:!completed.length&&!goalsDone.length&&!checkins.length&&!approved&&!strokes};
+}
+/** Where Xiaoya's attention is on a day: the first pencil, else the first conflict. */
+export function attentionOf(day){
+ const pencil=day.blocks.find(b=>b.type==='pencil');
+ if(pencil)return {kind:'pencil',id:pencil.id,minute:pencil.top,label:'我在这里画了一笔：'+pencil.title};
+ const clash=day.blocks.find(b=>b.type==='ink'&&b.conflict);
+ if(clash)return {kind:'conflict',minute:clash.top,label:clash.start+' 有两件事重叠'};
+ return null;
+}
 /** Free time today/tomorrow, for questions like 「我什么时候有空」. */
 export function freeWindows(data,date,{now=new Date(),minimum=45}={}){
  const from=date===dateKey(now)?now:new Date(date+'T08:00');

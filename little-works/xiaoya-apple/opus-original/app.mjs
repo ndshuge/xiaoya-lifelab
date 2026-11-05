@@ -13,7 +13,7 @@ import {createContextActionController} from '../context-actions.js';
 import {fetchCityForecast} from '../weather-forecast.js';
 import {buildGrowthRoutes,commitGrowthRoute,summarizeGrowthWorkload,growthStageTasks} from '../growth-simulator.js';
 import {parseLine} from './line-parser.mjs';
-import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,shortDay,DAYNAMES} from './page-model.mjs';
+import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,dayRecap,attentionOf,shortDay,DAYNAMES} from './page-model.mjs';
 import {createTalk} from './talk.mjs';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -230,11 +230,16 @@ function renderDay(data){
   '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+esc(h.text)+'</p>'+weatherLine+
   (isEmptyArchive(data)?'<div class="starter" aria-label="试着写一行"><span>试着写一行：</span>'+['周五前交实验报告 90分钟','明天下午3点到5点 社团例会 @创新中心','每周跑步两次','买洗衣液'].map(s=>'<button type="button" data-try="'+esc(s)+'">'+esc(s)+'</button>').join('')+'<button type="button" class="starter-alt" data-import-cal>或导入课表</button></div>':'')+
   '<div class="paper"><div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
-   '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+
+   '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+attentionMarker(day,top)+
    '<div class="ribbon" data-ribbon data-map="'+esc(JSON.stringify(map.segments.map(s=>[Math.round(s.y0),Math.round(s.y1),s.m0,s.m1,s.band?1:0])))+'" aria-label="'+esc(md(ui.date))+'时间带。点击空白处安排一件事。">'+hours.map(i=>'<span class="rule" style="top:'+top(i*60)+'px"></span>').join('')+bands+nowLine+ghosts+blocks+lines+
    '</div>'+
   '</div><aside class="margin" id="margin" aria-label="页边批注">'+margin+'</aside></div>'+
   renderPocket(data,now)+ahead+renderFooter(ui.date,now)+'</section>';
+}
+// Xiaoya sits in the time gutter beside what she is paying attention to; tapping her opens that note.
+function attentionMarker(day,top){
+ const a=attentionOf(day);if(!a)return '';
+ return '<button type="button" class="attention is-'+a.kind+'" style="top:'+Math.max(0,top(a.minute)-4)+'px" '+(a.kind==='pencil'?'data-expand="'+esc(a.id)+'"':'data-attention-conflict')+' aria-label="'+esc(a.label)+'" title="'+esc(a.label)+'"><img src="'+assetFace(a.kind==='pencil'?4:3)+'" alt="" width="30" height="30"></button>';
 }
 const isEmptyArchive=d=>!d.tasks.length&&!d.courses.length&&!d.events.length&&!d.goals.length;
 const minutesOf=stamp=>{const t=String(stamp).slice(11,16).split(':');return +t[0]*60+ +t[1]};
@@ -261,7 +266,11 @@ function renderFooter(date,now){
  if(date>today)return '<section class="footer-page is-future"><h2>页脚</h2><p>这一天还没到。到了那天再写。</p></section>';
  const entry=journalAll().find(e=>e.date===date),draft=drafts.get(draftKey(date));
  const mood=draft?.mood??entry?.mood??null,dirty=!!draft;
- return '<section class="footer-page" aria-labelledby="footer-title"><h2 id="footer-title">页脚 <small>'+(date===today?'今天':md(date))+'过得怎么样</small></h2>'+
+ const r=dayRecap(state(),date);
+ const recap=r.empty?'<p class="recap is-empty">'+(date===today?'今天':'这一天')+'还没有落下的墨。</p>':
+  '<div class="recap"><p class="recap-line">'+[r.completed.length?'完成 '+r.completed.length+' 件':'',r.approved?'采纳小芽 '+r.approved+' 笔':'',r.checkinCount?'目标行动 '+r.checkinCount+' 次 · '+r.checkinMinutes+' 分钟':'',r.goalsDone.length?'完成目标 '+r.goalsDone.length+' 个':''].filter(Boolean).join(' · ')+'</p>'+
+  (r.completed.length?'<ul class="recap-done">'+r.completed.slice(0,6).map(t=>'<li>'+esc(t)+'</li>').join('')+(r.completed.length>6?'<li class="more">……</li>':'')+'</ul>':'')+'</div>';
+ return '<section class="footer-page" aria-labelledby="footer-title"><h2 id="footer-title">页脚 <small>'+(date===today?'今天':md(date))+'过得怎么样</small></h2>'+recap+
   '<div class="moods" role="radiogroup" aria-label="心情">'+MOODS.map(([n,label,file])=>'<button type="button" role="radio" class="mood" data-mood="'+n+'" aria-checked="'+(mood===n)+'"><img src="../native-v4/assets/'+file+'" alt="" width="56" height="56" loading="lazy"><span>'+label+'</span></button>').join('')+'</div>'+
   '<label class="sr-only" for="journal-note">今天的一句话</label><textarea id="journal-note" maxlength="1800" rows="3" placeholder="写一句给自己的话。只存在这台设备上。">'+esc(draft?.note??entry?.note??'')+'</textarea>'+
   '<div class="footer-actions"><span class="journal-status" id="journal-status">'+(dirty?'未保存':entry?'已保存在这台设备':'')+'</span>'+(entry?'<button type="button" class="ghost-btn" data-journal-delete>删除这页</button>':'')+'<button type="button" class="ink-btn" data-journal-save>合上这一页</button></div>'+
@@ -814,6 +823,7 @@ document.addEventListener('click',e=>{
  if(ds.analyzeLocal!==undefined){closeSheet();return analyzeGrowth(false)}
  if(ds.growthPreview)return growthPreview(ds.growthPreview);
  if(ds.erase)return erase(ds.erase);
+ if(ds.attentionConflict!==undefined){const n=document.querySelector('.note[data-note^="conflict"]');if(n){n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('.note-head')?.click()}else whisper('这里有两件事重叠，点开时间块可以调整');return}
  if(ds.try){lineInput.value=ds.try;updateDraft();lineInput.focus({preventScroll:true});return}
  if(ds.cover)return coverAction(ds.cover);
  if(ds.importCal!==undefined)return $('#import-cal').click();

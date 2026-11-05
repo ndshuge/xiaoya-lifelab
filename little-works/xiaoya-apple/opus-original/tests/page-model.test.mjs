@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyStore,demoData} from '../../core.js';
 import {buildStudentAgentFeed} from '../../student-agent.js';
-import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,assignLanes,freeWindows,localAnswer,timeMap,withException} from '../page-model.mjs';
+import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,assignLanes,freeWindows,localAnswer,timeMap,withException,dayRecap,attentionOf} from '../page-model.mjs';
 import {checkSchedule} from '../../domain.js';
 import {buildEnvelope} from '../envelope.mjs';
 
@@ -92,6 +92,25 @@ test('one-off reschedule moves the occurrence to the target date and marks its o
  assert.equal(b.start,'14:00');assert.equal(b.movedFrom,'2026-11-04');assert.equal(b.occurrenceDate,'2026-11-04');assert.equal(b.place,'实验中心 B101');
  const next=buildDay(d,'2026-11-11',{now:NOW});assert.ok(next.blocks.some(x=>x.title==='电子技术实验'&&x.start==='15:00'),'other weeks unchanged');
  const w=buildWeek(d,NOW,{now:NOW});assert.equal(w.days[2].ghosts.length,1);assert.ok(w.days[4].items.some(i=>i.moved));
+});
+test('day recap counts only what was inked on that date',()=>{
+ const d=demo();
+ d.tasks[0].done=true;d.tasks[0].completedAt='2026-11-05T03:00:00.000Z';
+ d.checkins.push({id:'c',goalId:'demo-g1',at:'2026-11-05T04:00:00.000Z',minutes:25});
+ d.decisions.push({id:'p',status:'executed',at:'2026-11-05T05:00:00.000Z'});
+ const r=dayRecap(d,'2026-11-05');
+ assert.deepEqual([r.completed.length,r.checkinMinutes,r.approved,r.empty],[1,25,1,false]);
+ assert.equal(dayRecap(d,'2026-11-04').empty,true);
+ d.decisions.push({id:'q',status:'executed',at:'2026-11-05T06:00:00.000Z',transactionId:'tx-erased'});
+ d.transactions.push({id:'tx-erased',status:'undone',at:'2026-11-05T06:00:00.000Z',changes:[]});
+ assert.equal(dayRecap(d,'2026-11-05').approved,1,'erased approvals are not counted');
+});
+test('attention goes to the first pencil, else to a conflict, else nowhere',()=>{
+ const d=demo();
+ assert.equal(attentionOf(buildDay(d,'2026-11-04',{now:NOW})).kind,'conflict');
+ const strokes=pencilStrokes(buildStudentAgentFeed(d,{now:NOW}).candidates);
+ assert.equal(attentionOf(buildDay(d,strokes[0].date,{now:NOW,pencils:strokes})).kind,'pencil');
+ assert.equal(attentionOf(buildDay(emptyStore(),'2026-11-05',{now:NOW})),null);
 });
 test('free windows respect recorded events',()=>{
  const w=freeWindows(demo(),'2026-11-04',{now:NOW});
