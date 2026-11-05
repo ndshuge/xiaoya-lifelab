@@ -111,7 +111,7 @@ small{font-size:12px}
 .hours li{position:absolute;right:0;transform:translateY(-.6em);font:400 12px/1 var(--serif);color:var(--ink-3);font-variant-numeric:tabular-nums}
 .attention{position:absolute;right:-34px;z-index:6;width:36px;height:36px;border:0;border-radius:50%;background:var(--sprout-soft);padding:3px;display:grid;place-items:center;
   box-shadow:0 0 0 3px var(--paper);transition:top .45s var(--spring)}
-@media (max-width: 819px){.attention{right:auto;left:-44px;width:34px;height:34px}}
+@media (max-width: 819px){.attention{right:12px;width:30px;height:30px;margin-top:6px;padding:2px}.attention img{width:26px!important;height:26px!important}}
 .attention img{width:30px;height:30px;object-fit:contain;animation:attend 3.6s ease-in-out infinite;transform-origin:50% 85%}
 .attention.is-conflict{background:var(--alarm-soft)}
 .attention:hover{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--sprout)}
