@@ -56,12 +56,12 @@ export function createAgentBridge({getData,persist,getJournalEntries,getMode,ope
   const later=shortlist.slice(1);
   const content=primary?row(primary,controls(primary)):
    hint('目前没有需要主动调整的安排','补充课程、待办与目标后，小芽才能给出有依据的建议。');
-  const more=later.length?'<details class="xy-agent-more"><summary>其他提醒 · '+later.length+' 条</summary>'+
-   later.map(s=>row(s,controls(s))).join('')+'</details>':'';
+  const more=later.length?'<details class="xy-agent-more xy-agent-disclosure"><summary><span>其他提醒</span><small>'+later.length+' 条</small></summary><div class="xy-agent-disclosure-body">'+
+   later.map(s=>row(s,controls(s))).join('')+'</div></details>':'';
   const choices=primary?.from==='student'?
-   '<details class="xy-agent-more"><summary>这条建议的其他操作</summary><div class="xy-agent-footer">'+
+   '<details class="xy-agent-more xy-agent-disclosure"><summary><span>其他操作</span></summary><div class="xy-agent-disclosure-body"><div class="xy-agent-footer">'+
     action('稍后再看','snooze','data-agent-id="'+esc(primary.id)+'"','quiet')+
-    action('不再提醒','reject','data-agent-id="'+esc(primary.id)+'"','quiet')+'</div></details>':'';
+    action('不再提醒','reject','data-agent-id="'+esc(primary.id)+'"','quiet')+'</div></div></details>':'';
   return '<section class="dayflow-advice xy-agent-section" id="dayflow-suggestion">'+
     '<div id="xy-student-agent">'+header('小芽的建议','本地规则 · 需要批准')+
     content+more+choices+(undo()?'<div class="xy-agent-footer">'+undo()+'</div>':'')+

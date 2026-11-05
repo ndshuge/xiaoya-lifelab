@@ -61,7 +61,11 @@ export function installSpatialSwipe({getRoute,onNavigate,onSegment,getPreview=()
   if(e.button!==0||e.isPrimary===false||e.pointerType==='mouse'&&matchMedia('(pointer:fine)').matches||!allowed())return;
   const t=e.target instanceof Element?e.target:null;if(!t||!t.closest('#workspace'))return;
   const scope=t.closest('.v4-item-segments')?'items':t.closest('.v4-develop-segments')?'develop':null;
-  if(!scope&&(t.closest(EDITABLE)||t.closest(INTERACTIVE)||t.closest(DRAG)))return;
+  // A horizontal swipe must also work when started on a tappable card or
+  // primary action. Actual taps remain handled by the usual click delegation.
+  // Keep inputs, dropdowns, timeline controls and long-press item rows isolated.
+  if(!scope&&(t.closest(EDITABLE)||t.closest(DRAG)||
+    t.closest('summary,[role="switch"],[data-toggle],[data-mood],[data-item],[data-journal-date],a[href]')))return;
   if(t.closest('dialog,.xy-agent-section details'))return;
   reset();drag={id:e.pointerId,x:e.clientX,y:e.clientY,route:getRoute(),scope,side:0,started:false,cancelled:false,
    old:null,next:null,dx:0,width:0,target:null,samples:[],velocity:0};
@@ -94,7 +98,7 @@ export function installSpatialSwipe({getRoute,onNavigate,onSegment,getPreview=()
  const onUp=e=>{
   const s=drag;if(!s||s.id!==e.pointerId)return;drag=null;
   if(!s.started||s.cancelled||!s.target){restore(s);return}
-  const commit=allowed()&&s.side*s.dx>0&&(Math.abs(s.dx)>Math.min(s.width*.28,132)||Math.abs(s.dx)>36&&s.side*s.velocity>.48);
+  const commit=allowed()&&s.side*s.dx>0&&(Math.abs(s.dx)>Math.min(s.width*.42,190)||Math.abs(s.dx)>48&&s.side*s.velocity>.78);
   const end=commit?s.side*s.width:0;
   const ticket=++sequence;guardUntil=performance.now()+420;stop();
   const finish=()=>{if(ticket!==sequence)return;stopSpring=null;commit?complete(s):restore(s)};

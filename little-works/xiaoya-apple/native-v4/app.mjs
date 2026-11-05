@@ -15,8 +15,9 @@ import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=5.1.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
-import {createAgentBridge} from './agent-bridge.mjs?v=5.2.0';
-import {installSpatialSwipe} from './spatial-swipe-v56.mjs?v=5.7.0';
+import {createAgentBridge} from './agent-bridge.mjs?v=5.8.0';
+import {installSpatialSwipe} from './spatial-swipe-v56.mjs?v=5.8.0';
+import {installAgentDisclosureMotion} from './agent-disclosure-motion.mjs?v=5.8.0';
 import {createTwoPageRoute} from './two-page-route.mjs?v=5.7.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -581,6 +582,7 @@ function queueSwipePreviews(){
  };
  if(queue.length)schedule();
 }
+installAgentDisclosureMotion();
 installSpatialSwipe({
  getRoute:()=>({view,itemsTab,developTab}),
  getPreview:previewForSwipe,
