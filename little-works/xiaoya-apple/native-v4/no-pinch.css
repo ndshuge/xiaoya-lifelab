@@ -1,0 +1,7 @@
+/* Fixed app scale on touch surfaces. Keep pan-y for native one-finger scroll,
+   while horizontal pointer drags remain owned by the Xiaoya route controller. */
+html,body,#workspace{touch-action:pan-y}
+@media(pointer:fine) and (hover:hover){
+ /* Desktop mouse/trackpad scroll remains normal. */
+ html,body{touch-action:auto}
+}
