@@ -33,6 +33,30 @@ export function assignLanes(blocks){
  }
  return sorted;
 }
+/**
+ * Recurring courses/events that would normally happen on `date` but carry a cancel/replace exception there.
+ * Shown as struck-through ghosts so a 停课 or 调课 stays visible and reversible.
+ */
+export function cancelledOn(data,date){
+ const from=new Date(date+'T00:00'),until=plusDays(from,1),out=[];
+ for(const [kind,key] of [['course','courses'],['event','events']])for(const x of data[key]){
+  if(x.date)continue;
+  const ex=(x.exceptions||[]).find(e=>e.date===date&&(e.type==='cancel'||e.type==='replace'));if(!ex)continue;
+  const plain={...data,courses:kind==='course'?[{...x,exceptions:[]}]:[],events:kind==='event'?[{...x,exceptions:[]}]:[]};
+  const normal=occurrences(plain,from,until).find(o=>o.date===date);if(!normal)continue;
+  out.push({kind,id:x.id,title:x.name,place:x.place||'',start:normal.start,end:normal.end,exception:ex.type,
+   target:ex.type==='replace'?{date:ex.targetDate||ex.date,start:ex.start,end:ex.end,place:ex.place??x.place??''}:null});
+ }
+ return out;
+}
+/** Write (or clear) the exception for one occurrence of a recurring course/event; returns a new item. */
+export function withException(item,date,change){
+ const rest=(item.exceptions||[]).filter(e=>e.date!==date);
+ if(!change)return {...item,exceptions:rest};
+ if(change.type==='cancel')return {...item,exceptions:[...rest,{date,type:'cancel'}]};
+ if(change.type==='replace')return {...item,exceptions:[...rest,{date,type:'replace',targetDate:change.targetDate,start:change.start,end:change.end,...(change.place!==undefined?{place:change.place}:{})}]};
+ throw Error('不支持的例外类型');
+}
 /** Flatten engine proposals into time-placed pencil strokes. */
 export function pencilStrokes(candidates){
  const out=[];
@@ -54,6 +78,8 @@ export function buildDay(data,date,{now=new Date(),pencils=[]}={}){
  const conflicts=calendarConflicts(data,from,until).filter(c=>c.date===date);
  const conflictIds=new Set(conflicts.flatMap(c=>[c.a.occurrenceId,c.b.occurrenceId]));
  const blocks=occ.map(o=>({type:'ink',kind:o.kind,id:o.id,occurrenceId:o.occurrenceId,title:o.name,place:o.place||'',
+  recurring:!(data[o.kind==='course'?'courses':'events'].find(x=>x.id===o.id)?.date),
+  movedFrom:o.originalDate||'',occurrenceDate:o.originalDate||date,
   start:o.startsAt.slice(11,16),end:o.endsAt.slice(11,16),top:minutesInDay(o.startsAt,date),bottom:minutesInDay(o.endsAt,date),
   conflict:conflictIds.has(o.occurrenceId),fromAgent:!!o.source&&/Agent/.test(o.source),goalId:o.goalId||'',taskId:o.taskId||'',
   step:o.stepId?(t=>t?{id:t.id,done:!!t.done}:null)(data.tasks.find(t=>t.id===o.stepId)):null}));
@@ -74,7 +100,9 @@ export function buildDay(data,date,{now=new Date(),pencils=[]}={}){
  const deadlines=data.tasks.filter(t=>t.due&&t.due.slice(0,10)===date&&!stepIds.has(t.id)).map(t=>({id:t.id,title:t.title,time:t.due.slice(11,16),
   at:minutesInDay(t.due,date),done:!!t.done,type:t.type||'task',overdue:!t.done&&+new Date(t.due)<+now,minutes:t.minutes||null,parentId:t.parentId||''}))
   .sort((a,b)=>a.at-b.at);
- const marks=[...blocks,...strokes].flatMap(b=>[b.top,b.bottom]).concat(deadlines.map(d=>d.at));
+ const ghosts=cancelledOn(data,date).map(g=>({...g,type:'ghost',top:minutesInDay(date+'T'+g.start,date),bottom:minutesInDay(date+'T'+g.end,date)}));
+ for(const g of ghosts)if(g.bottom<=g.top)g.bottom=1440;
+ const marks=[...blocks,...strokes,...ghosts].flatMap(b=>[b.top,b.bottom]).concat(deadlines.map(d=>d.at));
  const isToday=date===dateKey(now),nowMin=isToday?now.getHours()*60+now.getMinutes():null;
  if(nowMin!==null)marks.push(nowMin);
  // Today starts one hour before the earlier of "now" and the first record, so the page opens on what is
@@ -84,7 +112,7 @@ export function buildDay(data,date,{now=new Date(),pencils=[]}={}){
  let endHour=Math.max(22,...marks.map(m=>Math.ceil(m/60)));
  startHour=Math.max(0,startHour);endHour=Math.min(24,endHour);
  if(endHour-startHour<4)startHour=Math.max(0,endHour-4);
- return {date,isToday,nowMin,startHour,endHour,blocks:assignLanes([...blocks,...strokes]),deadlines,conflicts,
+ return {date,isToday,nowMin,startHour,endHour,blocks:assignLanes([...blocks,...strokes]),ghosts,deadlines,conflicts,
   counts:{courses:blocks.filter(b=>b.kind==='course').length,events:blocks.filter(b=>b.kind==='event').length,pencils:new Set(strokes.map(s=>s.id)).size}};
 }
 /**
@@ -95,6 +123,7 @@ export function buildDay(data,date,{now=new Date(),pencils=[]}={}){
 export function timeMap(day,{hour=56,minGap=150,edge=30,band=54}={}){
  const start=day.startHour*60,end=day.endHour*60,busy=[];
  for(const b of day.blocks)busy.push([b.top,b.bottom]);
+ for(const g of day.ghosts||[])busy.push([g.top,g.bottom]);
  for(const d of day.deadlines)busy.push([d.at-25,d.at+25]);
  if(day.nowMin!=null)busy.push([day.nowMin-25,day.nowMin+25]);
  busy.sort((a,b)=>a[0]-b[0]);
@@ -123,10 +152,12 @@ export function buildWeek(data,weekStart,{now=new Date(),pencils=[]}={}){
  const stepIds=new Set(data.events.filter(e=>e.stepId).map(e=>e.stepId));
  const days=Array.from({length:7},(_,i)=>{
   const d=plusDays(start,i),key=dateKey(d);
-  const items=occ.filter(o=>o.date===key).map(o=>({kind:o.kind,id:o.id,title:o.name,start:o.startsAt.slice(11,16),end:o.endsAt.slice(11,16),place:o.place||'',conflict:conflictIds.has(o.occurrenceId),minutes:(new Date(o.endsAt)-new Date(o.startsAt))/60000}));
+  const items=occ.filter(o=>o.date===key).map(o=>({kind:o.kind,id:o.id,title:o.name,start:o.startsAt.slice(11,16),end:o.endsAt.slice(11,16),place:o.place||'',conflict:conflictIds.has(o.occurrenceId),minutes:(new Date(o.endsAt)-new Date(o.startsAt))/60000,
+   recurring:!(data[o.kind==='course'?'courses':'events'].find(x=>x.id===o.id)?.date),occurrenceDate:o.originalDate||key,moved:!!o.originalDate}));
+  const ghosts=cancelledOn(data,key);
   const due=data.tasks.filter(t=>t.due&&t.due.slice(0,10)===key&&!stepIds.has(t.id)).map(t=>({id:t.id,title:t.title,time:t.due.slice(11,16),done:!!t.done,type:t.type||'task'}));
   const busy=items.reduce((n,x)=>n+x.minutes,0);
-  return {key,date:d,label:DAYNAMES[i],dom:d.getDate(),isToday:key===dateKey(now),isPast:key<dateKey(now),items,due,
+  return {key,date:d,label:DAYNAMES[i],dom:d.getDate(),isToday:key===dateKey(now),isPast:key<dateKey(now),items,ghosts,due,
    pencils:pencils.filter(p=>p.date===key).length,busyMinutes:busy};
  });
  const tasksDue=data.tasks.filter(t=>t.due&&!stepIds.has(t.id)&&new Date(t.due)>=start&&new Date(t.due)<end);

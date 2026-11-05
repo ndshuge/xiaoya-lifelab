@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {emptyStore,demoData} from '../../core.js';
 import {buildStudentAgentFeed} from '../../student-agent.js';
-import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,assignLanes,freeWindows,localAnswer,timeMap} from '../page-model.mjs';
+import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,assignLanes,freeWindows,localAnswer,timeMap,withException} from '../page-model.mjs';
+import {checkSchedule} from '../../domain.js';
 import {buildEnvelope} from '../envelope.mjs';
 
 const NOW=new Date('2026-11-05T10:00:00'); // Thursday
@@ -70,6 +71,27 @@ test('split proposals stack as a whole',()=>{
  const shown=day.blocks.filter(b=>b.type==='pencil');
  assert.deepEqual(shown.map(b=>b.id),['a']);
  assert.deepEqual(shown[0].others.map(o=>o.id),['b']);
+});
+test('one-off cancel leaves a ghost, removes the conflict and is reversible',()=>{
+ const d=demo();const lab=d.courses.find(c=>c.id==='demo-c1');
+ d.courses=d.courses.map(c=>c.id==='demo-c1'?withException(lab,'2026-11-04',{type:'cancel'}):c);
+ checkSchedule(d.courses.find(c=>c.id==='demo-c1'));
+ const wed=buildDay(d,'2026-11-04',{now:NOW});
+ assert.ok(!wed.blocks.some(b=>b.title==='电子技术实验'));
+ assert.deepEqual(wed.ghosts.map(g=>[g.title,g.exception,g.start]),[['电子技术实验','cancel','15:00']]);
+ assert.equal(wed.conflicts.length,0);
+ const restored=withException(d.courses.find(c=>c.id==='demo-c1'),'2026-11-04',null);
+ assert.deepEqual(restored.exceptions,[]);
+});
+test('one-off reschedule moves the occurrence to the target date and marks its origin',()=>{
+ const d=demo();const lab=d.courses.find(c=>c.id==='demo-c1');
+ const moved=withException(lab,'2026-11-04',{type:'replace',targetDate:'2026-11-06',start:'14:00',end:'15:40',place:'实验中心 B101'});
+ checkSchedule(moved);d.courses=d.courses.map(c=>c.id==='demo-c1'?moved:c);
+ const wed=buildDay(d,'2026-11-04',{now:NOW});assert.equal(wed.ghosts[0].exception,'replace');assert.equal(wed.ghosts[0].target.date,'2026-11-06');
+ const fri=buildDay(d,'2026-11-06',{now:NOW});const b=fri.blocks.find(x=>x.title==='电子技术实验');
+ assert.equal(b.start,'14:00');assert.equal(b.movedFrom,'2026-11-04');assert.equal(b.occurrenceDate,'2026-11-04');assert.equal(b.place,'实验中心 B101');
+ const next=buildDay(d,'2026-11-11',{now:NOW});assert.ok(next.blocks.some(x=>x.title==='电子技术实验'&&x.start==='15:00'),'other weeks unchanged');
+ const w=buildWeek(d,NOW,{now:NOW});assert.equal(w.days[2].ghosts.length,1);assert.ok(w.days[4].items.some(i=>i.moved));
 });
 test('free windows respect recorded events',()=>{
  const w=freeWindows(demo(),'2026-11-04',{now:NOW});

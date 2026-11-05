@@ -141,6 +141,33 @@ small{font-size:12px}
 .blk-step::after{content:"";position:absolute;inset:-8px}
 .blk-step.is-done{background:var(--sprout);border-color:var(--sprout)}
 .blk-step.is-done::before{content:"";position:absolute;left:9px;top:5px;width:6px;height:11px;border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg)}
+/* A cancelled / moved-away occurrence: the original slot keeps a struck-through trace. */
+.blk.ghost{left:8px;width:calc(100% - 18px);background:transparent;box-shadow:inset 0 0 0 1px var(--rule-strong);color:var(--ink-3);z-index:1;
+  background-image:linear-gradient(to bottom right,transparent calc(50% - .6px),var(--rule-strong) 50%,transparent calc(50% + .6px))}
+.blk.ghost .blk-title{text-decoration:line-through;text-decoration-color:var(--ink-3);font-weight:500}
+.blk.ghost .blk-meta{color:var(--ink-3)}
+.blk.ghost:hover{box-shadow:inset 0 0 0 1px var(--ink-2)}
+.blk.ink.is-moved{box-shadow:inset 3px 0 0 var(--sprout),inset 0 0 0 1px var(--sprout-soft)}
+.witem.ghost button{background:none;box-shadow:inset 0 0 0 1px var(--rule);color:var(--ink-3);text-decoration:line-through}
+.witem.is-moved button{box-shadow:inset 2px 0 0 var(--sprout)}
+.occ-choices{display:grid;gap:6px;margin:6px 0 4px}
+.occ-choice{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-radius:12px;box-shadow:inset 0 0 0 1px var(--rule);cursor:pointer;min-height:52px}
+.occ-choice:has(input:checked){box-shadow:inset 0 0 0 1.5px var(--ink);background:var(--paper)}
+.occ-choice input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ink);flex:0 0 auto}
+.occ-choice span{display:flex;flex-direction:column}.occ-choice b{font:600 15px var(--serif)}.occ-choice small{color:var(--ink-3)}
+.occ-replace{padding:4px 0 0 4px;border-left:1.5px dashed var(--pencil);padding-left:14px;margin-top:8px}
+/* designed confirmation */
+.confirm{border:0;padding:0;background:transparent;max-width:none;color:var(--ink)}
+.confirm::backdrop{background:rgba(18,20,24,.38);animation:fade .18s}
+.confirm[open] .confirm-card{animation:confirm-in .3s var(--spring) both}
+@keyframes confirm-in{from{transform:translateY(10px) scale(.98);opacity:0}}
+.confirm-card{width:min(420px,calc(100vw - 32px));background:var(--card);border-radius:18px;padding:22px 22px 18px;box-shadow:0 30px 80px -30px rgba(0,0,0,.55),0 0 0 1px var(--rule);margin:0}
+.confirm-card h2{margin:0 0 8px;font:700 19px/1.4 var(--serif)}
+.confirm-body p{margin:0 0 8px;color:var(--ink-2);font-size:14.5px;line-height:1.6}
+.confirm-body ul{margin:0 0 10px;padding-left:18px;color:var(--ink-2);font-size:13.5px;line-height:1.65}
+.confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.ink-btn.is-danger{background:var(--alarm)}
+.ink-btn:disabled{opacity:.4;cursor:not-allowed}
 .sprout-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--sprout);margin-right:6px;vertical-align:1px}
 .blk.pencil{background:repeating-linear-gradient(-45deg,transparent 0 6px,var(--hatch) 6px 7px);border:1.5px dashed var(--pencil);color:var(--pencil-dark);z-index:3}
 .blk.pencil .blk-title{font:600 14px/1.3 var(--serif)}.blk.pencil .blk-meta{color:var(--pencil)}

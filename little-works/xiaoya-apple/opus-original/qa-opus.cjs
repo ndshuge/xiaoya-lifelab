@@ -119,6 +119,53 @@ async function run(browserType,label){
    await page.locator('#sheet-ok').click();
    await page.waitForFunction(()=>window.__XY_OPUS.getData().events.some(e=>e.name==='图书馆复习'&&e.date==='2026-11-05'));
   });
+  await step(label+' course exceptions: cancel one Wednesday, restore it, reschedule it to Friday',async()=>{
+   page.once('dialog',()=>{throw Error('native dialog must not appear')});
+   await page.evaluate(()=>{window.__XY_OPUS.ui.date='2026-11-04';window.__XY_OPUS.render()});
+   await page.locator('.blk.ink.course',{hasText:'电子技术实验'}).click();
+   await page.locator('#sheet[open] .occ-choices').waitFor();
+   assert.ok(await page.locator('#occ-replace').isHidden());
+   await page.locator('.occ-choice',{hasText:'这一次停课'}).click();
+   await shot(page,label+'-desktop-occurrence');
+   await page.locator('#sheet-ok').click();
+   await page.locator('.blk.ghost',{hasText:'本次停课'}).waitFor();
+   assert.equal(await page.locator('.blk.ink',{hasText:'电子技术实验'}).count(),0);
+   assert.equal(await page.locator('.blk.is-conflict').count(),0,'cancelling removes the club conflict');
+   await shot(page,label+'-desktop-cancelled');
+   await page.locator('.blk.ghost').click();
+   await page.locator('.occ-choice',{hasText:'恢复原安排'}).click();
+   await page.locator('#sheet-ok').click();
+   await page.locator('.blk.ink.course',{hasText:'电子技术实验'}).waitFor();
+   await page.locator('.blk.ink.course',{hasText:'电子技术实验'}).click();
+   await page.locator('.occ-choice',{hasText:'这一次调课'}).click();
+   assert.ok(await page.locator('#occ-replace').isVisible());
+   await page.locator('#occ-replace input[name=targetDate]').fill('2026-11-06');
+   await page.locator('#occ-replace input[name=start]').fill('14:00');
+   await page.locator('#occ-replace input[name=end]').fill('15:40');
+   await page.locator('#sheet-ok').click();
+   await page.waitForFunction(()=>window.__XY_OPUS.ui.date==='2026-11-06');
+   await page.locator('.blk.ink.is-moved',{hasText:'调课自'}).waitFor();
+   const lab=(await data()).courses.find(c=>c.id==='demo-c1');
+   assert.deepEqual(lab.exceptions.map(e=>[e.date,e.type,e.targetDate,e.start]),[['2026-11-04','replace','2026-11-06','14:00']]);
+   await shot(page,label+'-desktop-moved');
+   await page.locator('[data-day-today]').click();
+  });
+  await step(label+' designed confirm: cancel keeps, confirm deletes, 擦掉 restores',async()=>{
+   page.once('dialog',()=>{throw Error('native dialog must not appear')});
+   await page.locator('.slip-title',{hasText:'买洗衣液'}).click();
+   await page.locator('[data-delete="task"]').click();
+   await page.locator('#confirm[open]').waitFor();
+   assert.equal(await page.evaluate(()=>document.activeElement.id),'confirm-cancel','destructive confirm focuses the safe choice');
+   await shot(page,label+'-desktop-confirm');
+   await page.keyboard.press('Escape');
+   await page.waitForFunction(()=>!document.querySelector('#confirm').open);
+   assert.ok((await data()).tasks.some(t=>t.title==='买洗衣液'),'Escape cancels');
+   await page.locator('[data-delete="task"]').click();
+   await page.locator('#confirm-ok').click();
+   await page.waitForFunction(()=>!window.__XY_OPUS.getData().tasks.some(t=>t.title==='买洗衣液'));
+   await page.locator('#whisper [data-whisper-action]').click();
+   await page.waitForFunction(()=>window.__XY_OPUS.getData().tasks.some(t=>t.title==='买洗衣液'));
+  });
   await step(label+' journal footer: mood draft stays unsaved until 合上, persists across reload, private key',async()=>{
    await page.locator('.mood[data-mood="4"]').click();
    assert.equal(await page.locator('#journal-status').innerText(),'未保存');
@@ -145,7 +192,7 @@ async function run(browserType,label){
    await page.locator('#sheet-body textarea[name=note]').fill('练了 30 分钟基础节奏');
    await page.locator('#sheet-body input[name=minutes]').fill('30');
    const kept=await page.locator('#sheet-body textarea[name=note]').inputValue();
-   assert.equal(kept,'练了 30 分钟基础节奏','sheet content must not be replaced while typing; title='+await page.locator('#sheet-title').innerText()+' open='+await page.evaluate(()=>document.querySelector('#sheet').open)+' focus='+await page.evaluate(()=>document.activeElement?.name||document.activeElement?.id));
+   assert.equal(kept,'练了 30 分钟基础节奏','sheet content must not be replaced while typing; value='+JSON.stringify(kept)+' textareas='+await page.locator('#sheet-body textarea').count()+' title='+await page.locator('#sheet-title').innerText()+' open='+await page.evaluate(()=>document.querySelector('#sheet').open)+' focus='+await page.evaluate(()=>document.activeElement?.name||document.activeElement?.id));
    await page.locator('#sheet-ok').click();
    await page.waitForFunction(()=>window.__XY_OPUS.getData().checkins.length===1,null,{timeout:5000}).catch(async e=>{throw Error('check-in not saved; whisper="'+await page.locator('#whisper').innerText()+'"')});
    assert.ok(await page.locator('.lgrid-cell.is-current .knot:not(.is-hollow):not(.is-pencil)').count()>=1,'knot drawn in current week');
@@ -154,7 +201,7 @@ async function run(browserType,label){
    await shot(page,label+'-desktop-line');
   });
   await step(label+' growth route: two pencil routes, ink one creates goal + 3 stage tasks',async()=>{
-   page.once('dialog',d=>d.accept());
+   page.once('dialog',()=>{throw Error('native dialog must not appear')});
    await page.locator('[data-routes]').click();
    await page.locator('#sheet-body input[name=goal]').fill('从零学 Python');
    await page.locator('#sheet-body input[name=baseline]').fill('零基础');
@@ -163,8 +210,12 @@ async function run(browserType,label){
    await shot(page,label+'-desktop-routes');
    const before=(await data()).tasks.length;
    await page.locator('[data-route-ink="project"]').click();
+   await page.locator('#confirm[open]').waitFor();
+   assert.match(await page.locator('#confirm-body').innerText(),/阶段 3/);
+   await page.locator('#confirm-ok').click();
    await page.waitForFunction(n=>window.__XY_OPUS.getData().tasks.length===n+3,before);
    assert.ok((await data()).goals.some(g=>g.growthPlan?.routeId==='project'));
+   const tx=(await data()).transactions.at(-1);assert.match(tx.title,/种下长线/);assert.equal(tx.changes.length,4,'route is one erasable transaction');
   });
   await step(label+' model connection: consent required, 401 is explained, success shows envelope; payload holds only chosen scopes',async()=>{
    let lastBody=null;

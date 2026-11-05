@@ -13,7 +13,7 @@ import {createContextActionController} from '../context-actions.js';
 import {fetchCityForecast} from '../weather-forecast.js';
 import {buildGrowthRoutes,commitGrowthRoute,summarizeGrowthWorkload,growthStageTasks} from '../growth-simulator.js';
 import {parseLine} from './line-parser.mjs';
-import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,shortDay,DAYNAMES} from './page-model.mjs';
+import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,shortDay,DAYNAMES} from './page-model.mjs';
 import {createTalk} from './talk.mjs';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
@@ -91,6 +91,25 @@ function markFresh(tx){
  ui.fresh=new Set((tx?.changes||[]).filter(c=>c.key==='events'&&c.after).map(c=>c.after.id));
  setTimeout(()=>{ui.fresh.clear();$$('.is-fresh').forEach(n=>n.classList.remove('is-fresh'))},1600);
 }
+
+// ---------- designed confirmation (replaces window.confirm) ----------
+// Returns a Promise<boolean>. Destructive confirmations focus the safe choice; irreversible ones can require
+// an explicit acknowledgement checkbox before the confirm button enables.
+function askConfirm({title,body='',facts=[],ok='确认',cancel='取消',danger=false,acknowledge=''}){
+ return new Promise(resolve=>{
+  const dlg=$('#confirm'),okBtn=$('#confirm-ok'),cancelBtn=$('#confirm-cancel');
+  $('#confirm-title').textContent=title;
+  $('#confirm-body').innerHTML=(body?'<p>'+esc(body)+'</p>':'')+(facts.length?'<ul>'+facts.map(f=>'<li>'+esc(f)+'</li>').join('')+'</ul>':'')+
+   (acknowledge?'<label class="check"><input type="checkbox" id="confirm-ack"> '+esc(acknowledge)+'</label>':'');
+  okBtn.textContent=ok;cancelBtn.textContent=cancel;okBtn.classList.toggle('is-danger',danger);okBtn.disabled=!!acknowledge;
+  $('#confirm-ack')?.addEventListener('change',e=>{okBtn.disabled=!e.target.checked});
+  const done=()=>{dlg.removeEventListener('close',done);resolve(dlg.returnValue==='ok')};
+  dlg.returnValue='cancel';dlg.addEventListener('close',done);
+  dlg.showModal();
+  requestAnimationFrame(()=>(danger||acknowledge?cancelBtn:okBtn).focus({preventScroll:true}));
+ });
+}
+$('#confirm').addEventListener('click',e=>{if(e.target===$('#confirm')){$('#confirm').returnValue='cancel';$('#confirm').close()}});
 
 // ---------- sheet ----------
 let sheetHandler=null,sheetClosing=null;
@@ -188,9 +207,13 @@ function renderDay(data){
    const open=ui.open===b.id;
    return '<button type="button" class="blk pencil'+compact+(open?' is-open':'')+'" data-expand="'+esc(b.id)+'" style="top:'+y+'px;height:'+hgt+'px;'+lane+'" aria-label="铅笔建议：'+esc(b.title)+' '+b.start+'–'+b.end+'，点开看依据"><span class="blk-title">'+esc(b.title)+'</span><span class="blk-meta">'+b.start+'–'+b.end+(b.steps>1?' · 第 '+(b.step+1)+'/'+b.steps+' 段':'')+' · 铅笔</span>'+(b.others.length?'<span class="blk-stack">另有 '+b.others.length+' 笔也想用这段时间</span>':'')+'</button>';
   }
-  return '<button type="button" class="blk ink '+b.kind+compact+(b.conflict?' is-conflict':'')+(ui.fresh.has(b.id)?' is-fresh':'')+'" data-edit="'+b.kind+'" data-id="'+esc(b.id)+'" style="top:'+y+'px;height:'+hgt+'px;'+lane+'"><span class="blk-title">'+(b.fromAgent?'<i class="sprout-dot" title="小芽建议、你已批准"></i>':'')+esc(b.title)+'</span><span class="blk-meta">'+b.start+'–'+b.end+(b.place?' · '+esc(b.place):'')+(b.conflict?' · 重叠':'')+(b.step?.done?' · 做完了':'')+'</span></button>'+
+  const target=b.recurring?'data-occurrence="'+b.kind+'|'+esc(b.id)+'|'+b.occurrenceDate+'"':'data-edit="'+b.kind+'" data-id="'+esc(b.id)+'"';
+  const moved=b.movedFrom?(b.movedFrom===ui.date?' · 本次改时间':' · 调课自 '+shortDay(b.movedFrom)):'';
+  return '<button type="button" class="blk ink '+b.kind+compact+(b.conflict?' is-conflict':'')+(b.movedFrom?' is-moved':'')+(ui.fresh.has(b.id)?' is-fresh':'')+'" '+target+' style="top:'+y+'px;height:'+hgt+'px;'+lane+'"><span class="blk-title">'+(b.fromAgent?'<i class="sprout-dot" title="小芽建议、你已批准"></i>':'')+esc(b.title)+'</span><span class="blk-meta">'+b.start+'–'+b.end+(b.place?' · '+esc(b.place):'')+moved+(b.conflict?' · 重叠':'')+(b.step?.done?' · 做完了':'')+'</span></button>'+
    (b.step?'<button type="button" class="blk-step'+(b.step.done?' is-done':'')+'" style="top:'+(y+Math.min(hgt/2,22)-14)+'px" data-toggle-task="'+esc(b.step.id)+'" aria-pressed="'+b.step.done+'" aria-label="'+(b.step.done?'恢复':'完成')+'这一段：'+esc(b.title)+'"></button>':'');
  }).join('');
+ const ghosts=(day.ghosts||[]).map(g=>{const y=top(g.top),hgt=Math.max(26,top(g.bottom)-y-2);
+  return '<button type="button" class="blk ghost'+(hgt<44?' is-compact':'')+'" data-occurrence="'+g.kind+'|'+esc(g.id)+'|'+ui.date+'" style="top:'+y+'px;height:'+hgt+'px" aria-label="'+esc(g.title)+(g.exception==='cancel'?' 本次停课':' 本次已调走')+'，点按恢复或修改"><span class="blk-title">'+esc(g.title)+'</span><span class="blk-meta">'+g.start+'–'+g.end+' · '+(g.exception==='cancel'?'本次停课':'调到 '+(g.target.date===ui.date?'':shortDay(g.target.date)+' ')+g.target.start)+'</span></button>'}).join('');
  const lines=day.deadlines.map(d=>'<div class="due-line'+(d.done?' is-done':'')+(d.overdue?' is-overdue':'')+'" style="top:'+top(d.at)+'px"><button type="button" class="due-check" data-toggle-task="'+esc(d.id)+'" aria-label="'+(d.done?'恢复':'完成')+'「'+esc(d.title)+'」" aria-pressed="'+d.done+'"></button><button type="button" class="due-label" data-edit="task" data-id="'+esc(d.id)+'"><b>'+d.time+(d.done?' 已交':' 截止')+'</b>'+esc(d.title)+'</button></div>').join('');
  const nowLine=day.nowMin!==null&&day.nowMin>=day.startHour*60&&day.nowMin<=day.endHour*60?'<div class="past" style="height:'+top(day.nowMin)+'px"></div><div class="now-line" style="top:'+top(day.nowMin)+'px"><span>'+pad(now.getHours())+':'+pad(now.getMinutes())+'</span></div>':(ui.date<today?'<div class="past" style="height:100%"></div>':'');
  // Margin: pencil notes on this date, plus actionless notes and context notes on today.
@@ -208,7 +231,7 @@ function renderDay(data){
   (isEmptyArchive(data)?'<div class="starter" aria-label="试着写一行"><span>试着写一行：</span>'+['周五前交实验报告 90分钟','明天下午3点到5点 社团例会 @创新中心','每周跑步两次','买洗衣液'].map(s=>'<button type="button" data-try="'+esc(s)+'">'+esc(s)+'</button>').join('')+'<button type="button" class="starter-alt" data-import-cal>或导入课表</button></div>':'')+
   '<div class="paper"><div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
    '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+
-   '<div class="ribbon" data-ribbon data-map="'+esc(JSON.stringify(map.segments.map(s=>[Math.round(s.y0),Math.round(s.y1),s.m0,s.m1,s.band?1:0])))+'" aria-label="'+esc(md(ui.date))+'时间带。点击空白处安排一件事。">'+hours.map(i=>'<span class="rule" style="top:'+top(i*60)+'px"></span>').join('')+bands+nowLine+blocks+lines+
+   '<div class="ribbon" data-ribbon data-map="'+esc(JSON.stringify(map.segments.map(s=>[Math.round(s.y0),Math.round(s.y1),s.m0,s.m1,s.band?1:0])))+'" aria-label="'+esc(md(ui.date))+'时间带。点击空白处安排一件事。">'+hours.map(i=>'<span class="rule" style="top:'+top(i*60)+'px"></span>').join('')+bands+nowLine+ghosts+blocks+lines+
    '</div>'+
   '</div><aside class="margin" id="margin" aria-label="页边批注">'+margin+'</aside></div>'+
   renderPocket(data,now)+ahead+renderFooter(ui.date,now)+'</section>';
@@ -259,9 +282,10 @@ function renderWeek(data){
   '<p class="voice"><img src="'+assetFace(3)+'" alt="" width="30" height="30">'+esc(weekSentence(w))+'</p>'+
   '<ol class="week-grid">'+w.days.map(d=>'<li class="wday'+(d.isToday?' is-today':'')+(d.isPast?' is-past':'')+'"><button type="button" class="wday-head" data-goto-day="'+d.key+'"><span>'+d.label+'</span><b>'+d.dom+'</b>'+(d.pencils?'<i class="pencil-count" title="'+d.pencils+' 笔铅笔建议">✎'+d.pencils+'</i>':'')+'</button>'+
    '<span class="busy" style="--busy:'+Math.min(1,d.busyMinutes/600)+'" title="已记录 '+Math.round(d.busyMinutes/6)/10+' 小时"></span>'+
-   '<ul>'+d.items.map(x=>'<li class="witem '+x.kind+(x.conflict?' is-conflict':'')+'"><button type="button" data-edit="'+x.kind+'" data-id="'+esc(x.id)+'"><time>'+x.start+'</time>'+esc(x.title)+'</button></li>').join('')+
+   '<ul>'+d.items.map(x=>'<li class="witem '+x.kind+(x.conflict?' is-conflict':'')+(x.moved?' is-moved':'')+'"><button type="button" '+(x.recurring?'data-occurrence="'+x.kind+'|'+esc(x.id)+'|'+x.occurrenceDate+'"':'data-edit="'+x.kind+'" data-id="'+esc(x.id)+'"')+'><time>'+x.start+(x.moved?' · 调课':'')+'</time>'+esc(x.title)+'</button></li>').join('')+
+   d.ghosts.map(g=>'<li class="witem ghost"><button type="button" data-occurrence="'+g.kind+'|'+esc(g.id)+'|'+d.key+'"><time>'+g.start+' · '+(g.exception==='cancel'?'停课':'已调走')+'</time>'+esc(g.title)+'</button></li>').join('')+
    d.due.map(t=>'<li class="wdue'+(t.done?' is-done':'')+'"><button type="button" data-edit="task" data-id="'+esc(t.id)+'"><time>'+t.time+'</time>'+esc(t.title)+'</button></li>').join('')+
-   (!d.items.length&&!d.due.length?'<li class="wempty">—</li>':'')+'</ul></li>').join('')+'</ol>'+
+   (!d.items.length&&!d.due.length&&!d.ghosts.length?'<li class="wempty">—</li>':'')+'</ul></li>').join('')+'</ol>'+
   '<div class="tools"><button type="button" class="ghost-btn" data-new="course">添加每周课程</button><button type="button" class="ghost-btn" data-new="event">添加活动</button><button type="button" class="ghost-btn" data-import-cal>导入课表 CSV / ICS</button><button type="button" class="ghost-btn" data-export-ics>导出日历 .ics</button></div>'+
   '<p class="legend"><span class="lg course">课程</span><span class="lg event">活动</span><span class="lg due">截止（时刻）</span><span class="lg pencil">✎ 铅笔建议</span><span class="lg conflict">重叠</span></p></section>';
 }
@@ -460,11 +484,50 @@ function toggleGoal(id){
  const g=state().goals.find(x=>x.id===id);if(!g)return;
  ink(d=>{const x=d.goals.find(v=>v.id===id);x.done=!x.done;x.completedAt=x.done?new Date().toISOString():null},g.done?'目标重新开始：'+g.title:'这根长线完成了：'+g.title,{celebrate:!g.done});
 }
-function deleteRecord(kind,id){
+async function deleteRecord(kind,id){
  const key={task:'tasks',goal:'goals',course:'courses',event:'events'}[kind];const x=state()[key]?.find(v=>v.id===id);if(!x)return;
- if(!confirm('删除「'+(x.title||x.name)+'」？之后可以在「笔迹」或提示里擦掉这次删除。'))return;
+ const checkins=kind==='goal'?state().checkins.filter(c=>c.goalId===id).length:0;
+ const recurring=(kind==='course'||kind==='event')&&!x.date;
+ if(!await askConfirm({title:'删除「'+(x.title||x.name)+'」？',danger:true,ok:'删除',
+  facts:[recurring?'这是每周重复的安排，所有周次都会消失；只想取消某一次，请用「这一次停课」。':'',checkins?'连同 '+checkins+' 次行动记录一起删除。':'','可以在「笔迹」里擦掉这次删除。'].filter(Boolean)}))return;
  closeSheet();
  ink(d=>{d[key]=d[key].filter(v=>v.id!==id);if(kind==='goal')d.checkins=d.checkins.filter(c=>c.goalId!==id);d.history.unshift({id:uid(),at:new Date().toISOString(),action:'deleted',description:'删除：'+(x.title||x.name)})},'已删除：'+(x.title||x.name));
+}
+
+// ---------- one occurrence of a recurring course / weekly event: 停课 · 调课 · 恢复 ----------
+function occurrenceSheet(kind,id,date){
+ const key=kind==='course'?'courses':'events',x=state()[key].find(v=>v.id===id);if(!x)return;
+ const ex=(x.exceptions||[]).find(e=>e.date===date&&e.type!=='add');
+ const label=kind==='course'?'课':'活动';
+ const status=ex?(ex.type==='cancel'?'这一次已停课。':'这一次已调到 '+shortDay(ex.targetDate||ex.date)+' '+ex.start+'–'+ex.end+(ex.place?' · '+ex.place:'')+'。'):'';
+ const tgt=ex?.type==='replace'?ex:{targetDate:date,start:x.start,end:x.end,place:x.place||''};
+ openSheet(x.name+' · '+shortDay(date),
+  '<p class="sheet-lede">'+(status?esc(status)+' ':'')+'每周 '+DAYNAMES[x.day]+' '+x.start+'–'+x.end+(x.place?' · '+esc(x.place):'')+'。下面的改动只影响 '+esc(md(date))+' 这一次，其他周不变。</p>'+
+  '<div class="occ-choices" role="radiogroup" aria-label="这一次怎么安排">'+
+   [['keep',ex?'恢复原安排':'照常上'+label,ex?'撤销这一次的停课或调课':'不做改动'],['cancel','这一次停'+(kind==='course'?'课':'掉'),'时间带上会留下一道划掉的痕迹'],['replace','这一次调'+(kind==='course'?'课':'时间'),'换到另一天、另一个时段或教室']]
+   .map(([v,t,s])=>'<label class="occ-choice"><input type="radio" name="occ" value="'+v+'"'+((ex?.type||'keep')===v?' checked':'')+'><span><b>'+t+'</b><small>'+s+'</small></span></label>').join('')+'</div>'+
+  '<div class="occ-replace" id="occ-replace">'+field('调到哪天','targetDate',tgt.targetDate||date,'date')+'<div class="row2">'+field('开始','start',tgt.start,'time')+field('结束','end',tgt.end,'time')+'</div>'+field('地点（可选）','place',tgt.place??'')+'</div>'+
+  '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-edit="'+kind+'" data-id="'+esc(id)+'">修改整门'+label+'（所有周）</button></div>',
+  {ok:'落墨',onOk:form=>saveOccurrence(kind,id,date,form)});
+ const sync=()=>{$('#occ-replace').hidden=$('#sheet-body input[name=occ]:checked')?.value!=='replace'};
+ $$('#sheet-body input[name=occ]').forEach(r=>r.addEventListener('change',sync));sync();
+}
+function saveOccurrence(kind,id,date,form){
+ const key=kind==='course'?'courses':'events',x=state()[key].find(v=>v.id===id);if(!x)return true;
+ const choice=form.get('occ');let change=null;
+ if(choice==='cancel')change={type:'cancel'};
+ if(choice==='replace'){
+  change={type:'replace',targetDate:String(form.get('targetDate')||''),start:String(form.get('start')||''),end:String(form.get('end')||''),place:String(form.get('place')||'')};
+  if(!change.targetDate||!change.start||!change.end)return whisper('请填写调到的日期和起止时间',null,'error'),false;
+  if(change.start===change.end)return whisper('开始和结束时间不能相同',null,'error'),false;
+ }
+ const next=withException(x,date,change);
+ try{checkSchedule(next)}catch(e){whisper(e.message,null,'error');return false}
+ if(JSON.stringify(next.exceptions||[])===JSON.stringify(x.exceptions||[]))return true;
+ const msg=choice==='cancel'?md(date)+' 的「'+x.name+'」停了':choice==='replace'?'「'+x.name+'」这一次调到 '+shortDay(change.targetDate)+' '+change.start:'「'+x.name+'」恢复原安排';
+ const ok=ink(d=>{d[key]=d[key].map(v=>v.id===id?next:v);d.history.unshift({id:uid(),at:new Date().toISOString(),action:'edited',description:msg})},msg);
+ if(ok&&choice==='replace'&&change.targetDate!==ui.date){ui.date=change.targetDate;render()}
+ return ok;
 }
 
 // ---------- slot placement (user-initiated, still confirmed) ----------
@@ -477,7 +540,7 @@ function slotSheet(minute){
   (pocket.length?'<fieldset class="pick"><legend>或者，从口袋里拿一件</legend>'+pocket.map(t=>'<label class="check"><input type="radio" name="task" value="'+esc(t.id)+'"> '+esc(t.title)+' <small>约 '+(t.minutes||30)+' 分钟</small></label>').join('')+'</fieldset>':''),
   {ok:'落墨',onOk:form=>placeEvent(form)});
 }
-function placeEvent(form){
+async function placeEvent(form){
  const f=Object.fromEntries(form);const task=f.task?state().tasks.find(t=>t.id===f.task):null;
  const name=(task?.title||f.name||'').trim();if(!name)return whisper('写个名称，或从口袋里选一件',null,'error'),false;
  const len=task?Math.max(15,Math.min(240,Number(task.minutes)||30)):Number(f.len)||60;
@@ -485,7 +548,7 @@ function placeEvent(form){
  const ev={id:uid(),name:name.slice(0,160),date:ui.date,day:weekday(new Date(ui.date+'T12:00')),start:f.start,end:pad(Math.floor(total/60))+':'+pad(total%60),place:'',weekStart:1,weekEnd:54,parity:'all',exceptions:[],taskId:task?.id||'',createdAt:new Date().toISOString()};
  try{checkSchedule(ev)}catch(e){whisper(e.message,null,'error');return false}
  const clash=occurrences(state(),new Date(ui.date+'T'+ev.start),new Date(ui.date+'T'+ev.end));
- if(clash.length&&!confirm('这段时间已有「'+clash[0].name+'」。仍然放进去吗？'))return false;
+ if(clash.length&&!await askConfirm({title:'这段时间已有安排',body:ev.start+'–'+ev.end+' 与「'+clash[0].name+'」（'+clash[0].start+'–'+clash[0].end+'）重叠。',facts:['仍然放进去会在时间带上标出重叠，小芽可能会建议挪开。'],ok:'仍然放进去',cancel:'换个时间'}))return false;
  return ink(d=>{d.events.push(ev);d.history.unshift({id:uid(),at:new Date().toISOString(),action:'added',description:'安排：'+ev.name})},'落墨：'+ev.start+' '+ev.name);
 }
 function placeToday(taskId){
@@ -563,12 +626,19 @@ function generateRoutes(){
  const form=new FormData($('#sheet-form'));routeForm={goal:String(form.get('goal')||'').trim(),baseline:String(form.get('baseline')||'').trim(),hours:form.get('hours'),weeks:Number(form.get('weeks'))};
  try{const d=state();ui.routes=buildGrowthRoutes({...routeForm,pendingCount:d.tasks.filter(t=>!t.done).length,workload:summarizeGrowthWorkload(d,new Date())});ui.routes._basis=d.revision;routesSheet()}catch(e){whisper(e.message,null,'error')}
 }
-function inkRoute(routeId){
+async function inkRoute(routeId){
  const plan=ui.routes;if(!plan||plan._basis!==state().revision){whisper('档案变化了，请重新生成路线',null,'error');return}
- const tasks=growthStageTasks(plan,routeId,new Date());
- if(!confirm('落墨「'+plan.routes.find(r=>r.id===routeId).name+'」：新增 1 个目标和 '+tasks.length+' 个阶段事项（'+tasks.map(t=>t.due.slice(5,10)).join('、')+' 截止）。'))return;
- try{const r=commitGrowthRoute(state(),plan,routeId,new Date(),()=>uid());store.replace(r.next);ui.routes=null;closeSheet();setScale('line');render();whisper('种下了：'+plan.goal+' · '+r.route.name);setXiaoya('happy')}
- catch(e){whisper(e.message,null,'error')}
+ const tasks=growthStageTasks(plan,routeId,new Date()),route=plan.routes.find(r=>r.id===routeId);
+ if(!await askConfirm({title:'落墨「'+route.name+'」？',body:'把「'+plan.goal+'」种成一根长线：',facts:['新增 1 个目标（每周 1 次）',...tasks.map((t,i)=>'阶段 '+(i+1)+'：'+t.title.replace(plan.goal+' · ','')+' · '+t.due.slice(5,10).replace('-','/')+' 截止'),'之后可以在「笔迹」里整体擦掉'],ok:'落墨'}))return;
+ try{
+  const r=commitGrowthRoute(state(),plan,routeId,new Date(),()=>uid());
+  // Record the route as one transaction so it can be erased like any other ink.
+  const tx={id:uid(),at:new Date().toISOString(),title:'种下长线：'+plan.goal+' · '+r.route.name,status:'executed',
+   changes:[{key:'goals',id:r.goal.id,before:null,after:structuredClone(r.goal)},...r.tasks.map(t=>({key:'tasks',id:t.id,before:null,after:structuredClone(t)}))]};
+  r.next.transactions.push(tx);
+  store.replace(r.next);ui.routes=null;closeSheet();setScale('line');render();
+  whisper('种下了：'+plan.goal+' · '+r.route.name,{label:'擦掉',run:()=>erase(tx.id)});setXiaoya('happy');
+ }catch(e){whisper(e.message,null,'error')}
 }
 
 // ---------- engine pencils: preview → approve / reject / snooze ----------
@@ -606,9 +676,13 @@ function saveJournal(){
  try{journal.save({date,mood,note,tags:entry?.tags||[]});drafts.delete(draftKey(date));render();whisper('合上了这一页（只存在这台设备）');setXiaoya(mood&&mood<=2?'care':'nod')}
  catch(e){whisper(e.message,null,'error')}
 }
-function deleteJournal(){
- if(!confirm('删除 '+md(ui.date)+' 的心情和日记？这不能撤销。'))return;
- try{journal.remove(ui.date);drafts.delete(draftKey(ui.date));render();whisper('已删除这一页')}catch(e){whisper(e.message,null,'error')}
+async function deleteJournal(){
+ const date=ui.date,entry=journalAll().find(e=>e.date===date);if(!entry)return;
+ if(!await askConfirm({title:'删除 '+md(date)+' 这一页？',danger:true,ok:'删除',facts:[(entry.mood?'心情：'+MOODS[entry.mood-1][1]:'未记心情')+(entry.note?' · '+entry.note.slice(0,30)+(entry.note.length>30?'…':''):''),'日记只存在这台设备上；删除后只能在几秒内撤回。']}))return;
+ try{
+  journal.remove(date);drafts.delete(draftKey(date));render();
+  whisper('已删除这一页',{label:'撤回',run:()=>{try{journal.save(entry);render();whisper('这一页回来了')}catch(e){whisper(e.message,null,'error')}}});
+ }catch(e){whisper(e.message,null,'error')}
 }
 
 // ---------- cover (archive, consent, settings) ----------
@@ -655,8 +729,10 @@ async function coverAction(name){
  if(name==='export'){download(JSON.stringify({...state(),journalV1:journalAll(),exportedAt:new Date().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(new Date())+'.json');whisper('已导出当前档案（含日记）');return}
  if(name==='import'){$('#import-json').click();return}
  if(name==='clear'){
-  if(!confirm('清空当前'+(store.mode()==='demo'?'演示':'私人')+'档案和日记？建议先导出备份。'))return;
-  if(!confirm('再次确认：清空后不能撤销。'))return;
+  const d=state(),pages=journalAll().length;
+  if(!await askConfirm({title:'清空'+(store.mode()==='demo'?'演示':'私人')+'档案？',danger:true,ok:'清空',
+   facts:[d.tasks.length+' 个事项、'+d.courses.length+' 门课、'+d.events.length+' 个活动、'+d.goals.length+' 个目标、'+pages+' 页日记会全部删除。','这一步不能擦掉。建议先用「导出备份」保存一份。'],
+   acknowledge:'我已备份，或确认不再需要这些记录'}))return;
   store.replace(emptyStore());journal.clear();for(const k of [...drafts.keys()])if(k.startsWith(store.mode()+':'))drafts.delete(k);closeSheet();render();whisper('已清空');return;
  }
  if(name==='weather'){
@@ -679,7 +755,11 @@ $('#import-json').addEventListener('change',async e=>{
  const file=e.target.files[0];e.target.value='';if(!file)return;
  try{
   const incoming=JSON.parse(await file.text()),next=validateStore(incoming),entries=incoming.journalV1===undefined?null:validateJournalArchive(incoming.journalV1);
-  if(!confirm('用「'+file.name+'」覆盖当前'+(store.mode()==='demo'?'演示':'私人')+'档案？包含 '+next.tasks.length+' 个事项、'+next.courses.length+' 门课'+(entries?'、'+entries.length+' 页日记':'')+'。'))return;
+  const cur=state();
+  if(!await askConfirm({title:'用备份覆盖当前'+(store.mode()==='demo'?'演示':'私人')+'档案？',danger:true,ok:'覆盖恢复',
+   facts:['备份「'+file.name+'」：'+next.tasks.length+' 个事项、'+next.courses.length+' 门课、'+next.goals.length+' 个目标'+(entries?'、'+entries.length+' 页日记':'（不含日记，现有日记保留）'),
+    '当前档案：'+cur.tasks.length+' 个事项、'+cur.courses.length+' 门课、'+cur.goals.length+' 个目标，会被替换。'],
+   acknowledge:'我知道当前档案会被覆盖'}))return;
   store.replace(next);if(entries)journal.replace(entries);closeSheet();render();whisper('已从备份恢复'+(entries?'（含日记）':'（文件不含日记）'));
  }catch(err){whisper('恢复失败：'+err.message,null,'error')}
 });
@@ -710,6 +790,7 @@ document.addEventListener('click',e=>{
  if(ds.approveContext)return approve(ds.approveContext,true);
  if(ds.snooze)return respond(ds.snooze,'snooze');
  if(ds.reject)return respond(ds.reject,'reject');
+ if(ds.occurrence){const [k,id,date]=ds.occurrence.split('|');return occurrenceSheet(k,id,date)}
  if(ds.edit){closeSheet();return setTimeout(()=>editSheet(ds.edit,ds.id),$('#sheet').open&&!reduced()?190:0)}
  if(ds.new)return editSheet(ds.new,'',ds.new==='event'?{date:ui.date}:{});
  if(ds.toggleTask){toggleTask(ds.toggleTask);if($('#sheet').open&&t.closest('.stages'))goalSheet(state().tasks.find(x=>x.id===ds.toggleTask)?.goalId);return}

@@ -80,6 +80,13 @@
   </form>
 </dialog>
 
+<dialog class="confirm" id="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+  <form method="dialog" class="confirm-card">
+    <h2 id="confirm-title">确认</h2>
+    <div id="confirm-body" class="confirm-body"></div>
+    <div class="confirm-actions"><button type="submit" value="cancel" class="ghost-btn" id="confirm-cancel">取消</button><button type="submit" value="ok" class="ink-btn" id="confirm-ok">确认</button></div>
+  </form>
+</dialog>
 <div class="whisper" id="whisper" role="status" aria-live="polite"></div>
 <input type="file" id="import-json" accept=".json,application/json" hidden>
 <input type="file" id="import-cal" accept=".csv,.ics,text/calendar,text/csv" hidden>
