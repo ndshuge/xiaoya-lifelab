@@ -142,7 +142,7 @@ small{font-size:12px}
 .blk-step.is-done{background:var(--sprout);border-color:var(--sprout)}
 .blk-step.is-done::before{content:"";position:absolute;left:9px;top:5px;width:6px;height:11px;border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg)}
 /* A cancelled / moved-away occurrence: the original slot keeps a struck-through trace. */
-.blk.ghost{left:8px;width:calc(100% - 18px);background:transparent;box-shadow:inset 0 0 0 1px var(--rule-strong);color:var(--ink-3);z-index:1;
+.blk.ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--rule-strong);color:var(--ink-3);z-index:1;
   background-image:linear-gradient(to bottom right,transparent calc(50% - .6px),var(--rule-strong) 50%,transparent calc(50% + .6px))}
 .blk.ghost .blk-title{text-decoration:line-through;text-decoration-color:var(--ink-3);font-weight:500}
 .blk.ghost .blk-meta{color:var(--ink-3)}

@@ -112,7 +112,9 @@ export function buildDay(data,date,{now=new Date(),pencils=[]}={}){
  let endHour=Math.max(22,...marks.map(m=>Math.ceil(m/60)));
  startHour=Math.max(0,startHour);endHour=Math.min(24,endHour);
  if(endHour-startHour<4)startHour=Math.max(0,endHour-4);
- return {date,isToday,nowMin,startHour,endHour,blocks:assignLanes([...blocks,...strokes]),ghosts,deadlines,conflicts,
+ // Ghosts share lanes with real blocks so a cancelled class is never hidden under what replaced its time.
+ const laid=assignLanes([...blocks,...strokes,...ghosts]);
+ return {date,isToday,nowMin,startHour,endHour,blocks:laid.filter(b=>b.type!=='ghost'),ghosts,deadlines,conflicts,
   counts:{courses:blocks.filter(b=>b.kind==='course').length,events:blocks.filter(b=>b.kind==='event').length,pencils:new Set(strokes.map(s=>s.id)).size}};
 }
 /**
