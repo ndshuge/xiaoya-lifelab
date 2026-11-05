@@ -47,7 +47,7 @@ const server=http.createServer((req,res)=>{
    const v=await p.evaluate(()=>({out:document.querySelector('.xy-route-outgoing')?.getAnimations().length,
       incoming:document.querySelector('#workspace > .page:not(.xy-route-outgoing)')?.getAnimations().length,route:document.querySelector('#workspace > .page:not(.xy-route-outgoing)')?.id}));
    assert.equal(v.route,'page-items');assert.ok(v.out>0&&v.incoming>0,JSON.stringify(v));
-   await p.waitForTimeout(450);
+   await p.waitForTimeout(830);
    assert.equal(await p.locator('.xy-route-outgoing').count(),0);
   });
   await check(browserName+' assistant enters from above entire panel without scaling',async()=>{
@@ -61,7 +61,7 @@ const server=http.createServer((req,res)=>{
    await p.locator('#assistant-close').evaluate(e=>e.click());
    const closing=await p.locator('#xiaoya-assistant').evaluate(e=>e.getAnimations().flatMap(a=>a.effect?.getKeyframes?.()||[]).map(x=>x.transform||'').join(';'));
    assert.ok(/-\d{3,}/.test(closing)&&!/scale/i.test(closing),closing);
-   await p.waitForTimeout(430);
+   await p.waitForTimeout(780);
    assert.equal(await p.locator('#xiaoya-assistant').evaluate(e=>e.hidden),true);
   });
   await check(browserName+' no ghosts, no Dock changes, no JS crashes',async()=>{

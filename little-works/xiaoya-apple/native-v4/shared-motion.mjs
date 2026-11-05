@@ -1,3 +1,4 @@
+import {springTranslations} from './physical-spring.mjs';
 // Small, interruptible shared-geometry motions. No #workspace clone or route snapshots.
 const limit=(v,min,max)=>Math.max(min,Math.min(max,v));
 const reduced=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||
@@ -49,10 +50,9 @@ export function createSheetMotion(){
   const frame=dialog.querySelector('.sheet-frame');
   if(!frame||reduced())return;
   if(!originRect){
-    motion=frame.animate([
-      {clipPath:'inset(100% 0 0 0 round 24px 24px 0 0)',opacity:.95},
-      {clipPath:'inset(0 0 0 0 round 24px 24px 0 0)',opacity:1}
-    ],{duration:310,easing:'cubic-bezier(.18,.86,.3,1)',fill:'both'});
+    const duration=750,offset=Math.max(180,frame.getBoundingClientRect().height+24);
+    motion=frame.animate(springTranslations(offset,0,{duration,response:.55,damping:.76,axis:'y'}),
+      {duration,easing:'linear',fill:'both'});
     motion.id='xy-video-sheet';
     const current=motion;current.onfinish=()=>{if(motion===current)stop()};
     return;
@@ -76,12 +76,11 @@ export function createSheetMotion(){
   if(instant||reduced()||!frame||performance.now()-openedAt<140){settle(dialog);return}
   if(!originRect){
     stop();closing=true;dialog.dataset.xyClosing='true';frame.style.pointerEvents='none';const token=++session;
-    motion=frame.animate([
-      {clipPath:'inset(0 0 0 0 round 24px 24px 0 0)',opacity:1},
-      {clipPath:'inset(100% 0 0 0 round 24px 24px 0 0)',opacity:.95}
-    ],{duration:230,easing:'cubic-bezier(.32,0,.25,1)',fill:'both'});
+    const duration=530,offset=Math.max(180,frame.getBoundingClientRect().height+24);
+    motion=frame.animate(springTranslations(0,offset,{duration,response:.44,damping:.94,axis:'y'}),
+      {duration,easing:'linear',fill:'both'});
     motion.onfinish=()=>{if(session===token)settle(dialog)};
-    closeTimer=setTimeout(()=>{if(session===token)settle(dialog)},275);
+    closeTimer=setTimeout(()=>{if(session===token)settle(dialog)},duration+90);
     return;
   }
   stop();
