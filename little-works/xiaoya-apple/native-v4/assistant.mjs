@@ -62,7 +62,7 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
  provider.addEventListener('change',()=>{model.value=providers[provider.value]?.model||'';feedback.textContent=''});
  function addMessage(message,kind='bot'){const n=node('div','assistant-message '+kind,String(message));log.append(n);log.scrollTop=log.scrollHeight;return n}
  function status(){const label=api?'AI 已连接 · '+api.model:'本地规则 · 未连接 AI';$('#assistant-status').textContent=label;$('#assistant-footnote').textContent=api?'仅发送你在对话框中输入的内容 · 不自动读取私人档案':'离线时为本地规则引导 · 不自动上传私人档案'}
- let panelMotion=null,panelCloseTimer=null,lastTrigger=null,lastOrigin='translate(0px, -12px) scale(.965)';
+ let panelMotion=null,panelCloseTimer=null,lastTrigger=null,lastOrigin='translate3d(0,-720px,0)';
  const motionDisabled=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||!!getData()?.settings?.reducedMotion;
  const cancelMotion=()=>{if(panelMotion){panelMotion.cancel();panelMotion=null}};
  function finishClose(){
@@ -85,15 +85,17 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
      const y=Math.round(Math.max(-92,Math.min(92,(a.top+a.height/2)-(b.top+b.height/2))));
      lastOrigin='translate('+x+'px,'+y+'px) scale(.965)';
    }
+   lastOrigin='translate3d(0,'+(-Math.ceil(panel.getBoundingClientRect().bottom+12))+'px,0)';
    if(!motionDisabled()&&typeof panel.animate==='function'){
      const start=previousTransform!=='none'?previousTransform:lastOrigin;
-     panelMotion=panel.animate([{opacity:wasHidden?.82:.9,transform:start},{opacity:1,transform:'translate(0px,0px) scale(1)'}],
+     panelMotion=panel.animate([{opacity:1,transform:start},{opacity:1,transform:'translate3d(0,0,0)'}],
        {duration:420,easing:'cubic-bezier(.16,.91,.28,1)',fill:'both'});
      const current=panelMotion;
      current.onfinish=()=>{if(panelMotion===current){current.cancel();panelMotion=null}};
    }
    if(!log.children.length)addMessage('你好，我是小芽。可以和我聊聊今天的安排，也可以从下面进入目标、任务和复盘。');
-   input.focus({preventScroll:true});
+   // iPhone keyboard interrupts the top entrance; user taps the composer when ready.
+   if(matchMedia('(pointer:fine)').matches)input.focus({preventScroll:true});
  }
  function close(){
    if(panel.hidden)return;
@@ -101,8 +103,8 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
    cancelMotion();
    if(motionDisabled()||typeof panel.animate!=='function'){finishClose();return}
    panel.style.pointerEvents='none';
-   const from=previousTransform!=='none'?previousTransform:'translate(0px,0px) scale(1)';
-   panelMotion=panel.animate([{opacity:1,transform:from},{opacity:.18,transform:lastOrigin}],
+   const from=previousTransform!=='none'?previousTransform:'translate3d(0,0,0)';
+   panelMotion=panel.animate([{opacity:1,transform:from},{opacity:1,transform:lastOrigin}],
      {duration:310,easing:'cubic-bezier(.3,0,.24,1)',fill:'both'});
    const current=panelMotion;
    current.onfinish=()=>{if(panelMotion===current){current.cancel();panelMotion=null;finishClose()}};

@@ -1,0 +1,47 @@
+/* Xiaoya V5.6: two motion-independent, rigid page planes.
+   The content stays locked to its page during finger drag and navigation. */
+#workspace.xy-two-page-active,#workspace.xy-route-inflight{
+ position:relative;
+ overflow-x:clip;
+ isolation:isolate;
+ background:var(--v4-ground,var(--ground,#f5f5f7));
+}
+#workspace.xy-two-page-active>.page,
+#workspace.xy-route-inflight>.page{
+ position:relative;
+ min-width:0;
+ background:var(--v4-ground,var(--ground,#f5f5f7));
+}
+#workspace .xy-swipe-preview{
+ position:absolute;
+ inset:0 auto auto 0;
+ z-index:0;
+ min-width:0;
+ pointer-events:none!important;
+ user-select:none;
+ -webkit-user-select:none;
+ background:var(--v4-ground,var(--ground,#f5f5f7));
+ contain:layout paint style;
+}
+#workspace .xy-swipe-preview .page{width:100%;background:inherit}
+#workspace .xy-route-outgoing{
+ position:absolute!important;
+ top:0;left:0;width:100%;z-index:2;
+ background:var(--v4-ground,var(--ground,#f5f5f7));
+ pointer-events:none!important;
+ contain:layout paint style;
+}
+#workspace.xy-route-inflight>.page:not(.xy-route-outgoing){z-index:3;pointer-events:none!important}
+#workspace .xy-swipe-preview *,
+#workspace .xy-route-outgoing *{pointer-events:none!important}
+#workspace .page{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+/* Remove the artificial floating chip; actual pages themselves now move. */
+.xy-swipe-surface{display:none!important}
+/* The assistant is a top-entry surface. No card scaling and no extra CSS
+   page-in animation competing with the Web Animations API. */
+.assistant-panel{animation:none!important;transform-origin:top center}
+@media(prefers-reduced-motion:reduce){
+ #workspace.xy-two-page-active>.page,
+ #workspace .xy-swipe-preview,
+ #workspace.xy-route-inflight>.page{transition:none!important;animation:none!important}
+}

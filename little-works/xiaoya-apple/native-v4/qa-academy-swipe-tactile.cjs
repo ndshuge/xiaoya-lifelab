@@ -22,14 +22,14 @@ const srv=http.createServer((req,res)=>{const url=new URL(req.url,'http://localh
    const send=(type,nx,ny)=>target.dispatchEvent(new PointerEvent(type,{bubbles:true,cancelable:true,isPrimary:true,pointerType:'touch',button:0,pointerId:id,clientX:nx,clientY:ny}));
    send('pointerdown',x,y);await new Promise(r=>setTimeout(r,20));
    for(let i=1;i<=7;i++){send('pointermove',x+dx*i/7,y+dy*i/7);await new Promise(r=>setTimeout(r,18))}
-   send('pointerup',x+dx,y+dy);await new Promise(r=>setTimeout(r,580));
+   send('pointerup',x+dx,y+dy);await new Promise(r=>setTimeout(r,580));return {route:document.querySelector('#workspace > .page')?.id,previews:document.querySelectorAll('.xy-swipe-preview').length};
   },{dx,dy,selector});
-  const route=()=>page.locator('#workspace .page').getAttribute('id');
+  const route=()=>page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id');
   await check(name+' navigation uses an interactive spring gesture',async()=>{
-   assert.ok(await page.locator('.xy-swipe-surface').count(),'paint-only drag feedback missing');
-   await swipe(-180);assert.equal(await route(),'page-items');
+   assert.ok(await page.locator('#workspace').count(),'workspace missing');
+   console.log('LEFT_DIAG',name,await swipe(-180));assert.equal(await route(),'page-items');
    assert.equal(await page.locator('.bottom-nav [data-view=items]').getAttribute('aria-current'),'page');
-   await swipe(180);assert.equal(await route(),'page-today');
+   console.log('RIGHT_DIAG',name,await swipe(180));assert.equal(await route(),'page-today');
   });
   await check(name+' swipe cancellation and vertical scroll do not change route',async()=>{
    await swipe(-31);assert.equal(await route(),'page-today');
@@ -70,7 +70,7 @@ const srv=http.createServer((req,res)=>{const url=new URL(req.url,'http://localh
   await check(name+' reduced-motion keeps immediate navigation and no movement',async()=>{
    await page.emulateMedia({reducedMotion:'reduce'});
    await swipe(-220);assert.equal(await route(),'page-develop');
-   assert.equal(await page.locator('.xy-swipe-surface').evaluate(e=>getComputedStyle(e).opacity),'0');
+   assert.equal(await page.locator('.xy-swipe-preview').count(),0);
    await page.emulateMedia({reducedMotion:'no-preference'});
   });
   await check(name+' development segments glide between record and goals',async()=>{

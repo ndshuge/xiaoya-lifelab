@@ -16,7 +16,8 @@ import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=5.1.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
 import {createAgentBridge} from './agent-bridge.mjs?v=5.2.0';
-import {installSpatialSwipe} from './spatial-swipe.mjs?v=5.3.0';
+import {installSpatialSwipe} from './spatial-swipe-v56.mjs?v=5.6.0';
+import {createTwoPageRoute} from './two-page-route.mjs?v=5.6.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const icon=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
@@ -194,6 +195,7 @@ function render(){
 
 
  const addTop=document.querySelector('.glass-btn.add-top');if(addTop)addTop.hidden=view==='settings';
+ queueSwipePreviews();
  if(view==='search'){$('#search-input')?.focus()}
 }
 // Each logical destination owns its scroll position, including inner segments.
@@ -242,6 +244,7 @@ function transitionContent(update,{animate=true,direction='neutral'}={}){
     {duration:220,easing:'cubic-bezier(.25,1,.5,1)'}
   );
 }
+const twoPageTransition=createTwoPageRoute({workspace:$('#workspace'),getReduced:()=>matchMedia('(prefers-reduced-motion:reduce)').matches||!!state().settings.reducedMotion});
 function navigate(target){
  const from=target;let next=target;
  if(target==='schedule'||target==='tasks'){itemsTab=target==='tasks'?'inbox':'schedule';next='items'}
@@ -256,7 +259,7 @@ function navigate(target){
  if(next!=='develop'&&view==='develop'){journalHistory=null;cancelJournalMotion()}
  if((next==='settings'||next==='search')&&fromIndex>=0)lastPrimaryView=view;
  if(toIndex>=0)lastPrimaryView=next;
- transitionContent(()=>{
+ twoPageTransition(()=>{
    rememberScroll();view=next;if(next!=='search')query='';render();
    if(next!=='search')restoreScroll();
  },{animate:primary||detailForward||detailBackward,direction:dir});
@@ -439,7 +442,7 @@ document.addEventListener('click',e=>{
    const target=t.dataset.itemsTab;if(target===itemsTab)return;
    const dir=target==='inbox'?'forward':'backward';
    const oldIndex=itemsTab==='inbox'?1:0;
-   transitionContent(()=>{
+   twoPageTransition(()=>{
      rememberScroll();itemsTab=target;view='items';render();restoreScroll();
      // The segments are recreated by render(). Retarget their registered
      // scalar property from the previous selection to the new one.
@@ -454,8 +457,8 @@ document.addEventListener('click',e=>{
  }
  if(t.dataset.developTab){
    const target=t.dataset.developTab;if(target===developTab)return;
-   transitionContent(()=>{
-     rememberScroll();developTab=target;
+   twoPageTransition(()=>{
+     rememberScroll();developTab=target;render();
      $$('.v4-develop-segments [data-develop-tab]').forEach(b=>{
        const active=b.dataset.developTab===developTab;
        b.classList.toggle('is-active',active);b.setAttribute('aria-pressed',String(active));
@@ -540,8 +543,47 @@ $('#calendar-file').addEventListener('change',async e=>{
 window.addEventListener('storage',e=>{if(e.key===store.key()){try{store.refresh();render();notify('已读取另一标签页更新的记录')}catch(err){notify(err.message)}}});
 window.__XY_NATIVE_V3={version:'4.2',getMode:()=>store.mode(),getData:()=>state(),navigate,render,store};
 window.__XY_NATIVE_V4=window.__XY_NATIVE_V3;
+const swipePreviewCache=new Map();
+let swipePreviewGeneration=0;
+function makeSwipeMarkup({scope,target}){
+ const d=state(),at=now();let html='',v=target;
+ if(scope==='items'){v='items';html=renderItemsView(d,{selectedDate,weekStart,active:target,at});}
+ else if(scope==='develop'){v='develop';html=renderDevelopment(d,journal.all(),{
+  selectedDate:journalDate,at,growthPlanner:growthPanel.render(),active:target,historyReturn:!!journalHistory});}
+ else if(target==='today')html=todayView(d);
+ else if(target==='items')html=itemsView(d);
+ else if(target==='develop')html=developView(d);
+ const page=document.createElement('div');page.className='page';page.innerHTML=html;
+ agent.render(v,page);return page;
+}
+function previewForSwipe(target){
+ const k=target.scope+':'+target.target;
+ if(!swipePreviewCache.has(k))swipePreviewCache.set(k,makeSwipeMarkup(target));
+ return swipePreviewCache.get(k);
+}
+function queueSwipePreviews(){
+ const token=++swipePreviewGeneration;swipePreviewCache.clear();
+ const order=['today','items','develop'],idx=order.indexOf(view),queue=[];
+ if(idx>=0){
+  if(idx>0)queue.push({scope:'primary',target:order[idx-1]});
+  if(idx<2)queue.push({scope:'primary',target:order[idx+1]});
+  if(view==='items')queue.push({scope:'items',target:itemsTab==='schedule'?'inbox':'schedule'});
+  if(view==='develop')queue.push({scope:'develop',target:developTab==='record'?'goals':'record'});
+ }
+ const schedule=()=>{
+  if(typeof requestIdleCallback==='function')requestIdleCallback(step,{timeout:250});
+  else setTimeout(step,60);
+ };
+ const step=()=>{
+  if(token!==swipePreviewGeneration||!queue.length)return;
+  try{previewForSwipe(queue.shift())}catch(err){console.warn('Swipe preview unavailable',err)}
+  if(queue.length)schedule();
+ };
+ if(queue.length)schedule();
+}
 installSpatialSwipe({
  getRoute:()=>({view,itemsTab,developTab}),
+ getPreview:previewForSwipe,
  onNavigate:target=>navigate(target),
  onSegment:(kind,target)=>document.querySelector(kind==='items'?'.v4-item-segments [data-items-tab="'+target+'"]':'.v4-develop-segments [data-develop-tab="'+target+'"]')?.click(),
  disabled:()=>!!modal||assistant.isOpen()||!!journalHistory
