@@ -23,9 +23,10 @@ const editable='input:not([type=checkbox]):not([type=radio]):not([type=hidden]):
  for(const width of [320,390]){
    const ctx=await browser.newContext({viewport:{width,height:844},isMobile:true,hasTouch:true,deviceScaleFactor:3});
    const page=await ctx.newPage();await page.goto('http://127.0.0.1:'+server.address().port+'/xiaoya-lifelab/?judge=1',{waitUntil:'networkidle'});
-   await check(width+' preserves user zoom',async()=>{
+   await check(width+' fixed-scale mobile app mode',async()=>{
      const meta=await page.locator('meta[name=viewport]').getAttribute('content');
-     assert.ok(meta.includes('width=device-width')&&!/maximum-scale\\s*=\\s*1|user-scalable\\s*=\\s*no/i.test(meta));
+     assert.match(meta,/maximum-scale\s*=\s*1/);
+     assert.match(meta,/user-scalable\s*=\s*no/);
    });
    await page.locator('.topbar .toolbar-actions button').click();
    await audit(page,width+' settings');
