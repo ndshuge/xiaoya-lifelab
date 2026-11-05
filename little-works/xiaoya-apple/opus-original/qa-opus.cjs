@@ -95,14 +95,19 @@ async function run(browserType,label){
    await page.locator('.icon-x').click();
   });
   await step(label+' gentle reminder: a deadline 30 minutes away is whispered once and recorded',async()=>{
+   // Earlier steps can legitimately consume the 60-minute reminder gap; start from an empty reminder log.
+   await page.evaluate(()=>window.__XY_OPUS.store.commit(x=>{x.reminders=[]},{track:false}));
    await page.locator('#line-input').fill('今天10点交报名表');await page.locator('#line-input').press('Enter');
    await page.waitForFunction(()=>window.__XY_OPUS.getData().tasks.some(t=>t.title.includes('报名表')&&t.due==='2026-11-05T10:00'));
-   await page.waitForTimeout(3300);
-   await page.evaluate(()=>window.__XY_OPUS.remind());
-   await page.locator('#whisper.show',{hasText:'小芽轻声提醒'}).waitFor({timeout:3000});
-   const n=(await data()).reminders.length;assert.ok(n>=1);
-   await page.evaluate(()=>window.__XY_OPUS.remind());
-   assert.equal((await data()).reminders.length,n,'reminder gap prevents repeats');
+   // The page's own 60 s timer may deliver first; either way exactly one record must exist for this deadline.
+   const delivered=await page.evaluate(()=>window.__XY_OPUS.remind());
+   if(delivered.length)await page.locator('#whisper.show',{hasText:'小芽轻声提醒'}).waitFor({timeout:3000});
+   const task=(await data()).tasks.find(t=>t.title.includes('报名表'));
+   const mine=(await data()).reminders.filter(r=>r.sourceId===task.id);
+   assert.equal(mine.length,1,'deadline reminded exactly once');
+   const n=(await data()).reminders.length;
+   assert.deepEqual(await page.evaluate(()=>window.__XY_OPUS.remind()),[],'gap blocks an immediate repeat');
+   assert.equal((await data()).reminders.length,n);
   });
   await step(label+' tapping empty time places an event (user-confirmed)',async()=>{
    const box=await page.locator('[data-ribbon]').boundingBox();
@@ -140,7 +145,7 @@ async function run(browserType,label){
    await page.locator('#sheet-body textarea[name=note]').fill('练了 30 分钟基础节奏');
    await page.locator('#sheet-body input[name=minutes]').fill('30');
    const kept=await page.locator('#sheet-body textarea[name=note]').inputValue();
-   assert.equal(kept,'练了 30 分钟基础节奏','sheet content must not be replaced while typing');
+   assert.equal(kept,'练了 30 分钟基础节奏','sheet content must not be replaced while typing; title='+await page.locator('#sheet-title').innerText()+' open='+await page.evaluate(()=>document.querySelector('#sheet').open)+' focus='+await page.evaluate(()=>document.activeElement?.name||document.activeElement?.id));
    await page.locator('#sheet-ok').click();
    await page.waitForFunction(()=>window.__XY_OPUS.getData().checkins.length===1,null,{timeout:5000}).catch(async e=>{throw Error('check-in not saved; whisper="'+await page.locator('#whisper').innerText()+'"')});
    assert.ok(await page.locator('.lgrid-cell.is-current .knot:not(.is-hollow):not(.is-pencil)').count()>=1,'knot drawn in current week');

@@ -771,11 +771,12 @@ window.addEventListener('storage',e=>{if(e.key===store.key()){try{store.refresh(
 // ---------- gentle in-page reminders (existing domain rules: quiet hours, gap, lead times) ----------
 function remind(){
  try{
-  const d=state();if(!d.settings.reminderEnabled)return;
-  const {next,delivered}=deliverReminders(d,new Date());if(!delivered.length)return;
+  const d=state();if(!d.settings.reminderEnabled)return [];
+  const {next,delivered}=deliverReminders(d,new Date());if(!delivered.length)return [];
   store.commit(x=>{x.reminders=next.reminders},{track:false});
   const r=delivered[0];whisper('小芽轻声提醒：「'+r.title+'」'+r.label);setXiaoya('nod',2600);
- }catch{/* reminders never block the page */}
+  return delivered;
+ }catch{return []/* reminders never block the page */}
 }
 
 // ---------- boot ----------
