@@ -1,0 +1,87 @@
+/* V5.8: allow Safari to hand horizontal app gestures to Pointer Events,
+   while vertical page scrolling and pinch zoom remain native. */
+#workspace{touch-action:pan-y pinch-zoom;overscroll-behavior-x:contain}
+/* Interactive timeline scrubbers retain their existing JS touch handling.
+   The gesture controller excludes these from page navigation. */
+#workspace :is(input,textarea,select){touch-action:auto}
+
+/* Apple-style inset disclosure rows: typography and hairlines carry the hierarchy.
+   No decorative card frames, stacked rounded chips, glow, or 3D borders. */
+#workspace #xy-student-agent .xy-agent-disclosure{
+ margin:0;
+ border:0;
+ border-bottom:1px solid rgba(77,108,87,.12);
+ border-radius:0;
+ background:transparent;
+ overflow:visible;
+}
+#workspace #xy-student-agent .xy-agent-disclosure>summary{
+ display:flex;align-items:center;gap:9px;box-sizing:border-box;
+ list-style:none;min-height:48px;
+ padding:9px 3px;
+ color:var(--ink,#2a4836);
+ font-size:13px;font-weight:590;line-height:1.45;
+ cursor:pointer;-webkit-tap-highlight-color:transparent;
+ transition:background-color .22s ease,color .22s ease;
+}
+#workspace #xy-student-agent .xy-agent-disclosure>summary::-webkit-details-marker{display:none}
+#workspace #xy-student-agent .xy-agent-disclosure>summary::marker{content:""}
+#workspace #xy-student-agent .xy-agent-disclosure>summary small{
+ font-size:11px;font-weight:550;letter-spacing:0;
+ color:var(--secondary-text,#789082);
+}
+#workspace #xy-student-agent .xy-agent-disclosure>summary::after{
+ content:"";display:block;flex:0 0 auto;
+ width:6px;height:6px;margin-left:auto;margin-right:4px;
+ border-right:1.7px solid currentColor;border-bottom:1.7px solid currentColor;
+ transform:rotate(45deg) translateY(-2px);
+ opacity:.68;transition:transform .32s cubic-bezier(.2,.85,.25,1),opacity .2s ease;
+}
+#workspace #xy-student-agent .xy-agent-disclosure[open]>summary::after{
+ transform:rotate(225deg) translate(-2px,-1px);opacity:.9;
+}
+#workspace #xy-student-agent .xy-agent-disclosure>summary:active{
+ background:rgba(80,147,99,.045);
+}
+#workspace #xy-student-agent .xy-agent-disclosure>summary:focus-visible{
+ outline:2px solid rgba(65,141,86,.75);outline-offset:2px;border-radius:3px;
+}
+#workspace #xy-student-agent .xy-agent-disclosure-body{min-width:0}
+#workspace #xy-student-agent .xy-agent-disclosure-body>.xy-agent-row,
+#workspace #xy-student-agent .xy-agent-disclosure-body>.xy-agent-footer{
+ margin:0 4px;
+}
+#workspace #xy-student-agent .xy-agent-disclosure-body>.xy-agent-footer{
+ padding:8px 0 12px;
+}
+#workspace #xy-student-agent .xy-agent-disclosure-body>.xy-agent-row:first-of-type{
+ border-top:1px solid rgba(67,103,78,.08);
+}
+#workspace #xy-student-agent .dayflow-advice-actions button{
+ min-height:42px;
+ border:1px solid rgba(63,129,80,.15);
+ border-radius:13px;
+ background:rgba(221,240,225,.67);
+ color:#32714c;font-size:13px;font-weight:620;
+ padding:9px 14px;box-shadow:none;
+}
+#workspace #xy-student-agent .dayflow-advice-actions button:active{
+ background:rgba(208,229,213,.85);
+}
+@media(prefers-color-scheme:dark){
+ #workspace #xy-student-agent .xy-agent-disclosure{
+  border-bottom-color:rgba(185,221,194,.13);
+  background:transparent;
+ }
+ #workspace #xy-student-agent .xy-agent-disclosure>summary{color:#d9ecdc}
+ #workspace #xy-student-agent .xy-agent-disclosure>summary small{color:#abc9b4}
+ #workspace #xy-student-agent .dayflow-advice-actions button{
+  background:rgba(51,95,66,.7);border-color:rgba(130,182,146,.18);color:#c9f0d4
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #workspace #xy-student-agent .xy-agent-disclosure>summary,
+ #workspace #xy-student-agent .xy-agent-disclosure>summary::after{transition:none}
+}
+body.reduce-motion #workspace #xy-student-agent .xy-agent-disclosure>summary,
+body.reduce-motion #workspace #xy-student-agent .xy-agent-disclosure>summary::after{transition:none}
