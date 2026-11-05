@@ -1,3 +1,4 @@
+import {springTranslations} from './physical-spring.mjs';
 // Native V3 companion. Reintroduces the mature edition's BYOK chat and assistant actions
 // without its floating overlay, forced onboarding, or persistent API credentials.
 const providers=Object.freeze({
@@ -33,7 +34,7 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
  panel.setAttribute('role','dialog');panel.setAttribute('aria-label','与小芽对话');panel.setAttribute('aria-modal','false');
  panel.innerHTML=`
   <header class="assistant-top">
-   <div class="assistant-identity"><img src="../assets/brand/xiaoya_hero_v1.webp" width="38" height="38" alt=""><div><strong>小芽</strong><span id="assistant-status" role="status">本地规则 · 未连接 AI</span></div></div>
+   <button type="button" id="assistant-identity-toggle" class="assistant-identity" aria-label="收起小芽对话"><img src="../assets/brand/xiaoya_hero_v1.webp" width="38" height="38" alt=""><div><strong>小芽</strong><span id="assistant-status" role="status">本地规则 · 未连接 AI</span></div></button>
    <div class="assistant-top-actions"><button id="assistant-config-toggle" class="assistant-icon" type="button" aria-label="连接 AI">连接 AI</button><button id="assistant-close" class="assistant-icon" type="button" aria-label="关闭对话">×</button></div>
   </header>
   <div id="assistant-config" class="assistant-config" hidden>
@@ -62,12 +63,12 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
  provider.addEventListener('change',()=>{model.value=providers[provider.value]?.model||'';feedback.textContent=''});
  function addMessage(message,kind='bot'){const n=node('div','assistant-message '+kind,String(message));log.append(n);log.scrollTop=log.scrollHeight;return n}
  function status(){const label=api?'AI 已连接 · '+api.model:'本地规则 · 未连接 AI';$('#assistant-status').textContent=label;$('#assistant-footnote').textContent=api?'仅发送你在对话框中输入的内容 · 不自动读取私人档案':'离线时为本地规则引导 · 不自动上传私人档案'}
- let panelMotion=null,panelCloseTimer=null,lastTrigger=null,lastOrigin='translate3d(0,-720px,0)';
+ let panelMotion=null,panelCloseTimer=null,panelEnterTimer=null,lastTrigger=null,lastOffset=-720,closing=false;
  const motionDisabled=()=>matchMedia('(prefers-reduced-motion: reduce)').matches||!!getData()?.settings?.reducedMotion;
- const cancelMotion=()=>{if(panelMotion){panelMotion.cancel();panelMotion=null}};
+ const cancelMotion=()=>{clearTimeout(panelEnterTimer);panelEnterTimer=null;if(panelMotion){panelMotion.onfinish=null;panelMotion.cancel();panelMotion=null}};
  function finishClose(){
    clearTimeout(panelCloseTimer);panelCloseTimer=null;
-   panel.hidden=true;panel.style.pointerEvents='';
+   closing=false;panel.hidden=true;panel.style.pointerEvents='';
    document.body.classList.remove('assistant-is-open');
    if(lastTrigger?.isConnected)lastTrigger.focus({preventScroll:true});
  }
@@ -75,40 +76,44 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
    clearTimeout(panelCloseTimer);panelCloseTimer=null;
    const wasHidden=panel.hidden;
    if(wasHidden)lastTrigger=source instanceof HTMLElement?source:(document.activeElement instanceof HTMLElement?document.activeElement:null);
-   const previousTransform=!wasHidden?getComputedStyle(panel).transform:'none';
-   cancelMotion();panel.hidden=false;panel.style.pointerEvents='';
+   const prior=wasHidden?null:new DOMMatrixReadOnly(getComputedStyle(panel).transform);
+   const offset=prior?prior.m42:0;
+   cancelMotion();closing=false;panel.hidden=false;panel.style.pointerEvents='';
    document.body.classList.add('assistant-is-open');
-   const origin=source instanceof HTMLElement?source:lastTrigger;
-   if(origin?.isConnected){
-     const a=origin.getBoundingClientRect(),b=panel.getBoundingClientRect();
-     const x=Math.round(Math.max(-84,Math.min(84,(a.left+a.width/2)-(b.left+b.width/2))));
-     const y=Math.round(Math.max(-92,Math.min(92,(a.top+a.height/2)-(b.top+b.height/2))));
-     lastOrigin='translate('+x+'px,'+y+'px) scale(.965)';
-   }
-   lastOrigin='translate3d(0,'+(-Math.ceil(panel.getBoundingClientRect().bottom+12))+'px,0)';
+   // Offscreen origin is computed from settled geometry, even mid-reversal.
+   lastOffset=-Math.ceil(panel.getBoundingClientRect().bottom-offset+12);
    if(!motionDisabled()&&typeof panel.animate==='function'){
-     const start=previousTransform!=='none'?previousTransform:lastOrigin;
-     panelMotion=panel.animate([{opacity:1,transform:start},{opacity:1,transform:'translate3d(0,0,0)'}],
-       {duration:420,easing:'cubic-bezier(.16,.91,.28,1)',fill:'both'});
+     const duration=780;
+     panelMotion=panel.animate(springTranslations(wasHidden?lastOffset:offset,0,{
+       duration,response:.58,damping:.76,axis:'y'
+     }),{duration,easing:'linear',fill:'both'});
      const current=panelMotion;
-     current.onfinish=()=>{if(panelMotion===current){current.cancel();panelMotion=null}};
+     const finish=()=>{if(panelMotion===current)cancelMotion()};
+     current.onfinish=finish;panelEnterTimer=setTimeout(finish,duration+110);
    }
    if(!log.children.length)addMessage('你好，我是小芽。可以和我聊聊今天的安排，也可以从下面进入目标、任务和复盘。');
    // iPhone keyboard interrupts the top entrance; user taps the composer when ready.
    if(matchMedia('(pointer:fine)').matches)input.focus({preventScroll:true});
  }
  function close(){
-   if(panel.hidden)return;
-   const previousTransform=getComputedStyle(panel).transform;
+   if(panel.hidden||closing)return;
+   const current=new DOMMatrixReadOnly(getComputedStyle(panel).transform).m42;
    cancelMotion();
    if(motionDisabled()||typeof panel.animate!=='function'){finishClose();return}
-   panel.style.pointerEvents='none';
-   const from=previousTransform!=='none'?previousTransform:'translate3d(0,0,0)';
-   panelMotion=panel.animate([{opacity:1,transform:from},{opacity:1,transform:lastOrigin}],
-     {duration:310,easing:'cubic-bezier(.3,0,.24,1)',fill:'both'});
-   const current=panelMotion;
-   current.onfinish=()=>{if(panelMotion===current){current.cancel();panelMotion=null;finishClose()}};
-   panelCloseTimer=setTimeout(()=>{if(panelMotion===current){current.cancel();panelMotion=null;finishClose()}},380);
+   closing=true;panel.style.pointerEvents='none';
+   const duration=610;
+   panelMotion=panel.animate(springTranslations(current,lastOffset,{
+     duration,response:.48,damping:.93,axis:'y'
+   }),{duration,easing:'linear',fill:'both'});
+   const currentMotion=panelMotion;
+   const finish=()=>{if(panelMotion===currentMotion){cancelMotion();finishClose()}};
+   currentMotion.onfinish=finish;
+   panelCloseTimer=setTimeout(finish,duration+100);
+ }
+ function toggle(source){
+   if(closing){open(source);return}
+   if(panel.hidden)open(source);
+   else close();
  }
  let configMotion=null,configToken=0,configTimer=null;
  function toggleConfig(){
@@ -134,6 +139,7 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
    configTimer=setTimeout(settle,365);
  }
  $('#assistant-close').addEventListener('click',close);
+ $('#assistant-identity-toggle').addEventListener('click',close);
  $('#assistant-config-toggle').addEventListener('click',toggleConfig);
  panel.addEventListener('click',e=>{
   const b=e.target.closest('button');if(!b)return;
@@ -177,5 +183,5 @@ export function createAssistant({getData,getMode,navigate,getAgentReply=null}){
   finally{busy=false;send.disabled=false;log.scrollTop=log.scrollHeight}
  });
  window.addEventListener('pagehide',()=>{api=null;history=[];key.value=''});
- return {open,close,disconnect:()=>{api=null;history=[];status()},isOpen:()=>!panel.hidden};
+ return {open,close,toggle,disconnect:()=>{api=null;history=[];status()},isOpen:()=>!panel.hidden};
 }

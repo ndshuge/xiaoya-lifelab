@@ -38,7 +38,7 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
     assert.equal(await page.locator('#xiaoya-assistant').evaluate(e=>e.hidden),false);
     assert.ok(await page.locator('#xiaoya-assistant').evaluate(e=>e.getAnimations().length)>0);
     await page.locator('#assistant-close').evaluate(e=>e.click());
-    await page.waitForTimeout(470);
+    await page.waitForFunction(()=>document.querySelector('#xiaoya-assistant').hidden);
     assert.equal(await page.locator('#xiaoya-assistant').evaluate(e=>e.hidden),true);
     assert.equal(await page.locator('.xy-route-ghost').count(),0);
    });
@@ -52,14 +52,14 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
     await page.waitForTimeout(390);
     assert.equal(await page.locator('#assistant-config').evaluate(e=>e.hidden),true);
     await page.locator('#assistant-close').evaluate(e=>e.click());
-    await page.waitForTimeout(350);
+    await page.waitForFunction(()=>document.querySelector('#xiaoya-assistant').hidden);
    });
    await verify(name+' '+width+' rapid assistant open-close leaves no stale transform',async()=>{
     for(let i=0;i<5;i++){
      await page.locator('#xiaoya-avatar').evaluate(e=>e.click());
      await page.locator('#assistant-close').evaluate(e=>e.click());
     }
-    await page.waitForTimeout(480);
+    await page.waitForFunction(()=>document.querySelector('#xiaoya-assistant').hidden);
     assert.equal(await page.locator('#xiaoya-assistant').evaluate(e=>e.hidden),true);
     assert.equal(await page.locator('#xiaoya-assistant').evaluate(e=>e.getAnimations().length),0);
     assert.equal(await page.locator('#workspace').evaluate(e=>getComputedStyle(e).transform),'none');
@@ -81,7 +81,7 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
     assert.equal(await sheet.evaluate(e=>e.open),true);
     assert.ok(await sheet.locator('.sheet-frame').evaluate(e=>e.getAnimations().length)>0,'non-card sheet still flashes into view');
     await page.keyboard.press('Escape');
-    await page.waitForTimeout(330);
+    await page.waitForFunction(()=>!document.querySelector('#editor').open);
     assert.equal(await sheet.evaluate(e=>e.open),false);
     assert.equal(await page.locator('.xy-route-ghost').count(),0);
    });

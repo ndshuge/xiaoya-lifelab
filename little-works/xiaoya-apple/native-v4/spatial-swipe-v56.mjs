@@ -7,11 +7,11 @@ const DRAG='.native-timeline-frame,.xy-timeline-scrub,[data-swipe-ignore],.v4-mo
 const reduced=()=>matchMedia('(prefers-reduced-motion:reduce)').matches||document.body.classList.contains('reduce-motion');
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 function glide(start,end,update,done,velocity=0){
- const k=500,c=37;let x=start,v=clamp(velocity,-2200,2200),last=performance.now(),born=last,raf=0,alive=true;
- const fallback=setTimeout(()=>{if(alive){alive=false;cancelAnimationFrame(raf);update(end);done?.()}},410);
+ const k=180,c=23;let x=start,v=clamp(velocity,-1150,1150),last=performance.now(),born=last,raf=0,alive=true;
+ const fallback=setTimeout(()=>{if(alive){alive=false;cancelAnimationFrame(raf);update(end);done?.()}},860);
  function frame(t){if(!alive)return;const dt=clamp((t-last)/1000,.001,.028);last=t;
   v+=(-k*(x-end)-c*v)*dt;x+=v*dt;
-  if(t-born>=315||Math.abs(end-x)<.7&&Math.abs(v)<3){update(end);alive=false;clearTimeout(fallback);done?.();return}
+  if(t-born>=760||Math.abs(end-x)<.7&&Math.abs(v)<3){update(end);alive=false;clearTimeout(fallback);done?.();return}
   update(x);raf=requestAnimationFrame(frame);
  }raf=requestAnimationFrame(frame);return ()=>{alive=false;cancelAnimationFrame(raf);clearTimeout(fallback)};
 }

@@ -5,19 +5,19 @@ import '../glass/components.js'; // Original liquidglass.dev optical controls, s
 import './viewport-guard.mjs?v=4.5.3';
 import './press-system.mjs?v=4.8.0';
 import {createStore} from './store.mjs?v=3.1.1';
-import {createAssistant} from './assistant.mjs?v=5.3.0';
+import {createAssistant} from './assistant.mjs?v=5.7.0';
 import {createGrowthPanel} from './growth-panel.mjs?v=20261102';
 import {buildDayTimeline} from './timeline.mjs';
 import {installTimelineScrubber} from './timeline-scrubber.mjs?v=5.0.0';
 import {installContextLongPress} from './context-longpress.mjs?v=5.0.0';
-import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.4.0';
+import {createSheetMotion,enterJournal,leaveJournal,cancelJournalMotion,installEdgePop} from './shared-motion.mjs?v=5.7.0';
 import {renderDayflowToday} from './dayflow-view.mjs?v=4.0.0';
 import {renderItemsView} from './items-view.mjs?v=4.2.0';
 import {renderDevelopment} from './development-view.mjs?v=5.1.0';
 import {createJournalStore,validateJournalArchive} from './journal-store.mjs?v=4.2.0';
 import {createAgentBridge} from './agent-bridge.mjs?v=5.2.0';
-import {installSpatialSwipe} from './spatial-swipe-v56.mjs?v=5.6.0';
-import {createTwoPageRoute} from './two-page-route.mjs?v=5.6.0';
+import {installSpatialSwipe} from './spatial-swipe-v56.mjs?v=5.7.0';
+import {createTwoPageRoute} from './two-page-route.mjs?v=5.7.0';
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const icon=n=>'<svg aria-hidden="true"><use href="#ic-'+n+'"/></svg>';
@@ -411,7 +411,7 @@ function runAction(action,source){
  case 'search':navigate('search');break;
  case 'open-goals-archive':notify('已完成的目标保留在原版成长记录中。');break;
  case 'close':closeSheet();break;
- case 'pet':assistant.open(source);break;
+ case 'pet':assistant.toggle(source);break;
  case 'mode':agent.resetForMode();store.setMode(store.mode()==='demo'?'personal':'demo');navigate('today');notify(store.mode()==='demo'?'已切换到合成演示档案':'已返回私人档案');break;
  case 'export-json':blobDownload(JSON.stringify({...state(),journalV1:journal.all(),exportedAt:now().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(now())+'.json');notify('已导出当前档案');break;
  case 'import-json':$('#import-file').click();break;

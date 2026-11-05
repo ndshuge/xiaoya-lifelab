@@ -1,0 +1,8 @@
+/* V5.7: chat header doubles as the reversible Xiaoya close affordance. */
+#assistant-identity-toggle{appearance:none;-webkit-appearance:none;border:0;background:transparent;
+ color:inherit;padding:0;margin:0;font:inherit;text-align:left;cursor:pointer;
+ border-radius:15px;-webkit-tap-highlight-color:transparent;
+ transition:background-color .2s ease}
+#assistant-identity-toggle:active{background:rgba(95,148,110,.095)}
+#assistant-identity-toggle:focus-visible{outline:3px solid rgba(83,151,105,.64);outline-offset:3px}
+@media(prefers-reduced-motion:reduce){#assistant-identity-toggle{transition:none}}
