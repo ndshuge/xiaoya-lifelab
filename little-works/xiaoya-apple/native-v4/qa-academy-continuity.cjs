@@ -17,20 +17,20 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
    await page.goto('http://127.0.0.1:'+server.address().port+'/xiaoya-lifelab/?judge=1',{waitUntil:'networkidle'});
    await verify(name+' '+width+' setting enters with directional continuity and returns',async()=>{
     await page.locator('.topbar [data-view=settings]').evaluate(e=>e.click());
-    assert.equal(await page.locator('#workspace .page').getAttribute('id'),'page-settings');
-    assert.ok(await page.locator('#workspace .page').evaluate(el=>el.getAnimations().some(a=>a.id==='xy-page-motion')),'route animation missing');
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id'),'page-settings');
+    assert.ok(await page.locator('#workspace > .page:not(.xy-route-outgoing)').evaluate(el=>el.getAnimations().some(a=>a.id==='xy-incoming-page')),'route animation missing');
     assert.equal(await page.locator('.xy-route-ghost').count(),0);
     await page.locator('.topbar [data-view=today]').evaluate(e=>e.click());
-    assert.equal(await page.locator('#workspace .page').getAttribute('id'),'page-today');
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id'),'page-today');
     assert.equal(await page.locator('.bottom-nav [data-view]').count(),3);
    });
    await verify(name+' '+width+' search opens without duplicate pages and escapes to last primary page',async()=>{
     await page.evaluate(()=>window.__XY_NATIVE_V4.navigate('search'));
-    assert.equal(await page.locator('#workspace .page').getAttribute('id'),'page-search');
-    assert.ok(await page.locator('#workspace .page').evaluate(el=>el.getAnimations().some(a=>a.id==='xy-page-motion')));
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id'),'page-search');
+    assert.ok(await page.locator('#workspace > .page:not(.xy-route-outgoing)').evaluate(el=>el.getAnimations().some(a=>a.id==='xy-incoming-page')));
     await page.keyboard.press('Escape');
-    assert.equal(await page.locator('#workspace .page').getAttribute('id'),'page-today');
-    assert.equal(await page.locator('#workspace .page').count(),1);
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id'),'page-today');
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').count(),1);
    });
    await verify(name+' '+width+' assistant expands from avatar and returns focus',async()=>{
     const avatar=page.locator('#xiaoya-avatar');
@@ -67,14 +67,15 @@ const server=http.createServer((req,res)=>{const url=new URL(req.url,'http://loc
    await verify(name+' '+width+' reduced-motion uses immediate navigation and no transition',async()=>{
     await page.emulateMedia({reducedMotion:'reduce'});
     await page.locator('.topbar [data-view=settings]').evaluate(e=>e.click());
-    assert.equal(await page.locator('#workspace .page').getAttribute('id'),'page-settings');
-    assert.equal(await page.locator('#workspace .page').evaluate(e=>e.getAnimations().length),0);
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id'),'page-settings');
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').evaluate(e=>e.getAnimations().length),0);
     await page.keyboard.press('Escape');
-    assert.equal(await page.locator('#workspace .page').getAttribute('id'),'page-today');
+    assert.equal(await page.locator('#workspace > .page:not(.xy-route-outgoing)').getAttribute('id'),'page-today');
     await page.emulateMedia({reducedMotion:'no-preference'});
    });
    await verify(name+' '+width+' ordinary add-action sheet opens and closes continuously',async()=>{
     await page.evaluate(()=>window.__XY_NATIVE_V4.navigate('items'));
+    await page.waitForFunction(()=>!document.querySelector('.xy-route-outgoing'));
     await page.locator('#page-items .xy-action-main').evaluate(e=>e.click());
     const sheet=page.locator('#editor');
     assert.equal(await sheet.evaluate(e=>e.open),true);
