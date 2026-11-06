@@ -80,8 +80,13 @@ async function run(type,label){
    for(const fx of [.5,.42,.58,.34,.66,.26,.74]){for(const fy of [.5,.44,.56,.38]){await p.mouse.click(box.x+box.width*fx,box.y+box.height*fy);await p.waitForTimeout(120);
     if(await p.evaluate(()=>window.__XY_OPUS.ui.scale!=='week'||document.querySelector('#sheet').open)){navigated=true;break}}if(navigated)break}
    assert.ok(navigated,'some object on the island is pickable');
+   await p.evaluate(()=>{for(const id of ['#sheet','#confirm']){const d=document.querySelector(id);if(d?.open)d.close()}});
   });
-  const at=async(p,kind)=>{const box=await p.locator('.island-host').boundingBox();const s=await p.evaluate(k=>window.__XY_OPUS.island()?.locate(k),kind);if(!s)return null;return {x:box.x+s.x,y:box.y+s.y}};
+  // Find a screen point where the island really picks `kind` (other pieces, e.g. banners, may be in front).
+  const at=async(p,kind)=>{const box=await p.locator('.island-host').boundingBox();
+   const s=await p.evaluate(k=>{const i=window.__XY_OPUS.island();const l=i?.locate(k);if(!l)return null;
+    for(let r=0;r<=60;r+=6)for(let a=0;a<16;a++){const x=l.x+Math.cos(a/16*Math.PI*2)*r,y=l.y+Math.sin(a/16*Math.PI*2)*r;if(i.pickAt(x,y)===k)return {x,y}}return null},kind);
+   if(!s)return null;return {x:box.x+s.x,y:box.y+s.y}};
   await step(label+' hover shows a paper tooltip and lifts the piece; tapping Xiaoya makes her speak',async()=>{
    const p=a.page;await p.evaluate(()=>window.__XY_OPUS.setScale('week'));await p.locator('.island-canvas').waitFor();await p.waitForTimeout(2600);
    const h=await at(p,'course');assert.ok(h,'a course house exists');

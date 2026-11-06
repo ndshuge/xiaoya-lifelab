@@ -257,8 +257,10 @@ small{font-size:12px}
 .privacy{font-size:12px;color:var(--ink-3);margin-top:10px}
 
 /* ---------- 3D paper island ---------- */
-.island-slot{position:relative;height:min(58vh,520px);min-height:300px;margin:4px calc(var(--gutter) * -1) 6px;border-radius:0;overflow:hidden;
-  background:radial-gradient(120% 90% at 50% 20%,#fbf6ea 0%,var(--paper) 55%,var(--paper-2) 100%)}
+/* Full-bleed hero: the diorama spans the window and fades into the page at top and bottom. */
+html,body{overflow-x:clip}
+.island-slot{position:relative;height:min(66vh,640px);min-height:320px;width:100vw;margin:0 0 4px calc(50% - 50vw);overflow:hidden;
+  background:var(--paper);-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 7%,#000 88%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 7%,#000 88%,transparent 100%)}
 .island-host,.island-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .island-canvas{cursor:grab}
 .island-pop{position:absolute;z-index:3;transform:translate(-50%,-100%);pointer-events:none;max-width:260px;padding:6px 10px;border-radius:9px;
@@ -275,7 +277,7 @@ small{font-size:12px}
 .island-slot.is-fallback::after{content:"这台设备暂时无法显示 3D 纸岛，下面的列表包含同样的内容。";display:block;padding:12px 0;color:var(--ink-3);font:400 14px var(--serif)}
 .island-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 18px;font-size:12px;color:var(--ink-3)}
 .island-legend .island-tip{margin-left:auto}
-@media (min-width: 820px){.island-slot{margin:4px 0 6px;border-radius:18px;box-shadow:inset 0 0 0 1px var(--rule)}}
+@media (max-width: 819px){.island-slot{height:min(62vh,560px)}}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .island-slot{background:radial-gradient(120% 90% at 50% 20%,#2a2d33 0%,var(--paper) 60%,#101215 100%)}}
 
 /* ---------- opening (game-like) ---------- */

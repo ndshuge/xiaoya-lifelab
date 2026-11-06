@@ -1,1 +1,2 @@
 ﻿three r0.180.0 (MIT) copied from local node_modules; files: three.module.min.js, three.core.min.js, LICENSE
+addons/: examples/jsm postprocessing (EffectComposer, RenderPass, ShaderPass, OutputPass, UnrealBloomPass, Pass, MaskPass), shaders (Copy, LuminosityHighPass, Output), environments/RoomEnvironment from three r0.180.0 (MIT); bare 'three' imports rewritten to ../../three.module.min.js
