@@ -260,9 +260,16 @@ small{font-size:12px}
 /* Full-bleed hero: the diorama spans the window and fades into the page at top and bottom. */
 html,body{overflow-x:clip}
 .island-slot{position:relative;height:min(66vh,640px);min-height:320px;width:100vw;margin:0 0 4px calc(50% - 50vw);overflow:hidden;
-  background:var(--paper);-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 7%,#000 88%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 7%,#000 88%,transparent 100%)}
+  background:var(--paper);-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 3%,#000 96%,transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 3%,#000 96%,transparent 100%)}
 .island-host,.island-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .island-canvas{cursor:grab}
+.island-controls{position:absolute;z-index:5;right:max(18px,env(safe-area-inset-right));top:22px;display:flex;align-items:center;gap:3px;padding:4px 6px;background:rgba(249,245,233,.93);border:1px solid rgba(79,100,75,.22);border-radius:24px;box-shadow:0 3px 14px #3946320b;color:#425640}
+.island-controls button{min-height:34px;border:0;background:none;border-radius:18px;color:inherit;font:500 12px var(--sans);padding:0 12px;cursor:pointer}
+.island-controls button:hover{background:#e5ebd9}
+.island-controls button:focus-visible,.island-controls input:focus-visible{outline:2px solid #65834e;outline-offset:2px}
+.island-controls label{display:flex;align-items:center;padding:0 8px}
+.island-controls input{width:70px;accent-color:#6f8856;cursor:ew-resize}
+@media(max-width:819px){.island-controls{top:15px;right:14px}.island-controls button{min-height:40px;padding:0 10px}.island-controls input{width:52px}}
 .island-pop{position:absolute;z-index:3;transform:translate(-50%,-100%);pointer-events:none;max-width:260px;padding:6px 10px;border-radius:9px;
   background:var(--card);color:var(--ink);font:500 12.5px/1.45 var(--serif);box-shadow:0 0 0 1.5px var(--ink),3px 3px 0 var(--ink);white-space:normal;text-align:center}
 .island-say{position:absolute;z-index:4;transform:translate(-50%,-100%);width:min(300px,82%);padding:12px 14px 10px;border-radius:14px;background:#fbf9f4;color:#1c2230;
@@ -287,6 +294,7 @@ body.intro-open .dock,body.intro-open .whisper{visibility:hidden}
 .intro.is-leaving{animation:intro-out .42s var(--ease) both}
 @keyframes intro-out{to{opacity:0;transform:scale(1.03)}}
 .intro-stage{position:absolute;inset:0}
+.intro-stage .island-controls{display:none}
 .intro-skip{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;z-index:2;min-height:40px;border:1px solid rgba(43,50,67,.25);border-radius:999px;background:rgba(251,249,244,.75);padding:0 16px;color:#4b5161;font-size:13px}
 .intro-dialog{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);translate:-50% 0;width:min(720px,calc(100vw - 24px));display:flex;gap:14px;align-items:flex-end;
   animation:dialog-in .45s var(--spring) both}

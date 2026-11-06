@@ -75,7 +75,7 @@ async function run(type,label){
    await p.locator('.week-grid .witem.course button').first().click();
    await p.locator('#sheet[open] .occ-choices').waitFor();await p.locator('#sheet [data-close="sheet"]').first().click();
    // 第三章 · 看见自己
-   await bubble('房子是课');await p.waitForTimeout(2600);await shot(p,label+'-tour-5-island');
+   await bubble('日期旗杆');await p.waitForTimeout(2600);await shot(p,label+'-tour-5-island');
    await p.locator('[data-tour="next"]').click();
    await bubble('季节岛');await p.locator('#scale [data-scale="line"]').click();
    await bubble('真实做了几次');await p.waitForTimeout(1200);await shot(p,label+'-tour-6-season');

@@ -31,11 +31,12 @@ const server=http.createServer((req,res)=>{
 function listen(port,tries=0){
  server.once('error',e=>{if(e.code==='EADDRINUSE'&&tries<10)listen(port+1,tries+1);else{console.error(e.message);process.exit(1)}});
  server.listen(port,'127.0.0.1',()=>{
-  const url='http://127.0.0.1:'+port+'/little-works/xiaoya-apple/opus-original/'+(args.includes('--personal')?'':'?judge=1');
+  const url='http://127.0.0.1:'+port+'/little-works/xiaoya-apple/opus-original/'+(args.includes('--book')?'?judge=1&intro=0&scene=week':args.includes('--personal')?'':'?judge=1');
   console.log('小芽 · 铅笔与墨水 预览已启动');
+  if(args.includes('--book'))console.log('  小芽生活小岛：'+url);
   console.log('  演示档案：http://127.0.0.1:'+port+'/little-works/xiaoya-apple/opus-original/?judge=1');
   console.log('  私人档案：http://127.0.0.1:'+port+'/little-works/xiaoya-apple/opus-original/');
-  console.log('  正式版对照：http://127.0.0.1:'+port+'/little-works/xiaoya-apple/native-v4/?judge=1');
+  if(fs.existsSync(path.join(ROOT,'little-works/xiaoya-apple/native-v4/index.html')))console.log('  正式版对照：http://127.0.0.1:'+port+'/little-works/xiaoya-apple/native-v4/?judge=1');
   console.log('关闭这个窗口即可停止预览。');
   if(!args.includes('--no-open')){
    const cmd=process.platform==='win32'?['cmd',['/c','start','',url]]:process.platform==='darwin'?['open',[url]]:['xdg-open',[url]];

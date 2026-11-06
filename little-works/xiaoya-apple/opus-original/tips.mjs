@@ -9,7 +9,7 @@ export const TIPS=[
  {id:'free',sel:'.free-band:not(.is-past)',text:'浅色空白带是真正空着的时间。点一下就能放一件事，或者从口袋里拿一件进来。'},
  {id:'ghost',sel:'.blk.ghost|.witem.ghost',text:'划掉的半透明块是「这一次」停掉或调走的课，原来的位置留个痕迹，方便你记得。'},
  {id:'pocket',sel:'.pocket:not(.is-empty)',text:'口袋里是没有截止的小事。有空时点「放进今天」，小芽会帮你找一段空闲。'},
- {id:'week',sel:'#island-slot',scale:'week',text:'这一周折成了纸岛：拖动转岛，点任何房子、帐篷或灯塔都会翻回那张纸。'},
+ {id:'week',sel:'#island-slot',scale:'week',text:'这一周折成了生活小岛：每天一根旗杆，旗子的颜色说明忙闲。拖动转岛，点旗子、房子或灯塔都会翻回那张纸。'},
  {id:'line',sel:'.lgrid-scroll',scale:'line',text:'长线只记真实发生的事：每一格是一周，结是你为目标做的一次行动。点目标名可以打卡。'},
  {id:'talk',sel:'#talk:not([hidden]) .talk-log|#talk:not([hidden])',event:'talk-opened',text:'在这里说的话，小芽会记在这台设备上。说「记住……」它会记下来；封底里可以查看、管理或清空。'}
 ];

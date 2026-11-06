@@ -55,6 +55,9 @@ const contextActions=createContextActionController({getData:state,getContext:con
 
 let ui={scale:'day',date:dateKey(new Date()),weekStart:dateKey(monday(new Date())),open:null,previews:new Map(),fresh:new Set(),plan:null,planRevision:null,routes:null,forced:null};
 try{const saved=JSON.parse(localStorage.getItem(UI_KEY)||'{}');if(['day','week','line'].includes(saved.scale))ui.scale=saved.scale}catch{}
+// A view-only entry for reviewing the 3D experiment; archive and business data stay unchanged.
+if(params.get('scene')==='week')ui.scale='week';
+if(params.get('scene')==='season')ui.scale='line';
 const drafts=new Map(); // `${mode}:${date}` -> {mood,note}; memory only, never auto-saved
 const draftKey=date=>store.mode()+':'+date;
 
@@ -328,8 +331,8 @@ function renderWeek(data){
  const isThis=ui.weekStart===dateKey(monday(now));
  return '<section class="week" aria-labelledby="week-title"><div class="day-nav"><button type="button" class="nav-arrow" data-week-shift="-1" aria-label="上一周">‹</button><h1 id="week-title">'+(isThis?'本周':md(w.start)+' 起')+'<small>'+md(w.start)+' – '+md(w.end)+(w.teachingWeek?' · 第 '+w.teachingWeek+' 教学周':'')+'</small></h1><button type="button" class="nav-arrow" data-week-shift="1" aria-label="下一周">›</button>'+(isThis?'':'<button type="button" class="nav-today" data-week-today>回到本周</button>')+'</div>'+
   '<p class="voice"><img src="'+assetFace(3)+'" alt="" width="30" height="30">'+esc(weekSentence(w))+'</p>'+
-  '<div class="island-slot" id="island-slot" aria-label="这一周的纸岛：房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是目标，虚线踏脚石是小芽的建议。下方列表包含同样的内容。"></div>'+
-  '<p class="island-legend"><span>房子＝课</span><span>帐篷＝活动</span><span>灯塔＝截止</span><span>草地＝空闲</span><span>树＝目标</span><span>虚线踏脚石＝小芽的铅笔</span><span class="island-tip">拖动转岛 · 点一下翻回纸面</span></p>'+
+  '<div class="island-slot" id="island-slot" aria-label="生活小岛：旗杆顶端是日期，下方是事项。白旗为空闲，浅黄旗为有安排，浅红旗为需要关注。灯塔汇总截止，下方列表显示全部记录。"></div>'+
+  '<p class="island-legend"><span>白旗 · 空闲</span><span>浅黄 · 有安排</span><span>浅红 · 需关注</span><span>灯塔 · 截止</span><span>树 · 目标</span><span class="island-tip">移动鼠标陪小芽散步 · 手机点草地 · 拖动转岛</span></p>'+
   '<ol class="week-grid">'+w.days.map(d=>'<li class="wday'+(d.isToday?' is-today':'')+(d.isPast?' is-past':'')+'"><button type="button" class="wday-head" data-goto-day="'+d.key+'"><span>'+d.label+'</span><b>'+d.dom+'</b>'+(d.pencils?'<i class="pencil-count" title="'+d.pencils+' 笔铅笔建议">✎'+d.pencils+'</i>':'')+'</button>'+
    '<span class="busy" style="--busy:'+Math.min(1,d.busyMinutes/600)+'" title="已记录 '+Math.round(d.busyMinutes/6)/10+' 小时"></span>'+
    '<ul>'+d.items.map(x=>'<li class="witem '+x.kind+(x.conflict?' is-conflict':'')+(x.moved?' is-moved':'')+'"><button type="button" '+(x.recurring?'data-occurrence="'+x.kind+'|'+esc(x.id)+'|'+x.occurrenceDate+'"':'data-edit="'+x.kind+'" data-id="'+esc(x.id)+'"')+'><time>'+x.start+(x.moved?' · 调课':'')+'</time>'+esc(x.title)+'</button></li>').join('')+
@@ -363,7 +366,7 @@ function seasonModel(){
  const L=buildLongLine(data,entries,{now,plan:ui.plan});
  const weeks=L.weeks.map((w,i)=>{const done=L.doneRow[i];const moods=L.moodRow[i].map(x=>x.mood).filter(v=>v!=null);
   const intentions=L.goals.reduce((n,g)=>n+(g.cells[i]?.intention||0),0);
-  return {key:w.start,label:w.label,isCurrent:w.isCurrent,isFuture:w.isFuture,done:done?.done||0,checkins:done?.checkins||0,minutes:done?.minutes||0,
+  return {key:w.start,label:w.label,teachingWeek:teachingWeek(data,new Date(w.start+'T12:00')),isCurrent:w.isCurrent,isFuture:w.isFuture,done:done?.done||0,checkins:done?.checkins||0,minutes:done?.minutes||0,
    mood:moods.length?Math.round(moods.reduce((a,b)=>a+b,0)/moods.length*10)/10:null,intentions}});
  const c=L.current;
  const speech=(greeting(now)||'')+(L.hasEvidence||c.done||c.checkins?'这周完成 '+c.done+' 项、目标行动 '+c.checkins+' 次。往回看，每一格都是你真实走过的路。':'长线上还没有足迹。完成一件事，或者为目标记一次真实行动，这里就会开出第一朵花。');
@@ -1046,7 +1049,7 @@ function tourSteps(){
   {id:'free',chapter:C2,target:'.free-band:not(.is-past)',face:4,optional:true,text:'浅色的空白带是你真正空着的时间。点一下就能在这里放一件事，或者从口袋里拿一件进来。',next:'知道了'},
   {id:'week',chapter:C2,target:'#scale [data-scale="week"]',face:5,text:'把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
   {id:'occ',chapter:C2,target:'.week-grid .witem.course button',face:4,optional:true,text:'每周重复的课，可以只改「这一次」：停课会留下一道划掉的痕迹，调课会搬到新的时段。点一门课看看。',hint:'只是看看的话，直接关上就好，不会改动任何东西。',until:'occurrence-opened',delay:300},
-  {id:'island',chapter:C3,enter:()=>{if(ui.scale!=='week')setScale('week')},target:'#island-slot',face:4,pad:4,text:'房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是你的目标，虚线踏脚石是我的建议。点岛上任何东西，都会翻回纸面。',next:'明白了'},
+  {id:'island',chapter:C3,enter:()=>{if(ui.scale!=='week')setScale('week')},target:'#island-slot',face:4,pad:4,text:'每天一根日期旗杆：白旗是空闲，浅黄旗是有安排，浅红旗是要留意。房子是课，灯塔汇总截止，树是你的目标。点岛上任何东西，都会翻回纸面；移动鼠标，我会陪你散步。',next:'明白了'},
   {id:'season',chapter:C3,target:'#scale [data-scale="line"]',face:5,text:'再退远一点：「长线」把最近几周连成一座季节岛，每块地是一周，花是你完成的事，心情会变成天气。',until:'scale:line',delay:1600},
   {id:'goals',chapter:C3,target:'.lgrid-scroll',face:4,pad:4,text:'下面的格子记着每个目标每周真实做了几次。点目标名可以打卡、看成长路线，或让我帮你画一条新路线。',next:'下一步'},
   {id:'mood',chapter:C3,enter:()=>{toDay();requestAnimationFrame(()=>$('.moods')?.scrollIntoView({block:'center',behavior:'instant'}))},target:'.moods',face:3,text:'每天的页脚：选一个心情，写一句话，合上这一页。它只存在这台设备上，不会自动发给任何模型。',until:'mood-picked'},

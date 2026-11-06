@@ -1,0 +1,235 @@
+{
+  "results": [
+    {
+      "name": "seven spaced masts expose empty, busy and attention states with the reference-shaped puppet",
+      "pass": true
+    },
+    {
+      "name": "mouse gaze responds promptly and the character walks on a clear route",
+      "pass": true
+    },
+    {
+      "name": "leaving the canvas stops the route and re-entering replans it",
+      "pass": true
+    },
+    {
+      "name": "near view makes the original hood and asymmetric leaves inspectable",
+      "pass": true
+    },
+    {
+      "name": "lighthouse extension can be inspected halfway and fully reversed",
+      "pass": true
+    },
+    {
+      "name": "thirty courses remain complete in the real list without thirty buildings",
+      "pass": true
+    },
+    {
+      "name": "wave and boat animation evolve while vessels stay outside the island",
+      "pass": true
+    },
+    {
+      "name": "phone has readable colour-coded masts, one boat and working ground tap",
+      "pass": true
+    },
+    {
+      "name": "reduced motion freezes sea and boats while deliberate ground taps still work",
+      "pass": true
+    },
+    {
+      "name": "night water, labels and shoreline render without shader errors",
+      "pass": true
+    }
+  ],
+  "metrics": {
+    "desktop": {
+      "fold": 1,
+      "folding": false,
+      "yaw": 0,
+      "puppet": "xiaoya-paper-puppet",
+      "identity": "reference-hood-v2",
+      "navigation": {
+        "x": -0.029999999999998805,
+        "z": 1.640000000000002,
+        "path": 0,
+        "target": null,
+        "route": [],
+        "gaze": false,
+        "clear": true,
+        "inputLatencyMs": 0,
+        "gazeYaw": 0
+      },
+      "buildings": 3,
+      "flagPanels": 12,
+      "masts": 7,
+      "flagStates": [
+        "empty",
+        "busy",
+        "attention",
+        "empty",
+        "busy",
+        "busy",
+        "empty"
+      ],
+      "obstacles": 19,
+      "coast": {
+        "boats": 2,
+        "rabbits": 2,
+        "gulls": 2,
+        "grass": 200,
+        "boatClearance": 1.3035294868400347,
+        "waterTime": 2.365999999999998
+      },
+      "calls": 284,
+      "triangles": 59958,
+      "geometries": 172,
+      "textures": 21,
+      "post": "grade",
+      "dpr": 1,
+      "objects": 136
+    },
+    "inputLatencyMs": 2,
+    "dense": {
+      "fold": 1,
+      "folding": false,
+      "yaw": 0,
+      "puppet": "xiaoya-paper-puppet",
+      "identity": "reference-hood-v2",
+      "navigation": {
+        "x": -0.2716060997449819,
+        "z": 0.3800795934465672,
+        "path": 0,
+        "target": null,
+        "route": [],
+        "gaze": false,
+        "clear": true,
+        "inputLatencyMs": 12,
+        "gazeYaw": 0
+      },
+      "buildings": 7,
+      "flagPanels": 28,
+      "masts": 7,
+      "flagStates": [
+        "attention",
+        "attention",
+        "attention",
+        "attention",
+        "attention",
+        "attention",
+        "attention"
+      ],
+      "obstacles": 26,
+      "coast": {
+        "boats": 2,
+        "rabbits": 2,
+        "gulls": 2,
+        "grass": 200,
+        "boatClearance": 1.3197861052177646,
+        "waterTime": 8.403000000000002
+      },
+      "calls": 454,
+      "triangles": 64354,
+      "geometries": 261,
+      "textures": 37,
+      "post": "grade",
+      "dpr": 1,
+      "objects": 231
+    },
+    "motionFile": "E:\\CHATGPT\\projects\\_xiaoya_opus_original_20261105\\docs\\qa\\evidence\\2026-11-06-seaside\\motion\\page@141ba415d2dad2e563f9f2f9d55f4540.webm",
+    "mobile": {
+      "fold": 1,
+      "folding": false,
+      "yaw": 0,
+      "puppet": "xiaoya-paper-puppet",
+      "identity": "reference-hood-v2",
+      "navigation": {
+        "x": -1.0368575598338559,
+        "z": 1.612571087408663,
+        "path": 0,
+        "target": {
+          "x": -1.7024348927780704,
+          "z": 1.3834137300472946
+        },
+        "route": [],
+        "gaze": true,
+        "clear": true,
+        "inputLatencyMs": 15,
+        "gazeYaw": -0.6712073729307745
+      },
+      "buildings": 3,
+      "flagPanels": 12,
+      "masts": 7,
+      "flagStates": [
+        "empty",
+        "busy",
+        "attention",
+        "empty",
+        "busy",
+        "busy",
+        "empty"
+      ],
+      "obstacles": 19,
+      "coast": {
+        "boats": 1,
+        "rabbits": 2,
+        "gulls": 2,
+        "grass": 100,
+        "boatClearance": 1.2734293493463027,
+        "waterTime": 3.3559999999999985
+      },
+      "calls": 271,
+      "triangles": 41446,
+      "geometries": 162,
+      "textures": 21,
+      "post": "grade",
+      "dpr": 1.5,
+      "objects": 136
+    },
+    "night": {
+      "fold": 1,
+      "folding": false,
+      "yaw": 0,
+      "puppet": "xiaoya-paper-puppet",
+      "identity": "reference-hood-v2",
+      "navigation": {
+        "x": -0.029999999999998805,
+        "z": 1.640000000000002,
+        "path": 0,
+        "target": null,
+        "route": [],
+        "gaze": false,
+        "clear": true,
+        "inputLatencyMs": 0,
+        "gazeYaw": 0
+      },
+      "buildings": 3,
+      "flagPanels": 12,
+      "masts": 7,
+      "flagStates": [
+        "empty",
+        "busy",
+        "attention",
+        "empty",
+        "busy",
+        "busy",
+        "empty"
+      ],
+      "obstacles": 19,
+      "coast": {
+        "boats": 2,
+        "rabbits": 2,
+        "gulls": 2,
+        "grass": 200,
+        "boatClearance": 1.304145711061653,
+        "waterTime": 2.5939999999999976
+      },
+      "calls": 297,
+      "triangles": 59971,
+      "geometries": 172,
+      "textures": 32,
+      "post": "grade+bloom",
+      "dpr": 1,
+      "objects": 136
+    }
+  }
+}
