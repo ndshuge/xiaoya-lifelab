@@ -5,9 +5,9 @@ const path=require('node:path');
 const root=path.resolve(__dirname,'..');
 const read=p=>fs.readFileSync(path.join(root,p),'utf8');
 
-test('the submitted URL resolves to Apple Native V4 within the submitted repository',()=>{
+test('the submitted URL resolves to the paper island within the submitted repository',()=>{
  const html=read('index.html');
- assert.match(html,/little-works\/xiaoya-apple\/native-v4/);
+ assert.match(html,/little-works\/xiaoya-apple\/opus-original/);
  assert.match(html,/location\.replace/);
  assert.doesNotMatch(html,/ndshuge-galaxy/);
  assert.match(html,/location\.search/);
@@ -29,4 +29,12 @@ test('versions hub and accessible switcher are present across product editions',
 });
 test('original code and prior competition artifacts are never replaced',()=>{
  for(const p of ['competition-materials/README.md','judge.html','original.html','growth-simulator.js'])assert.ok(fs.existsSync(path.join(root,p)),p);
+});
+
+test('the new paper island and old Native V4 both exist on Pages',()=>{
+ for(const p of ['little-works/xiaoya-apple/opus-original/index.html','little-works/xiaoya-apple/opus-original/island.mjs','little-works/xiaoya-apple/native-v4/index.html']){
+  assert.ok(fs.existsSync(path.join(root,p)),p+' missing');
+ }
+ assert.match(read('versions/index.html'),/id="version-native"/);
+ assert.match(read('versions/index.html'),/id="version-opus"/);
 });

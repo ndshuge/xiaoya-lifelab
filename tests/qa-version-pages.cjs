@@ -22,31 +22,45 @@ const server=http.createServer((req,res)=>{
  try{
   const ctx=await browser.newContext({viewport:{width:390,height:844},hasTouch:true});
   const page=await ctx.newPage(),bad=[],failedResources=[];
+  page.setDefaultTimeout(6000);
   page.on('pageerror',e=>bad.push(e.message));
   page.on('response',r=>{if(r.status()===404)failedResources.push(r.url())});
-  await check('contest URL opens the bundled native V4, not the galaxy repository',async()=>{
-   await page.goto(base+'?judge=1',{waitUntil:'networkidle'});
-   assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/native-v4\/\?judge=1/);
+  await check('contest URL opens current paper island in demo mode',async()=>{
+   await page.goto(base+'?judge=1',{waitUntil:'commit',timeout:12000});
+   await page.waitForURL(/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/opus-original\/\?judge=1/,{timeout:15000});
+   assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/opus-original\/\?judge=1/);
+   await page.waitForSelector('#opus-version-library');
+   if(await page.locator('[data-intro-skip]').isVisible()) await page.locator('[data-intro-skip]').click();
+   assert.equal(await page.locator('#opus-version-library').isVisible(),true);
+  });
+  await check('paper island directly links to the former Native V4',async()=>{
+   await page.goto(base+'little-works/xiaoya-apple/opus-original/?judge=1&intro=0&history=0&tips=0',{waitUntil:'commit',timeout:12000});
+   await page.waitForSelector('#opus-previous-version');
+   const old=await page.locator('#opus-previous-version').getAttribute('href');
+   assert.match(old,/native-v4\/\?judge=1/);
+   await page.locator('#opus-previous-version').click();
+   assert.match(page.url(),/\/native-v4\/\?judge=1/);
+   await page.waitForFunction(()=>!!window.__XY_NATIVE_V3,{timeout:15000});
    assert.equal(await page.evaluate(()=>window.__XY_NATIVE_V3.getMode()),'demo');
    assert.ok(await page.evaluate(()=>window.__XY_NATIVE_V3.getData().tasks.length)>=2);
   });
-  await check('V4 version library lives in Settings without overlapping the Dock',async()=>{
+  await check('V4 old version links back into the six-edition archive',async()=>{
    assert.equal(await page.locator('#xiaoya-version-trigger').isVisible(),false);
    await page.locator('.topbar [data-view=settings]').click();
    assert.equal(await page.locator('#v4-version-library').isVisible(),true);
-   if(process.env.XIAOYA_SCREENSHOT_DIR){fs.mkdirSync(process.env.XIAOYA_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-settings-mobile.png')})}
    await page.locator('#v4-version-library').click();
    assert.match(page.url(),/\/versions\//);
    assert.equal(await page.locator('.version-card').count(),6);
   });
-  await check('Opus demo opens from version library and can switch back',async()=>{
+  await check('archive highlights paper island and old V4 independently',async()=>{
+   assert.equal(await page.locator('#version-opus .tag').innerText(),'当前正式版 · 小岛');
+   assert.equal(await page.locator('#version-native .tag').innerText(),'上一正式版 · 完整保留');
    await page.locator('#version-opus').click();
    assert.match(page.url(),/\/opus-original\/\?judge=1/);
-   await page.waitForSelector('.day,.week,.line-scale');
-   assert.equal(await page.locator('#opus-version-library').isVisible(),true);
+   await page.waitForSelector('#opus-version-library');
+   if(await page.locator('[data-intro-skip]').isVisible()) await page.locator('[data-intro-skip]').click();
    await page.locator('#opus-version-library').click();
    assert.match(page.url(),/\/versions\//);
-   assert.equal(await page.locator('#version-native').isVisible(),true);
   });
   await check('switch to classic edition keeps original source accessible',async()=>{
    await page.locator('#version-classic').click();

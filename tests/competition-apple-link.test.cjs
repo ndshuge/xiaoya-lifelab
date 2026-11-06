@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
 const html = fs.readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
-const target = 'https://ndshuge.github.io/xiaoya-lifelab/little-works/xiaoya-apple/native-v4/';
+const target = 'https://ndshuge.github.io/xiaoya-lifelab/little-works/xiaoya-apple/opus-original/';
 
 function redirect(source) {
   const url = new URL(source);
@@ -27,11 +27,11 @@ function redirect(source) {
   return destination;
 }
 
-test('submitted judge link opens bundled Apple Native V4 from the original repository', () => {
+test('submitted judge link opens bundled Xiaoya paper island from the original repository', () => {
   assert.equal(redirect('https://ndshuge.github.io/xiaoya-lifelab/?judge=1'), target + '?judge=1');
 });
 
-test('unchanged base competition link opens the same Apple version', () => {
+test('unchanged base competition link opens the same paper island version', () => {
   assert.equal(redirect('https://ndshuge.github.io/xiaoya-lifelab/'), target);
 });
 
@@ -57,6 +57,13 @@ test('original edition direct link stays present', () => {
   );
 });
 
-test('without JavaScript, HTML fallback links to Apple edition', () => {
-  assert.match(html, /<noscript>.*?url=\.\/little-works\/xiaoya-apple\/native-v4\//s);
+test('without JavaScript, HTML fallback links to paper island', () => {
+  assert.match(html, /<noscript>.*?url=\.\/little-works\/xiaoya-apple\/opus-original\//s);
+});
+
+test('former latest Native V4 remains directly accessible by edition=native-v4', () => {
+  assert.equal(
+    redirect('https://ndshuge.github.io/xiaoya-lifelab/?edition=native-v4&judge=1#today'),
+    'https://ndshuge.github.io/xiaoya-lifelab/little-works/xiaoya-apple/native-v4/?judge=1#today',
+  );
 });

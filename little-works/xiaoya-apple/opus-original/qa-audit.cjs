@@ -1,4 +1,4 @@
-// Capability audit: every business feature driven through the real UI, verified in saved data.
+﻿// Capability audit: every business feature driven through the real UI, verified in saved data.
 // Fixed clock; model + weather endpoints are mocked (no network, no fees). Usage: node qa-audit.cjs [--webkit] [--shots]
 const http=require('node:http'),path=require('node:path'),fs=require('node:fs'),os=require('node:os'),assert=require('node:assert/strict');
 const {chromium,webkit}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
@@ -28,7 +28,7 @@ async function run(type,label){
  const page=await context.newPage();await page.clock.setFixedTime(NOW);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  page.on('dialog',d=>{errors.push('native dialog: '+d.message());d.dismiss()});
- await page.goto(base+'/little-works/xiaoya-apple/opus-original/?judge=1');await page.waitForSelector('.day');
+ await page.goto(base+'/little-works/xiaoya-apple/opus-original/?judge=1&intro=0&history=0&tips=0');await page.waitForSelector('.day');
  const data=()=>page.evaluate(()=>window.__XY_OPUS.getData());
  const S=async(name,fn)=>{await closeLayers(page);await page.evaluate(()=>{window.__XY_OPUS.ui.date=new Date().toLocaleDateString('sv-SE');window.__XY_OPUS.render()});await step(label+' '+name,fn)};
  try{

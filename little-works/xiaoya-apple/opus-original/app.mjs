@@ -13,8 +13,18 @@ import {createContextActionController} from '../context-actions.js';
 import {fetchCityForecast} from '../weather-forecast.js';
 import {buildGrowthRoutes,commitGrowthRoute,summarizeGrowthWorkload,growthStageTasks} from '../growth-simulator.js';
 import {parseLine} from './line-parser.mjs';
-import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,dayRecap,attentionOf,shortDay,DAYNAMES} from './page-model.mjs';
+import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,dayRecap,attentionOf,freeWindows,shortDay,DAYNAMES} from './page-model.mjs';
 import {createTalk} from './talk.mjs';
+import {createMemory} from './memory.mjs';
+import {createIntro} from './intro.mjs';
+import {createTutorial} from './tutorial.mjs';
+import {createTips} from './tips.mjs';
+import {extractFromText} from './agent.mjs';
+import {needsDemoHistory,buildDemoHistory} from './demo-history.mjs';
+// The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
+const loadIsland=()=>import('./island.mjs');
+// App-wide event bus: the guided tour listens for real actions, never simulated clicks.
+const emit=(type,value)=>document.dispatchEvent(new CustomEvent('xy',{detail:{type,value}}));
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const MOODS=[[1,'低落','xiaoya-mood-1-hi-v2.webp'],[2,'疲倦','xiaoya-mood-2-hi.webp'],[3,'平稳','xiaoya-mood-3-hi.webp'],[4,'不错','xiaoya-mood-4-hi.webp'],[5,'很好','xiaoya-mood-5-hi.webp']];
@@ -35,6 +45,7 @@ catch(e){$('#page').innerHTML='<section class="fatal"><h1>这份档案需要先�
 const state=()=>store.current();
 function safeState(){try{return store.current()}catch{return null}}
 const journal=createJournalStore({getMode:()=>store.mode()});
+const memory=createMemory({getMode:()=>store.mode(),uid});
 const persist=next=>store.replace(next);
 const clock=()=>new Date();
 const consent={weather:false,mood:false,city:null,forecast:null};
@@ -44,6 +55,9 @@ const contextActions=createContextActionController({getData:state,getContext:con
 
 let ui={scale:'day',date:dateKey(new Date()),weekStart:dateKey(monday(new Date())),open:null,previews:new Map(),fresh:new Set(),plan:null,planRevision:null,routes:null,forced:null};
 try{const saved=JSON.parse(localStorage.getItem(UI_KEY)||'{}');if(['day','week','line'].includes(saved.scale))ui.scale=saved.scale}catch{}
+// A view-only entry for reviewing the 3D experiment; archive and business data stay unchanged.
+if(params.get('scene')==='week')ui.scale='week';
+if(params.get('scene')==='season')ui.scale='line';
 const drafts=new Map(); // `${mode}:${date}` -> {mood,note}; memory only, never auto-saved
 const draftKey=date=>store.mode()+':'+date;
 
@@ -70,7 +84,9 @@ function whisper(text,action=null,kind=''){
  const el=$('#whisper');el.innerHTML='<span>'+esc(text)+'</span>'+(action?'<button type="button" data-whisper-action>'+esc(action.label)+'</button>':'');
  el.dataset.kind=kind;el.classList.add('show');
  el.onclick=e=>{if(e.target.closest('[data-whisper-action]')){el.classList.remove('show');action.run()}};
- clearTimeout(whisperTimer);whisperTimer=setTimeout(()=>el.classList.remove('show'),action?6500:3200);
+ clearTimeout(whisperTimer);
+ // While the tour waits on a whisper action (e.g. 擦掉), the whisper stays until used.
+ if(!(action&&tour?.step()==='erase'))whisperTimer=setTimeout(()=>el.classList.remove('show'),action?6500:3200);
 }
 
 // ---------- ink helpers (every manual write goes through the guarded store) ----------
@@ -84,7 +100,7 @@ function ink(change,message,{celebrate=false}={}){
  }catch(e){render();whisper(e.message,null,'error');return false}
 }
 function erase(txId){
- try{store.replace(undoTransaction(state(),txId));render();whisper('已擦掉，恢复到落墨前');setXiaoya('nod')}
+ try{store.replace(undoTransaction(state(),txId));render();whisper('已擦掉，恢复到落墨前');setXiaoya('nod');emit('erased',txId)}
  catch(e){whisper(e.message,null,'error')}
 }
 function markFresh(tx){
@@ -138,11 +154,30 @@ $('#sheet-form').addEventListener('submit',async e=>{
 $('#sheet').addEventListener('cancel',e=>{e.preventDefault();closeSheet()});
 $('#sheet').addEventListener('click',e=>{if(e.target===$('#sheet'))closeSheet()});
 
-const talk=createTalk({esc,getData:state,getJournal:()=>consent.mood?journalAll():[],getContext:safeContext,getCandidates:feed,getMoodToday:()=>consent.mood?moodToday():moodToday(),openSheet,closeSheet,whisper,setXiaoya,onChange:()=>syncLineMode()});
+// Local rules see journal entries only with the local mood consent; the model agent gets them too, but its
+// mood/journal tools are each gated by the companion consent (memory.consent) before anything is read.
+const talk=createTalk({esc,getData:state,getJournal:local=>local?(consent.mood?journalAll():[]):journalAll(),getContext:safeContext,getCandidates:feed,
+ memory,inkDrafts,confirm:askConfirm,openSheet,closeSheet,whisper,setXiaoya,onChange:()=>syncLineMode()});
+/** 落墨 a set of pencil drafts (from the agent, the planner or a pasted notice) as ONE erasable transaction. */
+function inkDrafts(list){
+ const at=()=>new Date().toISOString();const tasks=[],events=[],goals=[];
+ for(const d of list){
+  const f=d.fields;
+  if(d.intent==='task')tasks.push({id:uid(),title:f.title,due:f.due||null,minutes:f.minutes||30,type:f.type||'task',course:f.course||'',done:false,remind:true,createdAt:at(),completedAt:null});
+  else if(d.intent==='event'){const ev={id:uid(),...f,createdAt:at()};try{checkSchedule(ev)}catch(e){whisper('「'+f.name+'」：'+e.message,null,'error');return false}events.push(ev)}
+  else if(d.intent==='goal')goals.push({id:uid(),title:f.title,category:f.category||'兴趣',target:f.target||'',weeklyTarget:f.weeklyTarget||1,kind:f.kind||'goal',done:false,createdAt:at(),completedAt:null});
+ }
+ const n=tasks.length+events.length+goals.length;if(!n)return false;
+ const first=(tasks[0]?.title||events[0]?.name||goals[0]?.title);
+ const ok=ink(d=>{d.tasks.push(...tasks);d.events.push(...events);d.goals.push(...goals);d.history.unshift({id:uid(),at:at(),action:'added',description:'采纳小芽的铅笔：'+(n>1?n+' 笔':first)})},n>1?'落墨了 '+n+' 笔':'落墨：'+first,{celebrate:goals.length>0});
+ return ok?(state().transactions.at(-1)?.id||true):false; // the transaction id lets the cards follow a later 擦掉
+}
 
 // ---------- rendering ----------
+let tips=null; // first-time tips; created at boot
 function render(){
  let data;try{data=state()}catch(e){$('#page').innerHTML='<section class="fatal"><h1>无法读取档案</h1><p class="fatal-msg">'+esc(e.message)+'</p></section>';return}
+ tips?.hide();
  document.body.classList.toggle('reduce',reduced());
  document.body.dataset.scale=ui.scale;document.body.dataset.mode=store.mode();
  renderMast(data);
@@ -152,8 +187,10 @@ function render(){
  $$('#scale [data-scale]').forEach(b=>{const on=b.dataset.scale===ui.scale;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1});
  $('#scale').style.setProperty('--i',String(['day','week','line'].indexOf(ui.scale)));
  if(ui.scale==='day')layoutMargin();
+ if(ui.scale==='week'||ui.scale==='line')mountIsland();
  if(ui.scale==='line'){const sc=$('.lgrid-scroll'),cur=$('.lgrid-head .is-current');if(sc&&cur&&sc.scrollWidth>sc.clientWidth)sc.scrollLeft=Math.max(0,cur.offsetLeft-sc.clientWidth*.55)}
  talk.refresh();
+ tips?.check({scale:ui.scale});
  if(!$('#xiaoya').dataset.state||['idle','sleepy'].includes($('#xiaoya').dataset.state))setXiaoya(null);
 }
 function renderMast(data){
@@ -227,7 +264,7 @@ function renderDay(data){
  const ahead=ui.date===today?renderAhead(data,cands,now):'';
  return '<section class="day" aria-labelledby="day-title">'+
   '<div class="day-nav"><button type="button" class="nav-arrow" data-day-shift="-1" aria-label="前一天">‹</button><h1 id="day-title">'+(ui.date===today?'今天':md(ui.date))+'<small>'+(ui.date===today?md(ui.date)+' ':'')+DAYNAMES[weekday(new Date(ui.date+'T12:00'))]+'</small></h1><button type="button" class="nav-arrow" data-day-shift="1" aria-label="后一天">›</button>'+(ui.date!==today?'<button type="button" class="nav-today" data-day-today>回到今天</button>':'')+'</div>'+
-  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+esc(h.text)+'</p>'+weatherLine+
+  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+(ui.date===today?esc(greeting(now)):'')+esc(h.text)+(ui.date===today&&!isEmptyArchive(data)?' <button type="button" class="plan-today" data-plan-today>✎ 帮我排今天</button>':'')+'</p>'+weatherLine+
   (isEmptyArchive(data)?'<div class="starter" aria-label="试着写一行"><span>试着写一行：</span>'+['周五前交实验报告 90分钟','明天下午3点到5点 社团例会 @创新中心','每周跑步两次','买洗衣液'].map(s=>'<button type="button" data-try="'+esc(s)+'">'+esc(s)+'</button>').join('')+'<button type="button" class="starter-alt" data-import-cal>或导入课表</button></div>':'')+
   '<div class="paper"><div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
    '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+attentionMarker(day,top)+
@@ -240,6 +277,11 @@ function renderDay(data){
 function attentionMarker(day,top){
  const a=attentionOf(day);if(!a)return '';
  return '<button type="button" class="attention is-'+a.kind+'" style="top:'+Math.max(0,top(a.minute)-4)+'px" '+(a.kind==='pencil'?'data-expand="'+esc(a.id)+'"':'data-attention-conflict')+' aria-label="'+esc(a.label)+'" title="'+esc(a.label)+'"><img src="'+assetFace(a.kind==='pencil'?4:3)+'" alt="" width="30" height="30"></button>';
+}
+function greeting(now){
+ let name='';try{name=memory.profile.get().name}catch{}
+ if(!name)return '';const h=now.getHours();
+ return (h<5?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好')+'，'+name+'。';
 }
 const isEmptyArchive=d=>!d.tasks.length&&!d.courses.length&&!d.events.length&&!d.goals.length;
 const minutesOf=stamp=>{const t=String(stamp).slice(11,16).split(':');return +t[0]*60+ +t[1]};
@@ -289,6 +331,8 @@ function renderWeek(data){
  const isThis=ui.weekStart===dateKey(monday(now));
  return '<section class="week" aria-labelledby="week-title"><div class="day-nav"><button type="button" class="nav-arrow" data-week-shift="-1" aria-label="上一周">‹</button><h1 id="week-title">'+(isThis?'本周':md(w.start)+' 起')+'<small>'+md(w.start)+' – '+md(w.end)+(w.teachingWeek?' · 第 '+w.teachingWeek+' 教学周':'')+'</small></h1><button type="button" class="nav-arrow" data-week-shift="1" aria-label="下一周">›</button>'+(isThis?'':'<button type="button" class="nav-today" data-week-today>回到本周</button>')+'</div>'+
   '<p class="voice"><img src="'+assetFace(3)+'" alt="" width="30" height="30">'+esc(weekSentence(w))+'</p>'+
+  '<div class="island-slot" id="island-slot" aria-label="生活小岛：旗杆顶端是日期，下方是事项。白旗为空闲，浅黄旗为有安排，浅红旗为需要关注。灯塔汇总截止，下方列表显示全部记录。"></div>'+
+  '<p class="island-legend"><span>白旗 · 空闲</span><span>浅黄 · 有安排</span><span>浅红 · 需关注</span><span>灯塔 · 截止</span><span>树 · 目标</span><span class="island-tip">移动鼠标陪小芽散步 · 手机点草地 · 拖动转岛</span></p>'+
   '<ol class="week-grid">'+w.days.map(d=>'<li class="wday'+(d.isToday?' is-today':'')+(d.isPast?' is-past':'')+'"><button type="button" class="wday-head" data-goto-day="'+d.key+'"><span>'+d.label+'</span><b>'+d.dom+'</b>'+(d.pencils?'<i class="pencil-count" title="'+d.pencils+' 笔铅笔建议">✎'+d.pencils+'</i>':'')+'</button>'+
    '<span class="busy" style="--busy:'+Math.min(1,d.busyMinutes/600)+'" title="已记录 '+Math.round(d.busyMinutes/6)/10+' 小时"></span>'+
    '<ul>'+d.items.map(x=>'<li class="witem '+x.kind+(x.conflict?' is-conflict':'')+(x.moved?' is-moved':'')+'"><button type="button" '+(x.recurring?'data-occurrence="'+x.kind+'|'+esc(x.id)+'|'+x.occurrenceDate+'"':'data-edit="'+x.kind+'" data-id="'+esc(x.id)+'"')+'><time>'+x.start+(x.moved?' · 调课':'')+'</time>'+esc(x.title)+'</button></li>').join('')+
@@ -297,6 +341,57 @@ function renderWeek(data){
    (!d.items.length&&!d.due.length&&!d.ghosts.length?'<li class="wempty">—</li>':'')+'</ul></li>').join('')+'</ol>'+
   '<div class="tools"><button type="button" class="ghost-btn" data-new="course">添加每周课程</button><button type="button" class="ghost-btn" data-new="event">添加活动</button><button type="button" class="ghost-btn" data-import-cal>导入课表 CSV / ICS</button><button type="button" class="ghost-btn" data-export-ics>导出日历 .ics</button></div>'+
   '<p class="legend"><span class="lg course">课程</span><span class="lg event">活动</span><span class="lg due">截止（时刻）</span><span class="lg pencil">✎ 铅笔建议</span><span class="lg conflict">重叠</span></p></section>';
+}
+// ---------- 3D paper island (week) ----------
+let islandApi=null,islandHost=null,islandLoad=null,islandFailed=false;
+const FACES={2:assetFace(2),3:assetFace(3),4:assetFace(4),5:assetFace(5)};
+function islandModel(){
+ const data=state(),now=new Date(),cands=feed(),pencils=pencilStrokes(cands);
+ const w=buildWeek(data,new Date(ui.weekStart+'T12:00'),{now,pencils});
+ const days=w.days.map(d=>({key:d.key,label:d.label,dom:d.dom,isToday:d.isToday,items:d.items,
+  due:d.due.map(t=>{const at=new Date(d.key+'T'+t.time);return {...t,urgent:!t.done&&+at-+now<=86400000}}),
+  freeMinutes:d.isPast?0:freeWindows(data,d.key,{now,minimum:30}).reduce((n,x)=>n+x.minutes,0),
+  pencilIds:[...new Set(pencils.filter(p=>p.date===d.key).map(p=>p.id))]}));
+ const attention=days.findIndex(d=>d.pencilIds.length&&!w.days[days.indexOf(d)].isPast);
+ const today=dateKey(now),dayNow=buildDay(data,today,{now,pencils});
+ let speech=headline(data,dayNow,{now,pencils,context:safeContext()}).text;
+ speech=greeting(now)+speech;
+ return {kind:'week',days,attentionDay:attention>=0?attention:undefined,xiaoyaFace:attention>=0?4:3,speech,hour:now.getHours()+now.getMinutes()/60,
+  goals:goalSummaries(data)};
+}
+const goalSummaries=data=>data.goals.filter(g=>!g.done).map(g=>({id:g.id,title:g.title,checkins:data.checkins.filter(c=>c.goalId===g.id).length}));
+/** The long line as a season island: nine week plots built from the same evidence as the grid below. */
+function seasonModel(){
+ const data=state(),now=new Date(),entries=journalAll();
+ const L=buildLongLine(data,entries,{now,plan:ui.plan});
+ const weeks=L.weeks.map((w,i)=>{const done=L.doneRow[i];const moods=L.moodRow[i].map(x=>x.mood).filter(v=>v!=null);
+  const intentions=L.goals.reduce((n,g)=>n+(g.cells[i]?.intention||0),0);
+  return {key:w.start,label:w.label,teachingWeek:teachingWeek(data,new Date(w.start+'T12:00')),isCurrent:w.isCurrent,isFuture:w.isFuture,done:done?.done||0,checkins:done?.checkins||0,minutes:done?.minutes||0,
+   mood:moods.length?Math.round(moods.reduce((a,b)=>a+b,0)/moods.length*10)/10:null,intentions}});
+ const c=L.current;
+ const speech=(greeting(now)||'')+(L.hasEvidence||c.done||c.checkins?'这周完成 '+c.done+' 项、目标行动 '+c.checkins+' 次。往回看，每一格都是你真实走过的路。':'长线上还没有足迹。完成一件事，或者为目标记一次真实行动，这里就会开出第一朵花。');
+ return {kind:'season',weeks,goals:goalSummaries(data),speech,hour:now.getHours()+now.getMinutes()/60,xiaoyaFace:L.hasEvidence?5:3};
+}
+function islandPick(p){
+ if(p.kind==='day')return setScale('day',{date:p.date});
+ if(p.kind==='course'||p.kind==='event')return p.recurring?occurrenceSheet(p.kind,p.id,p.occurrenceDate):editSheet(p.kind,p.id);
+ if(p.kind==='task')return editSheet('task',p.id);
+ if(p.kind==='goal')return goalSheet(p.id);
+ if(p.kind==='pencil'){setScale('day',{date:p.date});return setTimeout(()=>expand(p.id),60)}
+ if(p.kind==='week')return setScale('week',{date:p.start});
+ if(p.kind==='xiaoya-talk'){talk.open();emit('xiaoya')}
+}
+async function mountIsland(){
+ const slot=$('#island-slot');if(!slot)return;
+ if(!islandHost){islandHost=document.createElement('div');islandHost.className='island-host'}
+ slot.append(islandHost);
+ if(islandFailed){slot.classList.add('is-fallback');return}
+ if(!islandApi){
+  islandLoad||=loadIsland().then(m=>{islandApi=m.createIsland(islandHost,{onPick:islandPick,reduced,faces:FACES});if(!islandApi)throw Error('WebGL 不可用')})
+   .catch(()=>{islandFailed=true;slot.classList.add('is-fallback')});
+  await islandLoad;
+ }
+ if(islandApi&&(ui.scale==='week'||ui.scale==='line'))islandApi.update(ui.scale==='line'?seasonModel():islandModel());
 }
 function weekSentence(w){
  const busiest=[...w.days].sort((a,b)=>b.busyMinutes-a.busyMinutes)[0];
@@ -329,6 +424,8 @@ function renderLine(data){
  const done=L.goals.filter(g=>g.done);
  return '<section class="line-scale" aria-labelledby="line-title"><div class="day-nav"><h1 id="line-title">长线<small>过去五周 · 本周 · 未来三周</small></h1></div>'+
   '<p class="voice"><img src="'+assetFace(L.hasEvidence?4:3)+'" alt="" width="30" height="30">'+esc(sentence)+(analysis&&entries.length?' '+esc(analysis.explanation):'')+'</p>'+
+  '<div class="island-slot is-season" id="island-slot" aria-label="学期纸岛：每一格是一周。纸塔是完成的事项，花是目标行动，地块颜色是你记录的心情（仅本机），虚线格是未来的周。下方表格包含同样的内容。"></div>'+
+  '<p class="island-legend"><span>纸塔＝完成的事项</span><span>花＝目标行动</span><span>地块颜色＝心情（仅本机）</span><span>虚线格＝未来</span><span>树＝目标</span><span class="island-tip">点一周 · 翻到那一周</span></p>'+
   '<div class="lgrid-scroll" tabindex="0" aria-label="长线：每周的目标行动和完成记录"><div class="lgrid" style="--cols:'+L.weeks.length+'">'+head+moodRow+doneRow+(goalRows||'<div class="lgrid-row"><span class="lgrid-label dim">还没有目标</span></div>')+'</div></div>'+
   '<p class="legend"><span class="lg lg-knot">真实行动（大小≈时长）</span><span class="lg lg-hollow">本周还差</span><span class="lg lg-pencil">铅笔意向（未建日程）</span></p>'+
   '<div class="tools"><button type="button" class="ink-btn" data-new="goal">新目标</button><button type="button" class="ghost-btn" data-routes>种一条长线（成长路线）</button>'+(goals.length?'<button type="button" class="ghost-btn" data-analyze>推演未来四周</button>':'')+'</div>'+planBlock+
@@ -364,7 +461,7 @@ function setScale(next,{date=null}={}){
  try{localStorage.setItem(UI_KEY,JSON.stringify({scale:next}))}catch{}
  if(next===ui.scale&&!date)return;
  ui.scale=next;if(date){ui.date=date;ui.weekStart=dateKey(monday(new Date(date+'T12:00')))}ui.open=null;
- render();window.scrollTo({top:0,behavior:'instant'});
+ render();window.scrollTo({top:0,behavior:'instant'});emit('scale',next);
  // A CSS entrance on the new page only: zooming "in" toward the day, "out" toward the long line.
  // (View Transitions were dropped: they crashed WebKit when entering the day page.)
  const page=$('#page');if(!reduced()){page.dataset.zoom=dir;page.classList.remove('is-entering');void page.offsetWidth;page.classList.add('is-entering')}
@@ -395,6 +492,16 @@ function updateDraft(){
  setXiaoya('listen',1400);
 }
 lineInput.addEventListener('input',updateDraft);
+// Paste a whole notice / group-chat message: Xiaoya splits it into pencil drafts instead of one cramped line.
+lineInput.addEventListener('paste',e=>{
+ const raw=e.clipboardData?.getData('text')||'';
+ if(!(/\n/.test(raw.trim())||raw.length>60))return;
+ const found=extractFromText(raw,new Date());
+ if(!found.length)return; // nothing recognisable: let the browser paste as usual
+ e.preventDefault();
+ talk.offerDrafts(found,'从你粘贴的文字里，我找到 '+found.length+' 件可以记下的事，先用铅笔画出来。逐条落墨，或者一次全部落墨。','本地解析 · 没有联网');
+ emit('pasted',found.length);
+});
 lineInput.addEventListener('keydown',e=>{if(e.key==='Escape'){lineInput.value='';ui.forced=null;updateDraft();lineInput.blur()}});
 draftEl.addEventListener('click',e=>{
  if(e.target.closest('[data-cycle-intent]')){const cycle=['task','event','goal','question'];const cur=parsed?.intent||'task';ui.forced=cycle[(cycle.indexOf(cur)+1)%cycle.length];updateDraft();lineInput.focus();return}
@@ -403,9 +510,9 @@ draftEl.addEventListener('click',e=>{
 $('#line-form').addEventListener('submit',e=>{
  e.preventDefault();const text=lineInput.value.trim();if(!text)return;
  if(!parsed)updateDraft();
- if(parsed.intent==='question'){talk.ask(parsed.fields.question);clearLine();return}
+ if(parsed.intent==='question'){talk.ask(parsed.fields.question);clearLine();emit('asked');return}
  if(e.submitter?.dataset.refine){refineDraft();return}
- if(commitDraft(parsed))clearLine();
+ if(commitDraft(parsed)){clearLine();emit('line-committed',parsed?.intent)}
 });
 function clearLine(){lineInput.value='';ui.forced=null;parsed=null;updateDraft()}
 function commitDraft(p){
@@ -518,6 +625,7 @@ function occurrenceSheet(kind,id,date){
   '<div class="occ-replace" id="occ-replace">'+field('调到哪天','targetDate',tgt.targetDate||date,'date')+'<div class="row2">'+field('开始','start',tgt.start,'time')+field('结束','end',tgt.end,'time')+'</div>'+field('地点（可选）','place',tgt.place??'')+'</div>'+
   '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-edit="'+kind+'" data-id="'+esc(id)+'">修改整门'+label+'（所有周）</button></div>',
   {ok:'落墨',onOk:form=>saveOccurrence(kind,id,date,form)});
+ emit('occurrence-opened',kind);
  const sync=()=>{$('#occ-replace').hidden=$('#sheet-body input[name=occ]:checked')?.value!=='replace'};
  $$('#sheet-body input[name=occ]').forEach(r=>r.addEventListener('change',sync));sync();
 }
@@ -655,7 +763,7 @@ function expand(id){
  if(ui.open===id){ui.open=null;render();return}
  ui.open=id;
  try{ui.previews.set(id,student.preview(id))}catch(e){ui.previews.set(id,{error:e.message})}
- render();
+ render();emit('pencil-opened',id);
  requestAnimationFrame(()=>{const n=document.querySelector('[data-note="'+CSS.escape(id)+'"]');if(n){const r=n.getBoundingClientRect();if(r.bottom>innerHeight-110||r.top<70)n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('[data-approve],.ghost-btn')?.focus({preventScroll:true})}});
 }
 function expandContext(id){
@@ -670,7 +778,7 @@ function approve(id,context=false){
  try{
   const r=context?contextActions.approve(pv):student.approve(pv);
   ui.previews.delete(id);ui.open=null;markFresh(r.transaction);render();
-  whisper('已落墨。',{label:'擦掉',run:()=>erase(r.transaction.id)});setXiaoya('happy',2200);
+  whisper('已落墨。',{label:'擦掉',run:()=>erase(r.transaction.id)});setXiaoya('happy',2200);emit('inked',id);
  }catch(e){ui.previews.delete(id);ui.open=null;render();whisper('没有落墨：'+e.message,null,'error')}
 }
 function respond(id,decision){
@@ -682,7 +790,7 @@ function respond(id,decision){
 function saveJournal(){
  const date=ui.date,entry=journalAll().find(e=>e.date===date),draft=drafts.get(draftKey(date));
  const note=$('#journal-note')?.value??'';const mood=draft?.mood??entry?.mood??null;
- try{journal.save({date,mood,note,tags:entry?.tags||[]});drafts.delete(draftKey(date));render();whisper('合上了这一页（只存在这台设备）');setXiaoya(mood&&mood<=2?'care':'nod')}
+ try{journal.save({date,mood,note,tags:entry?.tags||[]});drafts.delete(draftKey(date));render();whisper('合上了这一页（只存在这台设备）');setXiaoya(mood&&mood<=2?'care':'nod');emit('journal-saved')}
  catch(e){whisper(e.message,null,'error')}
 }
 async function deleteJournal(){
@@ -712,6 +820,9 @@ function coverSheet(){
    '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-cover="weather">获取预报</button><button type="button" class="text-danger" data-cover="revoke">全部撤销</button></div>'+
    '<p class="hint">'+(consent.forecast&&consent.weather?'已获取：'+esc(consent.forecast.cityLabel)+' · '+esc(new Date(consent.forecast.fetchedAt).toLocaleString('zh-CN')):'尚未获取天气；未授权时不发任何网络请求。')+'</p></section>'+
   '<section class="cover-sec"><h3>模型</h3><p class="hint">'+(model?'已连接 '+esc(model.providerName)+' · '+esc(model.model)+'（密钥仅在内存）':'未连接。小芽的所有基础功能都不需要模型。')+'</p><div class="sheet-row"><button type="button" class="ghost-btn" data-open="model">'+(model?'模型设置':'连接你自己的模型')+'</button></div></section>'+
+  (()=>{let f=0,c=0,on=[];try{f=memory.facts.all().length;c=memory.chat.all().length;const k=memory.consent.get();on=Object.keys(k).filter(x=>k[x])}catch{}
+   return '<section class="cover-sec"><h3>小芽的记忆</h3><p class="hint">她记得 '+f+' 件事，留有 '+c+' 条对话，只存在这台设备的当前档案。连接模型时她能查看的记录：'+(on.length?on.length+' 类（在页边对话顶部逐项开关）':'无')+'。</p><div class="sheet-row"><button type="button" class="ghost-btn" data-open-memory>查看和管理</button></div></section>'})()+
+  '<section class="cover-sec"><h3>开场与教学</h3><div class="sheet-row wrap"><button type="button" class="ghost-btn" data-replay="intro">重新看开场</button><button type="button" class="ghost-btn" data-replay="tour">重新走一遍新手任务</button><button type="button" class="ghost-btn" data-replay="tips">重新显示「第一次见到」提示</button></div></section>'+
   '<section class="cover-sec"><h3>关于</h3><p class="hint">实验分支 experiment/xiaoya-opus-original-20261105。正式版不受影响：<a href="../native-v4/">打开正式版 V5.9</a>。</p></section>',
   {ok:'保存设置',onOk:saveCover,wide:true});
 }
@@ -733,16 +844,17 @@ function applyConsentFromForm(form){
 async function coverAction(name){
  if(name==='mode'){
   const next=store.mode()==='demo'?'personal':'demo';
-  resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));closeSheet();render();whisper(next==='demo'?'已切换到合成演示档案':'已回到私人档案');return;
+  resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));enrichDemo();closeSheet();render();whisper(next==='demo'?'已切换到合成演示档案':'已回到私人档案');return;
  }
- if(name==='export'){download(JSON.stringify({...state(),journalV1:journalAll(),exportedAt:new Date().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(new Date())+'.json');whisper('已导出当前档案（含日记）');return}
+ if(name==='export'){let companion=null;try{companion=memory.export()}catch{}
+  download(JSON.stringify({...state(),journalV1:journalAll(),...(companion?{companionV1:companion}:{}),exportedAt:new Date().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(new Date())+'.json');whisper('已导出当前档案（含日记与小芽的记忆）');return}
  if(name==='import'){$('#import-json').click();return}
  if(name==='clear'){
   const d=state(),pages=journalAll().length;
   if(!await askConfirm({title:'清空'+(store.mode()==='demo'?'演示':'私人')+'档案？',danger:true,ok:'清空',
-   facts:[d.tasks.length+' 个事项、'+d.courses.length+' 门课、'+d.events.length+' 个活动、'+d.goals.length+' 个目标、'+pages+' 页日记会全部删除。','这一步不能擦掉。建议先用「导出备份」保存一份。'],
+   facts:[d.tasks.length+' 个事项、'+d.courses.length+' 门课、'+d.events.length+' 个活动、'+d.goals.length+' 个目标、'+pages+' 页日记，以及和小芽的对话与她记得的事，会全部删除。','这一步不能擦掉。建议先用「导出备份」保存一份。'],
    acknowledge:'我已备份，或确认不再需要这些记录'}))return;
-  store.replace(emptyStore());journal.clear();for(const k of [...drafts.keys()])if(k.startsWith(store.mode()+':'))drafts.delete(k);closeSheet();render();whisper('已清空');return;
+  store.replace(emptyStore());journal.clear();try{memory.chat.clear();memory.facts.clear()}catch{}talk.reset();for(const k of [...drafts.keys()])if(k.startsWith(store.mode()+':'))drafts.delete(k);closeSheet();render();whisper('已清空');return;
  }
  if(name==='weather'){
   applyConsentFromForm(new FormData($('#sheet-form')));
@@ -769,7 +881,9 @@ $('#import-json').addEventListener('change',async e=>{
    facts:['备份「'+file.name+'」：'+next.tasks.length+' 个事项、'+next.courses.length+' 门课、'+next.goals.length+' 个目标'+(entries?'、'+entries.length+' 页日记':'（不含日记，现有日记保留）'),
     '当前档案：'+cur.tasks.length+' 个事项、'+cur.courses.length+' 门课、'+cur.goals.length+' 个目标，会被替换。'],
    acknowledge:'我知道当前档案会被覆盖'}))return;
-  store.replace(next);if(entries)journal.replace(entries);closeSheet();render();whisper('已从备份恢复'+(entries?'（含日记）':'（文件不含日记）'));
+  store.replace(next);if(entries)journal.replace(entries);
+  if(incoming.companionV1&&typeof incoming.companionV1==='object'){try{memory.restore(incoming.companionV1);talk.reset()}catch{}}
+  closeSheet();render();whisper('已从备份恢复'+(entries?'（含日记）':'（文件不含日记）'));
  }catch(err){whisper('恢复失败：'+err.message,null,'error')}
 });
 $('#import-cal').addEventListener('change',async e=>{
@@ -792,7 +906,7 @@ document.addEventListener('click',e=>{
  if(ds.open==='model'){closeSheet();setTimeout(()=>talk.connectSheet(),reduced()?0:190);return}
  if(ds.close==='talk')return talk.close();
  if(ds.close==='sheet')return closeSheet();
- if(t.id==='xiaoya')return talk.toggle(t);
+ if(t.id==='xiaoya'){talk.toggle(t);if(talk.isOpen())emit('talk-opened');return}
  if(ds.expand)return expand(ds.expand);
  if(ds.expandContext)return expandContext(ds.expandContext);
  if(ds.approve)return approve(ds.approve);
@@ -812,7 +926,7 @@ document.addEventListener('click',e=>{
  if(ds.dayToday!==undefined){ui.date=dateKey(new Date());return render()}
  if(ds.weekShift){ui.weekStart=dateKey(plusDays(new Date(ui.weekStart+'T12:00'),7*Number(ds.weekShift)));return render()}
  if(ds.weekToday!==undefined){ui.weekStart=dateKey(monday(new Date()));return render()}
- if(ds.mood){const date=ui.date,cur=drafts.get(draftKey(date))||{};drafts.set(draftKey(date),{...cur,mood:Number(ds.mood),note:$('#journal-note')?.value??cur.note});$$('.mood').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.mood===ds.mood)));$('#journal-status').textContent='未保存';return}
+ if(ds.mood){const date=ui.date,cur=drafts.get(draftKey(date))||{};drafts.set(draftKey(date),{...cur,mood:Number(ds.mood),note:$('#journal-note')?.value??cur.note});$$('.mood').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.mood===ds.mood)));$('#journal-status').textContent='未保存';emit('mood-picked',ds.mood);return}
  if(ds.journalSave!==undefined)return saveJournal();
  if(ds.journalDelete!==undefined)return deleteJournal();
  if(ds.goal)return goalSheet(ds.goal);
@@ -824,6 +938,9 @@ document.addEventListener('click',e=>{
  if(ds.growthPreview)return growthPreview(ds.growthPreview);
  if(ds.erase)return erase(ds.erase);
  if(ds.attentionConflict!==undefined){const n=document.querySelector('.note[data-note^="conflict"]');if(n){n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('.note-head')?.click()}else whisper('这里有两件事重叠，点开时间块可以调整');return}
+ if(ds.replay==='tips'){closeSheet();tips.reset();whisper('提示已重置：之后第一次见到的功能会再解释一次');setTimeout(()=>tips.check({scale:ui.scale}),400);return}
+ if(ds.replay){closeSheet();setTimeout(()=>ds.replay==='intro'?playIntro():startTour(),reduced()?0:200);return}
+ if(ds.planToday!==undefined){talk.ask('帮我排一下今天剩下的时间');emit('plan-today');return}
  if(ds.try){lineInput.value=ds.try;updateDraft();lineInput.focus({preventScroll:true});return}
  if(ds.cover)return coverAction(ds.cover);
  if(ds.importCal!==undefined)return $('#import-cal').click();
@@ -861,17 +978,102 @@ window.addEventListener('storage',e=>{if(e.key===store.key()){try{store.refresh(
 
 // ---------- gentle in-page reminders (existing domain rules: quiet hours, gap, lead times) ----------
 function remind(){
+ if(tour?.isActive())return []; // never talk over a tutorial step; the next minute's check delivers it
  try{
   const d=state();if(!d.settings.reminderEnabled)return [];
   const {next,delivered}=deliverReminders(d,new Date());if(!delivered.length)return [];
   store.commit(x=>{x.reminders=next.reminders},{track:false});
-  const r=delivered[0];whisper('小芽轻声提醒：「'+r.title+'」'+r.label);setXiaoya('nod',2600);
+  const r=delivered[0];
+  // Humanise the engine's minute count: "750 分钟" reads better as "约 12.5 小时".
+  const label=String(r.label).replace(/将在 (\d+) 分钟后到来/,(m,n)=>{n=Number(n);return n>=120?'约 '+Math.round(n/30)/2+' 小时后到来':n+' 分钟后到来'});
+  whisper('小芽轻声提醒：「'+r.title+'」'+label);setXiaoya('nod',2600);
   return delivered;
  }catch{return []/* reminders never block the page */}
 }
 
+// ---------- opening & guided tour ----------
+const ONBOARD_KEY='xiaoya-opus-original:onboarded:v1'; // non-private flag: has the opening been seen on this device
+function switchMode(next){if(store.mode()===next)return;resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));enrichDemo()}
+/** Demo archive only: add five weeks of clearly synthetic history once, so the long line is not empty. */
+function enrichDemo(){
+ if(store.mode()!=='demo'||params.get('history')==='0')return;
+ try{
+  if(!needsDemoHistory(state(),journalAll()))return;
+  const {data,journal:entries}=buildDemoHistory(state(),new Date());
+  store.replace(data);
+  const existing=new Set(journalAll().map(e=>e.date));
+  journal.replace([...journalAll(),...entries.filter(e=>!existing.has(e.date))]);
+ }catch(e){console.warn('demo history skipped',e)}
+}
+let introIsland=null,introOpen=false;
+async function playIntro(){
+ if(introOpen)return;introOpen=true;
+ try{introIsland=(await loadIsland()).createIsland}catch{introIsland=null} // without WebGL the opening is dialogue-only
+ const profile=(()=>{try{return memory.profile.get()}catch{return null}})();
+ createIntro({esc,faces:FACES,reduced,islandModel,
+  createIsland:(host,opts)=>{if(!introIsland)throw Error('no 3D');return introIsland(host,opts)},
+  onDone:r=>{introOpen=false;introDone(r)}}).play({profile});
+}
+function introDone({choice,profile}){
+ try{localStorage.setItem(ONBOARD_KEY,'1')}catch{}
+ if(profile){try{memory.profile.set(profile);const n=String(profile.name||'').trim();if(n)memory.facts.add('我叫'+n,'user');if(profile.school||profile.major)memory.facts.add('我在'+[profile.school,profile.major].filter(Boolean).join('读'),'user')}catch{}}
+ if(choice==='personal')switchMode('personal');else if(choice==='tour'||choice==='demo')switchMode('demo');
+ ui.scale='day';render();
+ if(choice==='tour')setTimeout(startTour,reduced()?0:450);
+}
+let tour=null;
+function startTour(){
+ if(tour?.isActive())return;
+ switchMode('demo');ui.scale='day';ui.date=dateKey(new Date());talk.close();render();
+ tour=createTutorial({esc,face:n=>FACES[n]||FACES[4],
+  onStep:s=>{if(s.id==='erase')clearTimeout(whisperTimer)},
+  onFinish:reason=>{if(reason==='done'){tips?.mark(['pencil','free','pocket','week','line','talk']);graduate()}else whisper('教学已跳过；封底里可以随时重新开始')},
+  steps:tourSteps()});
+ tour.start();
+}
+const fill=text=>()=>{lineInput.value=text;updateDraft();lineInput.focus({preventScroll:true})};
+const toDay=()=>{const today=dateKey(new Date());if(ui.scale!=='day'){ui.date=today;setScale('day')}else if(ui.date!==today){ui.date=today;ui.open=null;render()}};
+/** Three chapters, each step waiting for the real action. Every chapter can be skipped on its own. */
+function tourSteps(){
+ const C1='第一章 · 记下来',C2='第二章 · 排进去',C3='第三章 · 看见自己';
+ return [
+  {id:'line',chapter:C1,enter:toDay,target:'#line-input',face:4,text:'写一行。像发消息一样把要做的事写下来，我来理解成一条记录：有截止的是事项，有时间段的是活动。',hint:'写好后按回车（或点「落笔」）落墨。',
+   action:{label:'帮我写一句',run:fill('周六下午三点前交电路实验报告 60分钟')},until:'line-committed'},
+  {id:'pocket',chapter:C1,target:'#line-input',face:5,text:'没有截止时间的小事也能写。它不会占用时间带，而是放进页面下方的「口袋」，有空时再拿出来。',
+   action:{label:'帮我写一句',run:fill('买洗衣液')},until:'line-committed'},
+  {id:'event',chapter:C1,target:'#line-input',face:4,text:'写一个有起止时间的活动，它会画进今天或那一天的时间带。和别的事重叠时，我会标出冲突。',hint:'写下时，输入框上方会先显示我的理解；点那个标签可以改成事项 / 活动 / 目标 / 提问。',
+   action:{label:'帮我写一句',run:fill('明天晚上7点到8点半 社团例会 在活动中心')},until:'line-committed'},
+  {id:'open',chapter:C2,enter:toDay,target:'.blk.pencil|.note.is-pencil .note-head',face:5,optional:true,text:'铅笔：虚线框是我画的建议——还没写进你的日程。点开它，看看我为什么这样排。',until:'pencil-opened'},
+  {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',face:4,after:'open',text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
+  {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',face:3,after:'ink',text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
+  {id:'free',chapter:C2,target:'.free-band:not(.is-past)',face:4,optional:true,text:'浅色的空白带是你真正空着的时间。点一下就能在这里放一件事，或者从口袋里拿一件进来。',next:'知道了'},
+  {id:'week',chapter:C2,target:'#scale [data-scale="week"]',face:5,text:'把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
+  {id:'occ',chapter:C2,target:'.week-grid .witem.course button',face:4,optional:true,text:'每周重复的课，可以只改「这一次」：停课会留下一道划掉的痕迹，调课会搬到新的时段。点一门课看看。',hint:'只是看看的话，直接关上就好，不会改动任何东西。',until:'occurrence-opened',delay:300},
+  {id:'island',chapter:C3,enter:()=>{if(ui.scale!=='week')setScale('week')},target:'#island-slot',face:4,pad:4,text:'每天一根日期旗杆：白旗是空闲，浅黄旗是有安排，浅红旗是要留意。房子是课，灯塔汇总截止，树是你的目标。点岛上任何东西，都会翻回纸面；移动鼠标，我会陪你散步。',next:'明白了'},
+  {id:'season',chapter:C3,target:'#scale [data-scale="line"]',face:5,text:'再退远一点：「长线」把最近几周连成一座季节岛，每块地是一周，花是你完成的事，心情会变成天气。',until:'scale:line',delay:1600},
+  {id:'goals',chapter:C3,target:'.lgrid-scroll',face:4,pad:4,text:'下面的格子记着每个目标每周真实做了几次。点目标名可以打卡、看成长路线，或让我帮你画一条新路线。',next:'下一步'},
+  {id:'mood',chapter:C3,enter:()=>{toDay();requestAnimationFrame(()=>$('.moods')?.scrollIntoView({block:'center',behavior:'instant'}))},target:'.moods',face:3,text:'每天的页脚：选一个心情，写一句话，合上这一页。它只存在这台设备上，不会自动发给任何模型。',until:'mood-picked'},
+  {id:'talk',chapter:C3,target:'#xiaoya',face:5,text:'我一直在这儿。点我，打开页边对话：可以问日程、让我记住事情，接上你自己的模型后还能帮你排一整天。',until:'talk-opened'},
+  {id:'ask',chapter:C3,target:'#line-input',face:4,text:'对话打开时，输入框就是在问我。试着问一句。',action:{label:'帮我问一句',run:fill('我这周哪天最空？')},until:'asked',delay:900},
+  {id:'cover',chapter:C3,enter:()=>talk.close(),target:'#mast [data-open="cover"]|[data-open="cover"]',face:5,text:'最后是封底：切换演示 / 私人档案、备份恢复、天气与心情授权、连接模型，以及重新看这段教学，都在这里。',next:'完成'}
+ ];
+}
+function graduate(){
+ const n=(()=>{try{return memory.profile.get().name}catch{return ''}})();
+ askConfirm({title:'新手任务完成'+(n?'，'+n:'')+'！',body:'你已经会记下事项、活动和口袋小事，会看铅笔、落墨和擦掉，会调一次课，也见过这一周的纸岛和长线的季节岛了。',facts:['刚才的操作都在演示档案里，不影响你的记录。','封底里可以随时重新走一遍。'],ok:'开始我的生活',cancel:'继续逛演示'})
+  .then(go=>{if(go){switchMode('personal');ui.scale='day';render();whisper('欢迎回来。这一页是你的了。')}});
+ setXiaoya('happy',2600);
+}
+
 // ---------- boot ----------
-window.__XY_OPUS={version:'opus-original-1',getData:state,getMode:()=>store.mode(),store,journal,setScale,render,remind,ui};
-render();setXiaoya(null);syncLineMode();
+tips=createTips({esc,face:n=>FACES[n]||FACES[4],disabled:params.get('tips')==='0',
+ blocked:()=>!!(tour?.isActive()||introOpen||$('#sheet').open||$('#confirm').open||document.querySelector('.intro'))});
+document.addEventListener('xy',e=>{if(e.detail?.type==='talk-opened')tips.check({scale:ui.scale,event:'talk-opened'})});
+window.__XY_OPUS={version:'opus-original-3',island:()=>islandApi,getData:state,getMode:()=>store.mode(),store,journal,memory,setScale,render,remind,ui,startTour,playIntro,tips};
+enrichDemo();render();setXiaoya(null);syncLineMode();
+{
+ const force=params.get('intro');let seen=false;try{seen=localStorage.getItem(ONBOARD_KEY)==='1'}catch{}
+ if(force==='1'||(force!=='0'&&!seen))playIntro();
+}
 setTimeout(remind,1500);setInterval(remind,60000);
 setInterval(()=>{if(ui.scale==='day'&&!$('#sheet').open&&document.activeElement?.id!=='journal-note')render()},5*60000);

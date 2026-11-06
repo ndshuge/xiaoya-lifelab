@@ -1,8 +1,6 @@
 # 小芽 · 铅笔与墨水（Opus Original 实验版）
 
-独立实验，原创开发分支为 `experiment/xiaoya-opus-original-20261105`。现作为正式仓库 `/versions/` 中的**可选实验版**发布，未替换 `native-v4`、评委入口或任何历史版。
-
-在线体验默认从版本档案进入 `?judge=1`，使用演示数据。**注意**：同一 GitHub Pages 域名的不同页面共用 localStorage；若直接去掉 `?judge=1`，Opus 实验版会读取与正式版相同的个人档案键，修改后也可能被正式版读取。请先导出备份，正式个人记录建议继续使用 V4。
+独立实验，分支 `experiment/xiaoya-opus-original-20261105`。不修改 native-v4、共享业务模块、评委入口或 GitHub Pages。
 
 ## 打开预览
 - **Windows 双击** `Open-Preview.cmd`（需要 Node.js）。会在 `127.0.0.1` 启动本地服务并打开浏览器；关闭窗口即停止。

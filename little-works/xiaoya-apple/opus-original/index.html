@@ -6,7 +6,7 @@
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f1ea">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15171b">
 <meta name="description" content="小芽 · 铅笔与墨水 — 一页会生长的时间。实验版 Opus Original。">
-<title>小芽 · 铅笔与墨水</title>
+<title>小芽 · 生活小岛</title>
 <link rel="icon" href="../assets/brand/xiaoya_sprite_v1.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,7 +25,8 @@
       <button role="tab" type="button" data-scale="line" aria-selected="false">长线</button>
       <span class="scale-thumb" aria-hidden="true"></span>
     </nav>
-    <a id="opus-version-library" class="archive-link" href="../../../versions/" aria-label="切换小芽版本">版本</a>
+    <a id="opus-previous-version" class="edition-link" href="../native-v4/?judge=1" aria-label="打开上一正式版 Apple Native V4">旧版</a>
+    <a id="opus-version-library" class="edition-link" href="../../../versions/" aria-label="查看全部小芽版本">版本</a>
     <button type="button" class="cover-btn" data-open="cover" aria-label="封底：档案、授权与设置">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h11.5a2.5 2.5 0 0 1 2.5 2.5v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H19"/></svg>
     </button>
@@ -63,10 +64,11 @@
   <div class="envelope" id="envelope"></div>
   <div class="talk-log" id="talk-log" role="log" aria-live="polite"></div>
   <div class="talk-quick" id="talk-quick">
+    <button type="button" data-ask="帮我排一下今天剩下的时间">✎ 排今天</button>
     <button type="button" data-ask="今天先做什么">今天先做什么</button>
     <button type="button" data-ask="明天什么时候有空">明天什么时候有空</button>
     <button type="button" data-ask="这周有冲突吗">这周有冲突吗</button>
-    <button type="button" data-ask="目标进度怎么样">目标进度怎么样</button>
+    <button type="button" data-ask="你记得我什么">你记得我什么</button>
   </div>
 </aside>
 

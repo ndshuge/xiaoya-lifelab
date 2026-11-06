@@ -1,4 +1,12 @@
-## 当前正式版本与入口（2026-11-03）
+## 当前正式版本与入口（2026-11-06）
+
+- 评委原链接： https://ndshuge.github.io/xiaoya-lifelab/?judge=1
+- 默认：小芽小岛纸岛版（Opus Original），包含 3D 纸岛及海岸、时间纸张、互动引导与小芽陪伴；作品以隔离演示模式进入。
+- 前一正式版： Apple Native V4，原样保存在 little-works/xiaoya-apple/native-v4/?judge=1 ，可从小岛顶部「旧版」一键进入。
+- 完整档案： /versions/ ，保留 V4、V3、经典 LifeLab、Pro 与早期 Apple 版。
+- 既有评委二维码 URL 不变；静态 GitHub Pages 未部署本地后端或自动收费 AI。
+
+## 历史正式版本与入口（2026-11-03，Apple V4 时期）
 
 小芽的**正式主仓库**是 `ndshuge/xiaoya-lifelab`。评委仍使用原先提交的
 `https://ndshuge.github.io/xiaoya-lifelab/?judge=1`；根入口 `index.html`
