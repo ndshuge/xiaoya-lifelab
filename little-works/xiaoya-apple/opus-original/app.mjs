@@ -53,6 +53,9 @@ const contextActions=createContextActionController({getData:state,getContext:con
 
 let ui={scale:'day',date:dateKey(new Date()),weekStart:dateKey(monday(new Date())),open:null,previews:new Map(),fresh:new Set(),plan:null,planRevision:null,routes:null,forced:null};
 try{const saved=JSON.parse(localStorage.getItem(UI_KEY)||'{}');if(['day','week','line'].includes(saved.scale))ui.scale=saved.scale}catch{}
+// A view-only entry for reviewing the 3D experiment; archive and business data stay unchanged.
+if(params.get('scene')==='week')ui.scale='week';
+if(params.get('scene')==='season')ui.scale='line';
 const drafts=new Map(); // `${mode}:${date}` -> {mood,note}; memory only, never auto-saved
 const draftKey=date=>store.mode()+':'+date;
 
