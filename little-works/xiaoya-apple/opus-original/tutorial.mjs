@@ -3,7 +3,7 @@
 // A step may: prepare the page (enter), offer a helper action, be optional (auto-skipped if its target
 // is missing), or just explain (next). Chapters can be skipped one at a time, or the whole tour.
 export function createTutorial({esc,face,steps,onFinish,onStep=()=>{}}){
- let i=-1,layer=null,hole=null,bubble=null,raf=0,active=false,waiting=null,missTimer=null;
+ let i=-1,layer=null,hole=null,bubble=null,raf=0,active=false,waiting=null,missTimer=null;const skipped=new Set();
  const $=s=>document.querySelector(s);
  const chapters=[...new Set(steps.map(s=>s.chapter||''))];
  function build(){
@@ -27,6 +27,8 @@ export function createTutorial({esc,face,steps,onFinish,onStep=()=>{}}){
  }
  function show(){
   const s=steps[i];clearTimeout(missTimer);
+  // A step that only makes sense after another one (擦掉 after 落墨) is skipped when that one was skipped.
+  if(s.after&&skipped.has(s.after)){skipped.add(s.id);advance();return}
   try{s.enter?.()}catch{}
   onStep(s,i);
   const inChapter=steps.filter(x=>(x.chapter||'')===(s.chapter||'')),pos=inChapter.indexOf(s)+1,ci=chapters.indexOf(s.chapter||'');
@@ -40,13 +42,13 @@ export function createTutorial({esc,face,steps,onFinish,onStep=()=>{}}){
   requestAnimationFrame(()=>{const n=target();if(n){const r=n.getBoundingClientRect();if(r.top<80||r.bottom>innerHeight-140)n.scrollIntoView({block:'center',behavior:'instant'})}});
   waiting=s.until||null;
   // Optional steps whose target never appears (e.g. no pencil at night) are skipped instead of stalling.
-  if(s.optional)missTimer=setTimeout(()=>{if(active&&steps[i]===s&&!target())advance()},900);
+  if(s.optional)missTimer=setTimeout(()=>{if(active&&steps[i]===s&&!target()){skipped.add(s.id);advance()}},900);
  }
  function onEvent(e){if(!active||!waiting)return;const type=e.detail?.type,val=e.detail?.value;
   const [want,wantVal]=waiting.split(':');if(type===want&&(!wantVal||String(val)===wantVal)){waiting=null;setTimeout(advance,steps[i].delay??450)}}
  function advance(){i++;if(i>=steps.length){finish('done');return}show()}
  function skipChapter(){const c=steps[i]?.chapter;let j=i;while(j<steps.length&&steps[j].chapter===c)j++;i=j-1;advance()}
- function start(){if(active)return;active=true;build();document.addEventListener('xy',onEvent);i=-1;advance();raf=requestAnimationFrame(place)}
+ function start(){if(active)return;active=true;skipped.clear();build();document.addEventListener('xy',onEvent);i=-1;advance();raf=requestAnimationFrame(place)}
  function finish(reason){if(!active)return;active=false;clearTimeout(missTimer);cancelAnimationFrame(raf);document.removeEventListener('xy',onEvent);layer?.remove();layer=null;onFinish?.(reason)}
  return {start,finish,isActive:()=>active,step:()=>steps[i]?.id,chapter:()=>steps[i]?.chapter};
 }

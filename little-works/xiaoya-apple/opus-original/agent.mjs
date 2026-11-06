@@ -227,7 +227,9 @@ export const isPlanRequest=s=>/(?:帮我)?(?:排|安排|规划|计划)(?:一下)
  * Produces event drafts (focus blocks) — never writes. Max 4 blocks, 10-minute breathing room between.
  */
 export function planDayLocal(data,date,{now=new Date()}={}){
- const windows=freeWindows(data,date,{now,minimum:30}).map(w=>({from:Math.ceil(toMin(w.start)/5)*5,to:toMin(w.end)}));
+ // Today: leave five minutes to get going before the first block.
+ const lead=date===dateKey(now)?5:0;
+ const windows=freeWindows(data,date,{now,minimum:30}).map(w=>({from:Math.ceil((toMin(w.start)+lead)/5)*5,to:toMin(w.end)}));
  const horizon=plusDays(new Date(date+'T23:59'),7);
  const work=data.tasks.filter(t=>!t.done&&(!t.due||new Date(t.due)<=horizon)&&!(t.due&&new Date(t.due)<new Date(date+'T00:00')))
   .sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:0);

@@ -94,6 +94,42 @@ async function run(browserType,label){
    await page.evaluate(()=>document.querySelector('#sheet').close());
    await page.locator('.icon-x').click();
   });
+  await step(label+' companion offline: 记住, 排今天 as pencil cards, paste a notice, chat persists across reload',async()=>{
+   const line=page.locator('#line-input');
+   await page.locator('#xiaoya').click();await page.locator('#talk:not([hidden])').waitFor();
+   await line.fill('记住：我周三晚上有家教');await line.press('Enter');
+   await page.locator('.msg-xy .msg-text',{hasText:'记住了'}).waitFor();
+   assert.ok(await page.evaluate(()=>window.__XY_OPUS.memory.facts.all().some(f=>f.text==='我周三晚上有家教')));
+   const before=await data();
+   await page.locator('#talk-quick [data-ask^="帮我排"]').click();
+   await page.locator('.draft-card').first().waitFor();
+   const cards=await page.locator('.draft-card:not(.is-inked)').count();assert.ok(cards>=1);
+   assert.equal((await data()).events.length,before.events.length,'cards write nothing');
+   await shot(page,label+'-desktop-plan-today');
+   if(cards>1){await page.locator('[data-draft-ink-all]').last().click()}else{await page.locator('[data-draft-ink]').last().click()}
+   await page.locator('.draft-card.is-inked').first().waitFor();
+   const after=await data();
+   assert.equal(after.events.length,before.events.length+cards);
+   assert.equal(after.transactions.length,before.transactions.length+1,'all cards are one erasable step');
+   await page.locator('#whisper [data-whisper-action]').click();
+   await page.waitForFunction(n=>window.__XY_OPUS.getData().events.length===n,before.events.length);
+   await page.locator('.draft-card [data-draft-ink]',{hasText:'重新落墨'}).first().waitFor();
+   assert.equal(await page.locator('.draft-card.is-inked').count(),0,'erased cards no longer claim to be written');
+   // Paste a class notice into the line.
+   await line.focus();
+   await page.evaluate(()=>{const dt=new DataTransfer();dt.setData('text/plain','各位同学：\n1. 周六下午三点前交电路实验报告\n2. 下周一上午9点到11点在东3-204 期中答疑\n辛苦了');
+    document.querySelector('#line-input').dispatchEvent(new ClipboardEvent('paste',{clipboardData:dt,bubbles:true,cancelable:true}))});
+   await page.locator('.msg-xy .msg-text',{hasText:'从你粘贴的文字里'}).waitFor();
+   assert.equal(await line.inputValue(),'','the notice is not crammed into the line');
+   assert.ok(await page.locator('.draft-card',{hasText:'期中答疑'}).count()>=1);
+   await shot(page,label+'-desktop-paste-extract');
+   // Reload: the conversation is still there, marked as earlier.
+   await page.reload();await page.waitForSelector('.day');
+   await page.locator('#xiaoya').click();
+   await page.locator('.msg.is-past',{hasText:'我周三晚上有家教'}).first().waitFor();
+   await page.locator('.talk-divider').waitFor();
+   await page.locator('.icon-x').click();
+  });
   await step(label+' gentle reminder: a deadline 30 minutes away is whispered once and recorded',async()=>{
    // Earlier steps can legitimately consume the 60-minute reminder gap; start from an empty reminder log.
    await page.evaluate(()=>window.__XY_OPUS.store.commit(x=>{x.reminders=[]},{track:false}));
@@ -217,14 +253,22 @@ async function run(browserType,label){
    assert.ok((await data()).goals.some(g=>g.growthPlan?.routeId==='project'));
    const tx=(await data()).transactions.at(-1);assert.match(tx.title,/种下长线/);assert.equal(tx.changes.length,4,'route is one erasable transaction');
   });
-  await step(label+' model connection: consent required, 401 is explained, success shows envelope; payload holds only chosen scopes',async()=>{
-   let lastBody=null;
+  await step(label+' model connection + companion agent: consent per category, tool calls, trace, pencil drafts',async()=>{
+   const bodies=[];
+   // A scripted OpenAI-compatible model: it asks for the schedule when that tool is offered, then answers from the
+   // tool result; it drafts a focus block when asked to plan. No network, no fees.
    await page.route('https://api.deepseek.com/chat/completions',async r=>{
-    const body=JSON.parse(r.request().postData());lastBody=body;
+    const body=JSON.parse(r.request().postData());bodies.push(body);
     const auth=r.request().headers()['authorization'];
     if(auth!=='Bearer test-key-ok')return r.fulfill({status:401,contentType:'application/json',body:'{}'});
-    const user=body.messages.at(-1).content;
-    return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({choices:[{message:{content:user.includes('Say OK')?'OK':'收到。'+(user.includes('今天的日程')?'我看到了你附带的日程。':'没有附带记录。')}}]})});
+    const msgs=body.messages,last=msgs.at(-1),tools=(body.tools||[]).map(t=>t.function.name);
+    const reply=m=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({choices:[{message:m}]})});
+    if(last.content==='Say OK')return reply({content:'OK'});
+    if(last.role==='tool'){const prev=msgs.filter(m=>m.role==='tool').map(m=>m.content).join('');
+     return reply({content:prev.includes('draft_id')?'我画了 1 笔铅笔，你看看合不合适。':prev.includes('items')?'收到。我看到了你的日程。':'看不到。'})}
+    if(/帮我排/.test(last.content))return reply({content:null,tool_calls:[{id:'p1',type:'function',function:{name:'draft_event',arguments:JSON.stringify({title:'专注：工数习题第六章',date:'2026-11-05',start:'19:00',end:'19:45',reason:'明晚截止'})}}]});
+    if(tools.includes('get_schedule'))return reply({content:null,tool_calls:[{id:'s1',type:'function',function:{name:'get_schedule',arguments:'{"from":"2026-11-05","days":1}'}}]});
+    return reply({content:'我看不到你的日程，可以在「小芽能看到」里打开。'});
    });
    await page.locator('#xiaoya').click();
    await page.locator('.talk-connect').click();
@@ -240,15 +284,39 @@ async function run(browserType,label){
    await page.locator('#sheet-ok').click();
    await page.locator('#talk-status',{hasText:'已连接 DeepSeek'}).waitFor();
    assert.equal(await page.evaluate(()=>Object.keys(localStorage).some(k=>/key|deepseek/i.test(localStorage.getItem(k)||'')&&(localStorage.getItem(k)||'').includes('test-key-ok'))),false,'key never stored');
-   await page.locator('[data-env="today"]').click();
-   await shot(page,label+'-desktop-envelope');
-   await page.locator('#line-input').fill('帮我看看今天怎么安排？');await page.locator('#line-input').press('Enter');
-   await page.locator('.msg-xy .msg-text',{hasText:'我看到了你附带的日程'}).waitFor();
-   const sent=JSON.stringify(lastBody);
-   assert.match(sent,/今天的日程/);assert.doesNotMatch(sent,/实验课的电路终于调通了/,'journal text never leaves');assert.doesNotMatch(sent,/7 天内截止/);
-   assert.equal(await page.locator('[data-env="today"]').getAttribute('aria-pressed'),'false','envelope clears after send');
-   await page.locator('#line-input').fill('那明天呢？');await page.locator('#line-input').press('Enter');
-   await page.locator('.msg-xy .msg-text',{hasText:'没有附带记录'}).waitFor();
+   // Default: nothing readable. The model is offered only the harmless draft/remember tools.
+   assert.equal(await page.locator('[data-consent="schedule"]').getAttribute('aria-pressed'),'false');
+   await page.locator('#line-input').fill('今天有课吗？');await page.locator('#line-input').press('Enter');
+   await page.locator('.msg-xy .msg-text',{hasText:'我看不到你的日程'}).waitFor();
+   assert.ok(!bodies.at(-1).tools.some(t=>t.function.name==='get_schedule'),'schedule tool not offered without consent');
+   // Allow 课程与日程 → the model calls get_schedule; the answer shows what she looked at.
+   await page.locator('[data-consent="schedule"]').click();
+   assert.equal(await page.locator('[data-consent="schedule"]').getAttribute('aria-pressed'),'true');
+   await page.locator('#line-input').fill('那现在呢？');await page.locator('#line-input').press('Enter');
+   await page.locator('.msg-xy .msg-text',{hasText:'我看到了你的日程'}).waitFor();
+   await page.locator('.msg-xy .trace summary',{hasText:'这次查看了：日程'}).last().waitFor();
+   await shot(page,label+'-desktop-agent-trace');
+   // Planning → a pencil draft card; 落墨 writes it as one erasable step.
+   const before=(await data()).events.length;
+   await page.locator('#line-input').fill('帮我排一下今晚');await page.locator('#line-input').press('Enter');
+   await page.locator('.draft-card',{hasText:'专注：工数习题第六章'}).waitFor();
+   assert.equal((await data()).events.length,before,'a draft writes nothing');
+   await shot(page,label+'-desktop-agent-draft');
+   await page.locator('.draft-card [data-draft-ink]').last().click();
+   await page.locator('.draft-card.is-inked').waitFor();
+   assert.equal((await data()).events.length,before+1);
+   await page.locator('#whisper [data-whisper-action]').click();
+   await page.waitForFunction(n=>window.__XY_OPUS.getData().events.length===n,before);
+   // Journal is a separate, confirmed consent; cancelling leaves it off.
+   await page.locator('[data-consent="journal"]').click();
+   await page.locator('#confirm[open]',{hasText:'日记正文'}).waitFor();await page.locator('#confirm-cancel').click();
+   assert.equal(await page.locator('[data-consent="journal"]').getAttribute('aria-pressed'),'false');
+   const sent=JSON.stringify(bodies);
+   assert.doesNotMatch(sent,/实验课的电路终于调通了/,'journal text never leaves');
+   assert.doesNotMatch(sent,/test-key-ok/,'key only in the Authorization header');
+   // The conversation persists on this device.
+   assert.ok(await page.evaluate(()=>window.__XY_OPUS.memory.chat.all().some(m=>m.text.includes('我看到了你的日程'))));
+   await page.evaluate(()=>window.__XY_OPUS.memory.consent.revoke());
    await page.route('https://api.deepseek.com/chat/completions',r=>r.abort('failed'));
    await page.locator('#line-input').fill('再说一次？');await page.locator('#line-input').press('Enter');
    await page.locator('.msg.is-error').waitFor();

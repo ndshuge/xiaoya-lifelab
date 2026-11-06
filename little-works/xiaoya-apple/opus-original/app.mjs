@@ -19,6 +19,7 @@ import {createMemory} from './memory.mjs';
 import {createIntro} from './intro.mjs';
 import {createTutorial} from './tutorial.mjs';
 import {createTips} from './tips.mjs';
+import {extractFromText} from './agent.mjs';
 import {needsDemoHistory,buildDemoHistory} from './demo-history.mjs';
 // The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
 const loadIsland=()=>import('./island.mjs');
@@ -96,7 +97,7 @@ function ink(change,message,{celebrate=false}={}){
  }catch(e){render();whisper(e.message,null,'error');return false}
 }
 function erase(txId){
- try{store.replace(undoTransaction(state(),txId));render();whisper('已擦掉，恢复到落墨前');setXiaoya('nod');emit('erased')}
+ try{store.replace(undoTransaction(state(),txId));render();whisper('已擦掉，恢复到落墨前');setXiaoya('nod');emit('erased',txId)}
  catch(e){whisper(e.message,null,'error')}
 }
 function markFresh(tx){
@@ -150,7 +151,24 @@ $('#sheet-form').addEventListener('submit',async e=>{
 $('#sheet').addEventListener('cancel',e=>{e.preventDefault();closeSheet()});
 $('#sheet').addEventListener('click',e=>{if(e.target===$('#sheet'))closeSheet()});
 
-const talk=createTalk({esc,getData:state,getJournal:()=>consent.mood?journalAll():[],getContext:safeContext,getCandidates:feed,getMoodToday:()=>consent.mood?moodToday():moodToday(),openSheet,closeSheet,whisper,setXiaoya,onChange:()=>syncLineMode()});
+// Local rules see journal entries only with the local mood consent; the model agent gets them too, but its
+// mood/journal tools are each gated by the companion consent (memory.consent) before anything is read.
+const talk=createTalk({esc,getData:state,getJournal:local=>local?(consent.mood?journalAll():[]):journalAll(),getContext:safeContext,getCandidates:feed,
+ memory,inkDrafts,confirm:askConfirm,openSheet,closeSheet,whisper,setXiaoya,onChange:()=>syncLineMode()});
+/** 落墨 a set of pencil drafts (from the agent, the planner or a pasted notice) as ONE erasable transaction. */
+function inkDrafts(list){
+ const at=()=>new Date().toISOString();const tasks=[],events=[],goals=[];
+ for(const d of list){
+  const f=d.fields;
+  if(d.intent==='task')tasks.push({id:uid(),title:f.title,due:f.due||null,minutes:f.minutes||30,type:f.type||'task',course:f.course||'',done:false,remind:true,createdAt:at(),completedAt:null});
+  else if(d.intent==='event'){const ev={id:uid(),...f,createdAt:at()};try{checkSchedule(ev)}catch(e){whisper('「'+f.name+'」：'+e.message,null,'error');return false}events.push(ev)}
+  else if(d.intent==='goal')goals.push({id:uid(),title:f.title,category:f.category||'兴趣',target:f.target||'',weeklyTarget:f.weeklyTarget||1,kind:f.kind||'goal',done:false,createdAt:at(),completedAt:null});
+ }
+ const n=tasks.length+events.length+goals.length;if(!n)return false;
+ const first=(tasks[0]?.title||events[0]?.name||goals[0]?.title);
+ const ok=ink(d=>{d.tasks.push(...tasks);d.events.push(...events);d.goals.push(...goals);d.history.unshift({id:uid(),at:at(),action:'added',description:'采纳小芽的铅笔：'+(n>1?n+' 笔':first)})},n>1?'落墨了 '+n+' 笔':'落墨：'+first,{celebrate:goals.length>0});
+ return ok?(state().transactions.at(-1)?.id||true):false; // the transaction id lets the cards follow a later 擦掉
+}
 
 // ---------- rendering ----------
 let tips=null; // first-time tips; created at boot
@@ -243,7 +261,7 @@ function renderDay(data){
  const ahead=ui.date===today?renderAhead(data,cands,now):'';
  return '<section class="day" aria-labelledby="day-title">'+
   '<div class="day-nav"><button type="button" class="nav-arrow" data-day-shift="-1" aria-label="前一天">‹</button><h1 id="day-title">'+(ui.date===today?'今天':md(ui.date))+'<small>'+(ui.date===today?md(ui.date)+' ':'')+DAYNAMES[weekday(new Date(ui.date+'T12:00'))]+'</small></h1><button type="button" class="nav-arrow" data-day-shift="1" aria-label="后一天">›</button>'+(ui.date!==today?'<button type="button" class="nav-today" data-day-today>回到今天</button>':'')+'</div>'+
-  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+(ui.date===today?esc(greeting(now)):'')+esc(h.text)+'</p>'+weatherLine+
+  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+(ui.date===today?esc(greeting(now)):'')+esc(h.text)+(ui.date===today&&!isEmptyArchive(data)?' <button type="button" class="plan-today" data-plan-today>✎ 帮我排今天</button>':'')+'</p>'+weatherLine+
   (isEmptyArchive(data)?'<div class="starter" aria-label="试着写一行"><span>试着写一行：</span>'+['周五前交实验报告 90分钟','明天下午3点到5点 社团例会 @创新中心','每周跑步两次','买洗衣液'].map(s=>'<button type="button" data-try="'+esc(s)+'">'+esc(s)+'</button>').join('')+'<button type="button" class="starter-alt" data-import-cal>或导入课表</button></div>':'')+
   '<div class="paper"><div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
    '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+attentionMarker(day,top)+
@@ -471,6 +489,16 @@ function updateDraft(){
  setXiaoya('listen',1400);
 }
 lineInput.addEventListener('input',updateDraft);
+// Paste a whole notice / group-chat message: Xiaoya splits it into pencil drafts instead of one cramped line.
+lineInput.addEventListener('paste',e=>{
+ const raw=e.clipboardData?.getData('text')||'';
+ if(!(/\n/.test(raw.trim())||raw.length>60))return;
+ const found=extractFromText(raw,new Date());
+ if(!found.length)return; // nothing recognisable: let the browser paste as usual
+ e.preventDefault();
+ talk.offerDrafts(found,'从你粘贴的文字里，我找到 '+found.length+' 件可以记下的事，先用铅笔画出来。逐条落墨，或者一次全部落墨。','本地解析 · 没有联网');
+ emit('pasted',found.length);
+});
 lineInput.addEventListener('keydown',e=>{if(e.key==='Escape'){lineInput.value='';ui.forced=null;updateDraft();lineInput.blur()}});
 draftEl.addEventListener('click',e=>{
  if(e.target.closest('[data-cycle-intent]')){const cycle=['task','event','goal','question'];const cur=parsed?.intent||'task';ui.forced=cycle[(cycle.indexOf(cur)+1)%cycle.length];updateDraft();lineInput.focus();return}
@@ -789,6 +817,8 @@ function coverSheet(){
    '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-cover="weather">获取预报</button><button type="button" class="text-danger" data-cover="revoke">全部撤销</button></div>'+
    '<p class="hint">'+(consent.forecast&&consent.weather?'已获取：'+esc(consent.forecast.cityLabel)+' · '+esc(new Date(consent.forecast.fetchedAt).toLocaleString('zh-CN')):'尚未获取天气；未授权时不发任何网络请求。')+'</p></section>'+
   '<section class="cover-sec"><h3>模型</h3><p class="hint">'+(model?'已连接 '+esc(model.providerName)+' · '+esc(model.model)+'（密钥仅在内存）':'未连接。小芽的所有基础功能都不需要模型。')+'</p><div class="sheet-row"><button type="button" class="ghost-btn" data-open="model">'+(model?'模型设置':'连接你自己的模型')+'</button></div></section>'+
+  (()=>{let f=0,c=0,on=[];try{f=memory.facts.all().length;c=memory.chat.all().length;const k=memory.consent.get();on=Object.keys(k).filter(x=>k[x])}catch{}
+   return '<section class="cover-sec"><h3>小芽的记忆</h3><p class="hint">她记得 '+f+' 件事，留有 '+c+' 条对话，只存在这台设备的当前档案。连接模型时她能查看的记录：'+(on.length?on.length+' 类（在页边对话顶部逐项开关）':'无')+'。</p><div class="sheet-row"><button type="button" class="ghost-btn" data-open-memory>查看和管理</button></div></section>'})()+
   '<section class="cover-sec"><h3>开场与教学</h3><div class="sheet-row wrap"><button type="button" class="ghost-btn" data-replay="intro">重新看开场</button><button type="button" class="ghost-btn" data-replay="tour">重新走一遍新手任务</button><button type="button" class="ghost-btn" data-replay="tips">重新显示「第一次见到」提示</button></div></section>'+
   '<section class="cover-sec"><h3>关于</h3><p class="hint">实验分支 experiment/xiaoya-opus-original-20261105。正式版不受影响：<a href="../native-v4/">打开正式版 V5.9</a>。</p></section>',
   {ok:'保存设置',onOk:saveCover,wide:true});
@@ -813,14 +843,15 @@ async function coverAction(name){
   const next=store.mode()==='demo'?'personal':'demo';
   resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));enrichDemo();closeSheet();render();whisper(next==='demo'?'已切换到合成演示档案':'已回到私人档案');return;
  }
- if(name==='export'){download(JSON.stringify({...state(),journalV1:journalAll(),exportedAt:new Date().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(new Date())+'.json');whisper('已导出当前档案（含日记）');return}
+ if(name==='export'){let companion=null;try{companion=memory.export()}catch{}
+  download(JSON.stringify({...state(),journalV1:journalAll(),...(companion?{companionV1:companion}:{}),exportedAt:new Date().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(new Date())+'.json');whisper('已导出当前档案（含日记与小芽的记忆）');return}
  if(name==='import'){$('#import-json').click();return}
  if(name==='clear'){
   const d=state(),pages=journalAll().length;
   if(!await askConfirm({title:'清空'+(store.mode()==='demo'?'演示':'私人')+'档案？',danger:true,ok:'清空',
-   facts:[d.tasks.length+' 个事项、'+d.courses.length+' 门课、'+d.events.length+' 个活动、'+d.goals.length+' 个目标、'+pages+' 页日记会全部删除。','这一步不能擦掉。建议先用「导出备份」保存一份。'],
+   facts:[d.tasks.length+' 个事项、'+d.courses.length+' 门课、'+d.events.length+' 个活动、'+d.goals.length+' 个目标、'+pages+' 页日记，以及和小芽的对话与她记得的事，会全部删除。','这一步不能擦掉。建议先用「导出备份」保存一份。'],
    acknowledge:'我已备份，或确认不再需要这些记录'}))return;
-  store.replace(emptyStore());journal.clear();for(const k of [...drafts.keys()])if(k.startsWith(store.mode()+':'))drafts.delete(k);closeSheet();render();whisper('已清空');return;
+  store.replace(emptyStore());journal.clear();try{memory.chat.clear();memory.facts.clear()}catch{}talk.reset();for(const k of [...drafts.keys()])if(k.startsWith(store.mode()+':'))drafts.delete(k);closeSheet();render();whisper('已清空');return;
  }
  if(name==='weather'){
   applyConsentFromForm(new FormData($('#sheet-form')));
@@ -847,7 +878,9 @@ $('#import-json').addEventListener('change',async e=>{
    facts:['备份「'+file.name+'」：'+next.tasks.length+' 个事项、'+next.courses.length+' 门课、'+next.goals.length+' 个目标'+(entries?'、'+entries.length+' 页日记':'（不含日记，现有日记保留）'),
     '当前档案：'+cur.tasks.length+' 个事项、'+cur.courses.length+' 门课、'+cur.goals.length+' 个目标，会被替换。'],
    acknowledge:'我知道当前档案会被覆盖'}))return;
-  store.replace(next);if(entries)journal.replace(entries);closeSheet();render();whisper('已从备份恢复'+(entries?'（含日记）':'（文件不含日记）'));
+  store.replace(next);if(entries)journal.replace(entries);
+  if(incoming.companionV1&&typeof incoming.companionV1==='object'){try{memory.restore(incoming.companionV1);talk.reset()}catch{}}
+  closeSheet();render();whisper('已从备份恢复'+(entries?'（含日记）':'（文件不含日记）'));
  }catch(err){whisper('恢复失败：'+err.message,null,'error')}
 });
 $('#import-cal').addEventListener('change',async e=>{
@@ -904,6 +937,7 @@ document.addEventListener('click',e=>{
  if(ds.attentionConflict!==undefined){const n=document.querySelector('.note[data-note^="conflict"]');if(n){n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('.note-head')?.click()}else whisper('这里有两件事重叠，点开时间块可以调整');return}
  if(ds.replay==='tips'){closeSheet();tips.reset();whisper('提示已重置：之后第一次见到的功能会再解释一次');setTimeout(()=>tips.check({scale:ui.scale}),400);return}
  if(ds.replay){closeSheet();setTimeout(()=>ds.replay==='intro'?playIntro():startTour(),reduced()?0:200);return}
+ if(ds.planToday!==undefined){talk.ask('帮我排一下今天剩下的时间');emit('plan-today');return}
  if(ds.try){lineInput.value=ds.try;updateDraft();lineInput.focus({preventScroll:true});return}
  if(ds.cover)return coverAction(ds.cover);
  if(ds.importCal!==undefined)return $('#import-cal').click();
@@ -941,6 +975,7 @@ window.addEventListener('storage',e=>{if(e.key===store.key()){try{store.refresh(
 
 // ---------- gentle in-page reminders (existing domain rules: quiet hours, gap, lead times) ----------
 function remind(){
+ if(tour?.isActive())return []; // never talk over a tutorial step; the next minute's check delivers it
  try{
   const d=state();if(!d.settings.reminderEnabled)return [];
   const {next,delivered}=deliverReminders(d,new Date());if(!delivered.length)return [];
@@ -1006,8 +1041,8 @@ function tourSteps(){
   {id:'event',chapter:C1,target:'#line-input',face:4,text:'写一个有起止时间的活动，它会画进今天或那一天的时间带。和别的事重叠时，我会标出冲突。',hint:'写下时，输入框上方会先显示我的理解；点那个标签可以改成事项 / 活动 / 目标 / 提问。',
    action:{label:'帮我写一句',run:fill('明天晚上7点到8点半 社团例会 在活动中心')},until:'line-committed'},
   {id:'open',chapter:C2,enter:toDay,target:'.blk.pencil|.note.is-pencil .note-head',face:5,optional:true,text:'铅笔：虚线框是我画的建议——还没写进你的日程。点开它，看看我为什么这样排。',until:'pencil-opened'},
-  {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',face:4,optional:true,text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
-  {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',face:3,optional:true,text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
+  {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',face:4,after:'open',text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
+  {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',face:3,after:'ink',text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
   {id:'free',chapter:C2,target:'.free-band:not(.is-past)',face:4,optional:true,text:'浅色的空白带是你真正空着的时间。点一下就能在这里放一件事，或者从口袋里拿一件进来。',next:'知道了'},
   {id:'week',chapter:C2,target:'#scale [data-scale="week"]',face:5,text:'把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
   {id:'occ',chapter:C2,target:'.week-grid .witem.course button',face:4,optional:true,text:'每周重复的课，可以只改「这一次」：停课会留下一道划掉的痕迹，调课会搬到新的时段。点一门课看看。',hint:'只是看看的话，直接关上就好，不会改动任何东西。',until:'occurrence-opened',delay:300},
