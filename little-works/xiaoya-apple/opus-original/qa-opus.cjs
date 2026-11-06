@@ -20,7 +20,7 @@ async function newPage(browser,base,{mobile=false,judge=true}={}){
  // Fonts are a progressive enhancement; keep QA offline and deterministic.
  await page.route(/fonts\.(googleapis|gstatic)\.com/,r=>r.fulfill({status:200,contentType:'text/css',body:''}));
  await page.clock.setFixedTime(NOW);
- await page.goto(base+'/little-works/xiaoya-apple/opus-original/'+(judge?'?judge=1&intro=0':'?intro=0'));
+ await page.goto(base+'/little-works/xiaoya-apple/opus-original/'+(judge?'?judge=1&intro=0&history=0':'?intro=0&history=0'));
  await page.waitForSelector('.day,.week,.line-scale');
  return {page,context,errors};
 }

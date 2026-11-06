@@ -81,8 +81,35 @@ async function run(type,label){
     if(await p.evaluate(()=>window.__XY_OPUS.ui.scale!=='week'||document.querySelector('#sheet').open)){navigated=true;break}}if(navigated)break}
    assert.ok(navigated,'some object on the island is pickable');
   });
+  const at=async(p,kind)=>{const box=await p.locator('.island-host').boundingBox();const s=await p.evaluate(k=>window.__XY_OPUS.island()?.locate(k),kind);if(!s)return null;return {x:box.x+s.x,y:box.y+s.y}};
+  await step(label+' hover shows a paper tooltip and lifts the piece; tapping Xiaoya makes her speak',async()=>{
+   const p=a.page;await p.evaluate(()=>window.__XY_OPUS.setScale('week'));await p.locator('.island-canvas').waitFor();await p.waitForTimeout(2600);
+   const h=await at(p,'course');assert.ok(h,'a course house exists');
+   await p.mouse.move(h.x,h.y);await p.waitForTimeout(500);
+   assert.ok(await p.locator('.island-pop').isVisible(),'tooltip visible');
+   assert.match(await p.locator('.island-pop').innerText(),/\d\d:\d\d|周.|项/);
+   await shot(p,label+'-island-hover');
+   const x=await at(p,'xiaoya');await p.mouse.click(x.x,x.y);
+   await p.locator('.island-say').waitFor();assert.match(await p.locator('.island-say p').innerText(),/阿芽|今天|截止|下一件/);
+   await p.waitForTimeout(300);await shot(p,label+'-island-xiaoya-say');
+   await p.locator('[data-island-talk]').click();await p.locator('#talk:not([hidden])').waitFor();await p.locator('.icon-x').click();
+  });
+  await step(label+' long line becomes a season island; picking a week opens that week',async()=>{
+   const p=a.page;await p.evaluate(()=>window.__XY_OPUS.setScale('line'));await p.locator('.island-slot.is-season .island-canvas').waitFor({timeout:15000});await p.waitForTimeout(2800);
+   await shot(p,label+'-season-island');
+   const w=await at(p,'week');assert.ok(w,'week plots exist');await p.mouse.click(w.x,w.y);
+   await p.waitForFunction(()=>window.__XY_OPUS.ui.scale==='week');
+  });
   await step(label+' no page errors (desktop)',async()=>{assert.deepEqual(a.errors.filter(e=>!/GPU stall|WebGL|swiftshader/i.test(e)),[])});
   await a.ctx.close();
+  // Night: lighting follows the real hour (windows lit, stars out).
+  {const n=await browser.newContext({viewport:{width:1280,height:860}});await n.route(/fonts\./,r=>r.fulfill({status:200,contentType:'text/css',body:''}));
+   const p=await n.newPage();await p.clock.setFixedTime(new Date('2026-11-05T21:40:00+08:00'));await p.goto(base+'/little-works/xiaoya-apple/opus-original/?judge=1&intro=0');
+   await step(label+' night lighting: host marked night, island renders',async()=>{
+    await p.waitForSelector('.day');await p.evaluate(()=>window.__XY_OPUS.setScale('week'));await p.locator('.island-canvas').waitFor({timeout:15000});await p.waitForTimeout(2800);
+    assert.equal(await p.locator('.island-host').getAttribute('data-night'),'true');
+    await shot(p,label+'-island-night');
+   });await n.close()}
   // Mobile: returning visitor skips the opening; island fits the phone.
   const m=await open(browser,base,{mobile:true,query:'?judge=1&intro=0'});
   await step(label+' mobile island fits 390px and keeps the list below',async()=>{

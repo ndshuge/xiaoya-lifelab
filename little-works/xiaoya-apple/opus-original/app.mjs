@@ -18,6 +18,7 @@ import {createTalk} from './talk.mjs';
 import {createMemory} from './memory.mjs';
 import {createIntro} from './intro.mjs';
 import {createTutorial} from './tutorial.mjs';
+import {needsDemoHistory,buildDemoHistory} from './demo-history.mjs';
 // The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
 const loadIsland=()=>import('./island.mjs');
 // App-wide event bus: the guided tour listens for real actions, never simulated clicks.
@@ -162,7 +163,7 @@ function render(){
  $$('#scale [data-scale]').forEach(b=>{const on=b.dataset.scale===ui.scale;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1});
  $('#scale').style.setProperty('--i',String(['day','week','line'].indexOf(ui.scale)));
  if(ui.scale==='day')layoutMargin();
- if(ui.scale==='week')mountIsland();
+ if(ui.scale==='week'||ui.scale==='line')mountIsland();
  if(ui.scale==='line'){const sc=$('.lgrid-scroll'),cur=$('.lgrid-head .is-current');if(sc&&cur&&sc.scrollWidth>sc.clientWidth)sc.scrollLeft=Math.max(0,cur.offsetLeft-sc.clientWidth*.55)}
  talk.refresh();
  if(!$('#xiaoya').dataset.state||['idle','sleepy'].includes($('#xiaoya').dataset.state))setXiaoya(null);
@@ -327,8 +328,24 @@ function islandModel(){
   freeMinutes:d.isPast?0:freeWindows(data,d.key,{now,minimum:30}).reduce((n,x)=>n+x.minutes,0),
   pencilIds:[...new Set(pencils.filter(p=>p.date===d.key).map(p=>p.id))]}));
  const attention=days.findIndex(d=>d.pencilIds.length&&!w.days[days.indexOf(d)].isPast);
- return {days,attentionDay:attention>=0?attention:undefined,xiaoyaFace:attention>=0?4:3,
-  goals:data.goals.filter(g=>!g.done).map(g=>({id:g.id,title:g.title,checkins:data.checkins.filter(c=>c.goalId===g.id).length}))};
+ const today=dateKey(now),dayNow=buildDay(data,today,{now,pencils});
+ let speech=headline(data,dayNow,{now,pencils,context:safeContext()}).text;
+ speech=greeting(now)+speech;
+ return {kind:'week',days,attentionDay:attention>=0?attention:undefined,xiaoyaFace:attention>=0?4:3,speech,hour:now.getHours()+now.getMinutes()/60,
+  goals:goalSummaries(data)};
+}
+const goalSummaries=data=>data.goals.filter(g=>!g.done).map(g=>({id:g.id,title:g.title,checkins:data.checkins.filter(c=>c.goalId===g.id).length}));
+/** The long line as a season island: nine week plots built from the same evidence as the grid below. */
+function seasonModel(){
+ const data=state(),now=new Date(),entries=journalAll();
+ const L=buildLongLine(data,entries,{now,plan:ui.plan});
+ const weeks=L.weeks.map((w,i)=>{const done=L.doneRow[i];const moods=L.moodRow[i].map(x=>x.mood).filter(v=>v!=null);
+  const intentions=L.goals.reduce((n,g)=>n+(g.cells[i]?.intention||0),0);
+  return {key:w.start,label:w.label,isCurrent:w.isCurrent,isFuture:w.isFuture,done:done?.done||0,checkins:done?.checkins||0,minutes:done?.minutes||0,
+   mood:moods.length?Math.round(moods.reduce((a,b)=>a+b,0)/moods.length*10)/10:null,intentions}});
+ const c=L.current;
+ const speech=(greeting(now)||'')+(L.hasEvidence||c.done||c.checkins?'这周完成 '+c.done+' 项、目标行动 '+c.checkins+' 次。往回看，每一格都是你真实走过的路。':'长线上还没有足迹。完成一件事，或者为目标记一次真实行动，这里就会开出第一朵花。');
+ return {kind:'season',weeks,goals:goalSummaries(data),speech,hour:now.getHours()+now.getMinutes()/60,xiaoyaFace:L.hasEvidence?5:3};
 }
 function islandPick(p){
  if(p.kind==='day')return setScale('day',{date:p.date});
@@ -336,7 +353,8 @@ function islandPick(p){
  if(p.kind==='task')return editSheet('task',p.id);
  if(p.kind==='goal')return goalSheet(p.id);
  if(p.kind==='pencil'){setScale('day',{date:p.date});return setTimeout(()=>expand(p.id),60)}
- if(p.kind==='xiaoya'){talk.toggle();emit('xiaoya')}
+ if(p.kind==='week')return setScale('week',{date:p.start});
+ if(p.kind==='xiaoya-talk'){talk.open();emit('xiaoya')}
 }
 async function mountIsland(){
  const slot=$('#island-slot');if(!slot)return;
@@ -348,7 +366,7 @@ async function mountIsland(){
    .catch(()=>{islandFailed=true;slot.classList.add('is-fallback')});
   await islandLoad;
  }
- if(islandApi&&ui.scale==='week')islandApi.update(islandModel());
+ if(islandApi&&(ui.scale==='week'||ui.scale==='line'))islandApi.update(ui.scale==='line'?seasonModel():islandModel());
 }
 function weekSentence(w){
  const busiest=[...w.days].sort((a,b)=>b.busyMinutes-a.busyMinutes)[0];
@@ -381,6 +399,8 @@ function renderLine(data){
  const done=L.goals.filter(g=>g.done);
  return '<section class="line-scale" aria-labelledby="line-title"><div class="day-nav"><h1 id="line-title">长线<small>过去五周 · 本周 · 未来三周</small></h1></div>'+
   '<p class="voice"><img src="'+assetFace(L.hasEvidence?4:3)+'" alt="" width="30" height="30">'+esc(sentence)+(analysis&&entries.length?' '+esc(analysis.explanation):'')+'</p>'+
+  '<div class="island-slot is-season" id="island-slot" aria-label="学期纸岛：每一格是一周。纸塔是完成的事项，花是目标行动，地块颜色是你记录的心情（仅本机），虚线格是未来的周。下方表格包含同样的内容。"></div>'+
+  '<p class="island-legend"><span>纸塔＝完成的事项</span><span>花＝目标行动</span><span>地块颜色＝心情（仅本机）</span><span>虚线格＝未来</span><span>树＝目标</span><span class="island-tip">点一周 · 翻到那一周</span></p>'+
   '<div class="lgrid-scroll" tabindex="0" aria-label="长线：每周的目标行动和完成记录"><div class="lgrid" style="--cols:'+L.weeks.length+'">'+head+moodRow+doneRow+(goalRows||'<div class="lgrid-row"><span class="lgrid-label dim">还没有目标</span></div>')+'</div></div>'+
   '<p class="legend"><span class="lg lg-knot">真实行动（大小≈时长）</span><span class="lg lg-hollow">本周还差</span><span class="lg lg-pencil">铅笔意向（未建日程）</span></p>'+
   '<div class="tools"><button type="button" class="ink-btn" data-new="goal">新目标</button><button type="button" class="ghost-btn" data-routes>种一条长线（成长路线）</button>'+(goals.length?'<button type="button" class="ghost-btn" data-analyze>推演未来四周</button>':'')+'</div>'+planBlock+
@@ -786,7 +806,7 @@ function applyConsentFromForm(form){
 async function coverAction(name){
  if(name==='mode'){
   const next=store.mode()==='demo'?'personal':'demo';
-  resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));closeSheet();render();whisper(next==='demo'?'已切换到合成演示档案':'已回到私人档案');return;
+  resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));enrichDemo();closeSheet();render();whisper(next==='demo'?'已切换到合成演示档案':'已回到私人档案');return;
  }
  if(name==='export'){download(JSON.stringify({...state(),journalV1:journalAll(),exportedAt:new Date().toISOString(),archiveMode:store.mode()},null,2),'application/json','xiaoya-'+store.mode()+'-'+dateKey(new Date())+'.json');whisper('已导出当前档案（含日记）');return}
  if(name==='import'){$('#import-json').click();return}
@@ -919,14 +939,28 @@ function remind(){
   const d=state();if(!d.settings.reminderEnabled)return [];
   const {next,delivered}=deliverReminders(d,new Date());if(!delivered.length)return [];
   store.commit(x=>{x.reminders=next.reminders},{track:false});
-  const r=delivered[0];whisper('小芽轻声提醒：「'+r.title+'」'+r.label);setXiaoya('nod',2600);
+  const r=delivered[0];
+  // Humanise the engine's minute count: "750 分钟" reads better as "约 12.5 小时".
+  const label=String(r.label).replace(/将在 (\d+) 分钟后到来/,(m,n)=>{n=Number(n);return n>=120?'约 '+Math.round(n/30)/2+' 小时后到来':n+' 分钟后到来'});
+  whisper('小芽轻声提醒：「'+r.title+'」'+label);setXiaoya('nod',2600);
   return delivered;
  }catch{return []/* reminders never block the page */}
 }
 
 // ---------- opening & guided tour ----------
 const ONBOARD_KEY='xiaoya-opus-original:onboarded:v1'; // non-private flag: has the opening been seen on this device
-function switchMode(next){if(store.mode()===next)return;resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()))}
+function switchMode(next){if(store.mode()===next)return;resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()));enrichDemo()}
+/** Demo archive only: add five weeks of clearly synthetic history once, so the long line is not empty. */
+function enrichDemo(){
+ if(store.mode()!=='demo'||params.get('history')==='0')return;
+ try{
+  if(!needsDemoHistory(state(),journalAll()))return;
+  const {data,journal:entries}=buildDemoHistory(state(),new Date());
+  store.replace(data);
+  const existing=new Set(journalAll().map(e=>e.date));
+  journal.replace([...journalAll(),...entries.filter(e=>!existing.has(e.date))]);
+ }catch(e){console.warn('demo history skipped',e)}
+}
 let introIsland=null,introOpen=false;
 async function playIntro(){
  if(introOpen)return;introOpen=true;
@@ -970,8 +1004,8 @@ function graduate(){
 }
 
 // ---------- boot ----------
-window.__XY_OPUS={version:'opus-original-2',getData:state,getMode:()=>store.mode(),store,journal,memory,setScale,render,remind,ui,startTour,playIntro};
-render();setXiaoya(null);syncLineMode();
+window.__XY_OPUS={version:'opus-original-2',island:()=>islandApi,getData:state,getMode:()=>store.mode(),store,journal,memory,setScale,render,remind,ui,startTour,playIntro};
+enrichDemo();render();setXiaoya(null);syncLineMode();
 {
  const force=params.get('intro');let seen=false;try{seen=localStorage.getItem(ONBOARD_KEY)==='1'}catch{}
  if(force==='1'||(force!=='0'&&!seen))playIntro();
