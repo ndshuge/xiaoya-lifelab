@@ -13,8 +13,15 @@ import {createContextActionController} from '../context-actions.js';
 import {fetchCityForecast} from '../weather-forecast.js';
 import {buildGrowthRoutes,commitGrowthRoute,summarizeGrowthWorkload,growthStageTasks} from '../growth-simulator.js';
 import {parseLine} from './line-parser.mjs';
-import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,dayRecap,attentionOf,shortDay,DAYNAMES} from './page-model.mjs';
+import {buildDay,buildWeek,buildLongLine,headline,pencilStrokes,timeMap,withException,dayRecap,attentionOf,freeWindows,shortDay,DAYNAMES} from './page-model.mjs';
 import {createTalk} from './talk.mjs';
+import {createMemory} from './memory.mjs';
+import {createIntro} from './intro.mjs';
+import {createTutorial} from './tutorial.mjs';
+// The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
+const loadIsland=()=>import('./island.mjs');
+// App-wide event bus: the guided tour listens for real actions, never simulated clicks.
+const emit=(type,value)=>document.dispatchEvent(new CustomEvent('xy',{detail:{type,value}}));
 
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 const MOODS=[[1,'低落','xiaoya-mood-1-hi-v2.webp'],[2,'疲倦','xiaoya-mood-2-hi.webp'],[3,'平稳','xiaoya-mood-3-hi.webp'],[4,'不错','xiaoya-mood-4-hi.webp'],[5,'很好','xiaoya-mood-5-hi.webp']];
@@ -35,6 +42,7 @@ catch(e){$('#page').innerHTML='<section class="fatal"><h1>这份档案需要先�
 const state=()=>store.current();
 function safeState(){try{return store.current()}catch{return null}}
 const journal=createJournalStore({getMode:()=>store.mode()});
+const memory=createMemory({getMode:()=>store.mode(),uid});
 const persist=next=>store.replace(next);
 const clock=()=>new Date();
 const consent={weather:false,mood:false,city:null,forecast:null};
@@ -70,7 +78,9 @@ function whisper(text,action=null,kind=''){
  const el=$('#whisper');el.innerHTML='<span>'+esc(text)+'</span>'+(action?'<button type="button" data-whisper-action>'+esc(action.label)+'</button>':'');
  el.dataset.kind=kind;el.classList.add('show');
  el.onclick=e=>{if(e.target.closest('[data-whisper-action]')){el.classList.remove('show');action.run()}};
- clearTimeout(whisperTimer);whisperTimer=setTimeout(()=>el.classList.remove('show'),action?6500:3200);
+ clearTimeout(whisperTimer);
+ // While the tour waits on a whisper action (e.g. 擦掉), the whisper stays until used.
+ if(!(action&&tour?.step()==='erase'))whisperTimer=setTimeout(()=>el.classList.remove('show'),action?6500:3200);
 }
 
 // ---------- ink helpers (every manual write goes through the guarded store) ----------
@@ -84,7 +94,7 @@ function ink(change,message,{celebrate=false}={}){
  }catch(e){render();whisper(e.message,null,'error');return false}
 }
 function erase(txId){
- try{store.replace(undoTransaction(state(),txId));render();whisper('已擦掉，恢复到落墨前');setXiaoya('nod')}
+ try{store.replace(undoTransaction(state(),txId));render();whisper('已擦掉，恢复到落墨前');setXiaoya('nod');emit('erased')}
  catch(e){whisper(e.message,null,'error')}
 }
 function markFresh(tx){
@@ -152,6 +162,7 @@ function render(){
  $$('#scale [data-scale]').forEach(b=>{const on=b.dataset.scale===ui.scale;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1});
  $('#scale').style.setProperty('--i',String(['day','week','line'].indexOf(ui.scale)));
  if(ui.scale==='day')layoutMargin();
+ if(ui.scale==='week')mountIsland();
  if(ui.scale==='line'){const sc=$('.lgrid-scroll'),cur=$('.lgrid-head .is-current');if(sc&&cur&&sc.scrollWidth>sc.clientWidth)sc.scrollLeft=Math.max(0,cur.offsetLeft-sc.clientWidth*.55)}
  talk.refresh();
  if(!$('#xiaoya').dataset.state||['idle','sleepy'].includes($('#xiaoya').dataset.state))setXiaoya(null);
@@ -227,7 +238,7 @@ function renderDay(data){
  const ahead=ui.date===today?renderAhead(data,cands,now):'';
  return '<section class="day" aria-labelledby="day-title">'+
   '<div class="day-nav"><button type="button" class="nav-arrow" data-day-shift="-1" aria-label="前一天">‹</button><h1 id="day-title">'+(ui.date===today?'今天':md(ui.date))+'<small>'+(ui.date===today?md(ui.date)+' ':'')+DAYNAMES[weekday(new Date(ui.date+'T12:00'))]+'</small></h1><button type="button" class="nav-arrow" data-day-shift="1" aria-label="后一天">›</button>'+(ui.date!==today?'<button type="button" class="nav-today" data-day-today>回到今天</button>':'')+'</div>'+
-  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+esc(h.text)+'</p>'+weatherLine+
+  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+(ui.date===today?esc(greeting(now)):'')+esc(h.text)+'</p>'+weatherLine+
   (isEmptyArchive(data)?'<div class="starter" aria-label="试着写一行"><span>试着写一行：</span>'+['周五前交实验报告 90分钟','明天下午3点到5点 社团例会 @创新中心','每周跑步两次','买洗衣液'].map(s=>'<button type="button" data-try="'+esc(s)+'">'+esc(s)+'</button>').join('')+'<button type="button" class="starter-alt" data-import-cal>或导入课表</button></div>':'')+
   '<div class="paper"><div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
    '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+attentionMarker(day,top)+
@@ -240,6 +251,11 @@ function renderDay(data){
 function attentionMarker(day,top){
  const a=attentionOf(day);if(!a)return '';
  return '<button type="button" class="attention is-'+a.kind+'" style="top:'+Math.max(0,top(a.minute)-4)+'px" '+(a.kind==='pencil'?'data-expand="'+esc(a.id)+'"':'data-attention-conflict')+' aria-label="'+esc(a.label)+'" title="'+esc(a.label)+'"><img src="'+assetFace(a.kind==='pencil'?4:3)+'" alt="" width="30" height="30"></button>';
+}
+function greeting(now){
+ let name='';try{name=memory.profile.get().name}catch{}
+ if(!name)return '';const h=now.getHours();
+ return (h<5?'夜深了':h<11?'早上好':h<14?'中午好':h<18?'下午好':'晚上好')+'，'+name+'。';
 }
 const isEmptyArchive=d=>!d.tasks.length&&!d.courses.length&&!d.events.length&&!d.goals.length;
 const minutesOf=stamp=>{const t=String(stamp).slice(11,16).split(':');return +t[0]*60+ +t[1]};
@@ -289,6 +305,8 @@ function renderWeek(data){
  const isThis=ui.weekStart===dateKey(monday(now));
  return '<section class="week" aria-labelledby="week-title"><div class="day-nav"><button type="button" class="nav-arrow" data-week-shift="-1" aria-label="上一周">‹</button><h1 id="week-title">'+(isThis?'本周':md(w.start)+' 起')+'<small>'+md(w.start)+' – '+md(w.end)+(w.teachingWeek?' · 第 '+w.teachingWeek+' 教学周':'')+'</small></h1><button type="button" class="nav-arrow" data-week-shift="1" aria-label="下一周">›</button>'+(isThis?'':'<button type="button" class="nav-today" data-week-today>回到本周</button>')+'</div>'+
   '<p class="voice"><img src="'+assetFace(3)+'" alt="" width="30" height="30">'+esc(weekSentence(w))+'</p>'+
+  '<div class="island-slot" id="island-slot" aria-label="这一周的纸岛：房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是目标，虚线踏脚石是小芽的建议。下方列表包含同样的内容。"></div>'+
+  '<p class="island-legend"><span>房子＝课</span><span>帐篷＝活动</span><span>灯塔＝截止</span><span>草地＝空闲</span><span>树＝目标</span><span>虚线踏脚石＝小芽的铅笔</span><span class="island-tip">拖动转岛 · 点一下翻回纸面</span></p>'+
   '<ol class="week-grid">'+w.days.map(d=>'<li class="wday'+(d.isToday?' is-today':'')+(d.isPast?' is-past':'')+'"><button type="button" class="wday-head" data-goto-day="'+d.key+'"><span>'+d.label+'</span><b>'+d.dom+'</b>'+(d.pencils?'<i class="pencil-count" title="'+d.pencils+' 笔铅笔建议">✎'+d.pencils+'</i>':'')+'</button>'+
    '<span class="busy" style="--busy:'+Math.min(1,d.busyMinutes/600)+'" title="已记录 '+Math.round(d.busyMinutes/6)/10+' 小时"></span>'+
    '<ul>'+d.items.map(x=>'<li class="witem '+x.kind+(x.conflict?' is-conflict':'')+(x.moved?' is-moved':'')+'"><button type="button" '+(x.recurring?'data-occurrence="'+x.kind+'|'+esc(x.id)+'|'+x.occurrenceDate+'"':'data-edit="'+x.kind+'" data-id="'+esc(x.id)+'"')+'><time>'+x.start+(x.moved?' · 调课':'')+'</time>'+esc(x.title)+'</button></li>').join('')+
@@ -297,6 +315,40 @@ function renderWeek(data){
    (!d.items.length&&!d.due.length&&!d.ghosts.length?'<li class="wempty">—</li>':'')+'</ul></li>').join('')+'</ol>'+
   '<div class="tools"><button type="button" class="ghost-btn" data-new="course">添加每周课程</button><button type="button" class="ghost-btn" data-new="event">添加活动</button><button type="button" class="ghost-btn" data-import-cal>导入课表 CSV / ICS</button><button type="button" class="ghost-btn" data-export-ics>导出日历 .ics</button></div>'+
   '<p class="legend"><span class="lg course">课程</span><span class="lg event">活动</span><span class="lg due">截止（时刻）</span><span class="lg pencil">✎ 铅笔建议</span><span class="lg conflict">重叠</span></p></section>';
+}
+// ---------- 3D paper island (week) ----------
+let islandApi=null,islandHost=null,islandLoad=null,islandFailed=false;
+const FACES={2:assetFace(2),3:assetFace(3),4:assetFace(4),5:assetFace(5)};
+function islandModel(){
+ const data=state(),now=new Date(),cands=feed(),pencils=pencilStrokes(cands);
+ const w=buildWeek(data,new Date(ui.weekStart+'T12:00'),{now,pencils});
+ const days=w.days.map(d=>({key:d.key,label:d.label,dom:d.dom,isToday:d.isToday,items:d.items,
+  due:d.due.map(t=>{const at=new Date(d.key+'T'+t.time);return {...t,urgent:!t.done&&+at-+now<=86400000}}),
+  freeMinutes:d.isPast?0:freeWindows(data,d.key,{now,minimum:30}).reduce((n,x)=>n+x.minutes,0),
+  pencilIds:[...new Set(pencils.filter(p=>p.date===d.key).map(p=>p.id))]}));
+ const attention=days.findIndex(d=>d.pencilIds.length&&!w.days[days.indexOf(d)].isPast);
+ return {days,attentionDay:attention>=0?attention:undefined,xiaoyaFace:attention>=0?4:3,
+  goals:data.goals.filter(g=>!g.done).map(g=>({id:g.id,title:g.title,checkins:data.checkins.filter(c=>c.goalId===g.id).length}))};
+}
+function islandPick(p){
+ if(p.kind==='day')return setScale('day',{date:p.date});
+ if(p.kind==='course'||p.kind==='event')return p.recurring?occurrenceSheet(p.kind,p.id,p.occurrenceDate):editSheet(p.kind,p.id);
+ if(p.kind==='task')return editSheet('task',p.id);
+ if(p.kind==='goal')return goalSheet(p.id);
+ if(p.kind==='pencil'){setScale('day',{date:p.date});return setTimeout(()=>expand(p.id),60)}
+ if(p.kind==='xiaoya'){talk.toggle();emit('xiaoya')}
+}
+async function mountIsland(){
+ const slot=$('#island-slot');if(!slot)return;
+ if(!islandHost){islandHost=document.createElement('div');islandHost.className='island-host'}
+ slot.append(islandHost);
+ if(islandFailed){slot.classList.add('is-fallback');return}
+ if(!islandApi){
+  islandLoad||=loadIsland().then(m=>{islandApi=m.createIsland(islandHost,{onPick:islandPick,reduced,faces:FACES});if(!islandApi)throw Error('WebGL 不可用')})
+   .catch(()=>{islandFailed=true;slot.classList.add('is-fallback')});
+  await islandLoad;
+ }
+ if(islandApi&&ui.scale==='week')islandApi.update(islandModel());
 }
 function weekSentence(w){
  const busiest=[...w.days].sort((a,b)=>b.busyMinutes-a.busyMinutes)[0];
@@ -364,7 +416,7 @@ function setScale(next,{date=null}={}){
  try{localStorage.setItem(UI_KEY,JSON.stringify({scale:next}))}catch{}
  if(next===ui.scale&&!date)return;
  ui.scale=next;if(date){ui.date=date;ui.weekStart=dateKey(monday(new Date(date+'T12:00')))}ui.open=null;
- render();window.scrollTo({top:0,behavior:'instant'});
+ render();window.scrollTo({top:0,behavior:'instant'});emit('scale',next);
  // A CSS entrance on the new page only: zooming "in" toward the day, "out" toward the long line.
  // (View Transitions were dropped: they crashed WebKit when entering the day page.)
  const page=$('#page');if(!reduced()){page.dataset.zoom=dir;page.classList.remove('is-entering');void page.offsetWidth;page.classList.add('is-entering')}
@@ -405,7 +457,7 @@ $('#line-form').addEventListener('submit',e=>{
  if(!parsed)updateDraft();
  if(parsed.intent==='question'){talk.ask(parsed.fields.question);clearLine();return}
  if(e.submitter?.dataset.refine){refineDraft();return}
- if(commitDraft(parsed))clearLine();
+ if(commitDraft(parsed)){clearLine();emit('line-committed',parsed?.intent)}
 });
 function clearLine(){lineInput.value='';ui.forced=null;parsed=null;updateDraft()}
 function commitDraft(p){
@@ -655,7 +707,7 @@ function expand(id){
  if(ui.open===id){ui.open=null;render();return}
  ui.open=id;
  try{ui.previews.set(id,student.preview(id))}catch(e){ui.previews.set(id,{error:e.message})}
- render();
+ render();emit('pencil-opened',id);
  requestAnimationFrame(()=>{const n=document.querySelector('[data-note="'+CSS.escape(id)+'"]');if(n){const r=n.getBoundingClientRect();if(r.bottom>innerHeight-110||r.top<70)n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('[data-approve],.ghost-btn')?.focus({preventScroll:true})}});
 }
 function expandContext(id){
@@ -670,7 +722,7 @@ function approve(id,context=false){
  try{
   const r=context?contextActions.approve(pv):student.approve(pv);
   ui.previews.delete(id);ui.open=null;markFresh(r.transaction);render();
-  whisper('已落墨。',{label:'擦掉',run:()=>erase(r.transaction.id)});setXiaoya('happy',2200);
+  whisper('已落墨。',{label:'擦掉',run:()=>erase(r.transaction.id)});setXiaoya('happy',2200);emit('inked',id);
  }catch(e){ui.previews.delete(id);ui.open=null;render();whisper('没有落墨：'+e.message,null,'error')}
 }
 function respond(id,decision){
@@ -682,7 +734,7 @@ function respond(id,decision){
 function saveJournal(){
  const date=ui.date,entry=journalAll().find(e=>e.date===date),draft=drafts.get(draftKey(date));
  const note=$('#journal-note')?.value??'';const mood=draft?.mood??entry?.mood??null;
- try{journal.save({date,mood,note,tags:entry?.tags||[]});drafts.delete(draftKey(date));render();whisper('合上了这一页（只存在这台设备）');setXiaoya(mood&&mood<=2?'care':'nod')}
+ try{journal.save({date,mood,note,tags:entry?.tags||[]});drafts.delete(draftKey(date));render();whisper('合上了这一页（只存在这台设备）');setXiaoya(mood&&mood<=2?'care':'nod');emit('journal-saved')}
  catch(e){whisper(e.message,null,'error')}
 }
 async function deleteJournal(){
@@ -712,6 +764,7 @@ function coverSheet(){
    '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-cover="weather">获取预报</button><button type="button" class="text-danger" data-cover="revoke">全部撤销</button></div>'+
    '<p class="hint">'+(consent.forecast&&consent.weather?'已获取：'+esc(consent.forecast.cityLabel)+' · '+esc(new Date(consent.forecast.fetchedAt).toLocaleString('zh-CN')):'尚未获取天气；未授权时不发任何网络请求。')+'</p></section>'+
   '<section class="cover-sec"><h3>模型</h3><p class="hint">'+(model?'已连接 '+esc(model.providerName)+' · '+esc(model.model)+'（密钥仅在内存）':'未连接。小芽的所有基础功能都不需要模型。')+'</p><div class="sheet-row"><button type="button" class="ghost-btn" data-open="model">'+(model?'模型设置':'连接你自己的模型')+'</button></div></section>'+
+  '<section class="cover-sec"><h3>开场与教学</h3><div class="sheet-row wrap"><button type="button" class="ghost-btn" data-replay="intro">重新看开场</button><button type="button" class="ghost-btn" data-replay="tour">重新走一遍新手任务</button></div></section>'+
   '<section class="cover-sec"><h3>关于</h3><p class="hint">实验分支 experiment/xiaoya-opus-original-20261105。正式版不受影响：<a href="../native-v4/">打开正式版 V5.9</a>。</p></section>',
   {ok:'保存设置',onOk:saveCover,wide:true});
 }
@@ -824,6 +877,7 @@ document.addEventListener('click',e=>{
  if(ds.growthPreview)return growthPreview(ds.growthPreview);
  if(ds.erase)return erase(ds.erase);
  if(ds.attentionConflict!==undefined){const n=document.querySelector('.note[data-note^="conflict"]');if(n){n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('.note-head')?.click()}else whisper('这里有两件事重叠，点开时间块可以调整');return}
+ if(ds.replay){closeSheet();setTimeout(()=>ds.replay==='intro'?playIntro():startTour(),reduced()?0:200);return}
  if(ds.try){lineInput.value=ds.try;updateDraft();lineInput.focus({preventScroll:true});return}
  if(ds.cover)return coverAction(ds.cover);
  if(ds.importCal!==undefined)return $('#import-cal').click();
@@ -870,8 +924,57 @@ function remind(){
  }catch{return []/* reminders never block the page */}
 }
 
+// ---------- opening & guided tour ----------
+const ONBOARD_KEY='xiaoya-opus-original:onboarded:v1'; // non-private flag: has the opening been seen on this device
+function switchMode(next){if(store.mode()===next)return;resetSession();store.setMode(next);ui.date=dateKey(new Date());ui.weekStart=dateKey(monday(new Date()))}
+let introIsland=null,introOpen=false;
+async function playIntro(){
+ if(introOpen)return;introOpen=true;
+ try{introIsland=(await loadIsland()).createIsland}catch{introIsland=null} // without WebGL the opening is dialogue-only
+ const profile=(()=>{try{return memory.profile.get()}catch{return null}})();
+ createIntro({esc,faces:FACES,reduced,islandModel,
+  createIsland:(host,opts)=>{if(!introIsland)throw Error('no 3D');return introIsland(host,opts)},
+  onDone:r=>{introOpen=false;introDone(r)}}).play({profile});
+}
+function introDone({choice,profile}){
+ try{localStorage.setItem(ONBOARD_KEY,'1')}catch{}
+ if(profile){try{memory.profile.set(profile);const n=String(profile.name||'').trim();if(n)memory.facts.add('我叫'+n,'user');if(profile.school||profile.major)memory.facts.add('我在'+[profile.school,profile.major].filter(Boolean).join('读'),'user')}catch{}}
+ if(choice==='personal')switchMode('personal');else if(choice==='tour'||choice==='demo')switchMode('demo');
+ ui.scale='day';render();
+ if(choice==='tour')setTimeout(startTour,reduced()?0:450);
+}
+let tour=null;
+function startTour(){
+ if(tour?.isActive())return;
+ switchMode('demo');ui.scale='day';ui.date=dateKey(new Date());talk.close();render();
+ tour=createTutorial({esc,face:n=>FACES[n]||FACES[4],
+  onStep:s=>{if(s.id==='erase')clearTimeout(whisperTimer);if(s.id==='line'&&ui.scale!=='day'){ui.scale='day';render()}},
+  onFinish:reason=>{if(reason==='done')graduate();else whisper('教学已跳过；封底里可以随时重新开始')},
+  steps:[
+   {id:'line',target:'#line-input',face:4,text:'第一课：写一行。像发消息一样把要做的事写下来，我来理解成一条记录。',hint:'写好后按回车（或点「落笔」）落墨。',
+    action:{label:'帮我写一句',run:()=>{lineInput.value='周六下午三点前交电路实验报告 60分钟';updateDraft();lineInput.focus({preventScroll:true})}},until:'line-committed'},
+   {id:'open',target:'.blk.pencil|.note.is-pencil .note-head',face:5,text:'第二课：铅笔。虚线框是我画的建议——还没写进你的日程。点开它，看看我为什么这样排。',until:'pencil-opened'},
+   {id:'ink',target:'.note.is-open [data-approve]',face:4,text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
+   {id:'erase',target:'#whisper [data-whisper-action]',face:3,text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
+   {id:'week',target:'#scale [data-scale="week"]',face:5,text:'第三课：把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
+   {id:'island',target:'#island-slot',face:4,pad:4,text:'房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是你的目标，虚线踏脚石是我的建议。点岛上任何东西，都会翻回纸面。',next:'明白了'},
+   {id:'me',target:'#xiaoya',face:5,text:'最后：想问我什么、想让我记住什么，就点我，或者在输入框里直接问。',next:'完成'}
+  ]});
+ tour.start();
+}
+function graduate(){
+ const n=(()=>{try{return memory.profile.get().name}catch{return ''}})();
+ askConfirm({title:'新手任务完成'+(n?'，'+n:'')+'！',body:'你已经会写一行、看懂铅笔、落墨和擦掉，也见过这一周的纸岛了。',facts:['刚才的操作都在演示档案里，不影响你的记录。','封底里可以随时重新走一遍。'],ok:'开始我的生活',cancel:'继续逛演示'})
+  .then(go=>{if(go){switchMode('personal');ui.scale='day';render();whisper('欢迎回来。这一页是你的了。')}});
+ setXiaoya('happy',2600);
+}
+
 // ---------- boot ----------
-window.__XY_OPUS={version:'opus-original-1',getData:state,getMode:()=>store.mode(),store,journal,setScale,render,remind,ui};
+window.__XY_OPUS={version:'opus-original-2',getData:state,getMode:()=>store.mode(),store,journal,memory,setScale,render,remind,ui,startTour,playIntro};
 render();setXiaoya(null);syncLineMode();
+{
+ const force=params.get('intro');let seen=false;try{seen=localStorage.getItem(ONBOARD_KEY)==='1'}catch{}
+ if(force==='1'||(force!=='0'&&!seen))playIntro();
+}
 setTimeout(remind,1500);setInterval(remind,60000);
 setInterval(()=>{if(ui.scale==='day'&&!$('#sheet').open&&document.activeElement?.id!=='journal-note')render()},5*60000);

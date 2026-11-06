@@ -256,6 +256,54 @@ small{font-size:12px}
 .journal-status{margin-right:auto;font-size:13px;color:var(--ink-3)}
 .privacy{font-size:12px;color:var(--ink-3);margin-top:10px}
 
+/* ---------- 3D paper island ---------- */
+.island-slot{position:relative;height:min(58vh,520px);min-height:300px;margin:4px calc(var(--gutter) * -1) 6px;border-radius:0;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 20%,#fbf6ea 0%,var(--paper) 55%,var(--paper-2) 100%)}
+.island-host,.island-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.island-canvas{cursor:grab}
+.island-slot.is-fallback{height:auto;min-height:0;background:none}
+.island-slot.is-fallback::after{content:"这台设备暂时无法显示 3D 纸岛，下面的列表包含同样的内容。";display:block;padding:12px 0;color:var(--ink-3);font:400 14px var(--serif)}
+.island-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 18px;font-size:12px;color:var(--ink-3)}
+.island-legend .island-tip{margin-left:auto}
+@media (min-width: 820px){.island-slot{margin:4px 0 6px;border-radius:18px;box-shadow:inset 0 0 0 1px var(--rule)}}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .island-slot{background:radial-gradient(120% 90% at 50% 20%,#2a2d33 0%,var(--paper) 60%,#101215 100%)}}
+
+/* ---------- opening (game-like) ---------- */
+body.intro-open{overflow:hidden}
+body.intro-open .dock,body.intro-open .whisper{visibility:hidden}
+.intro{position:fixed;inset:0;z-index:60;background:radial-gradient(110% 80% at 50% 30%,#fbf6ea,#e9e0cc 70%,#d9cfb8);animation:fade .4s both}
+.intro.is-leaving{animation:intro-out .42s var(--ease) both}
+@keyframes intro-out{to{opacity:0;transform:scale(1.03)}}
+.intro-stage{position:absolute;inset:0}
+.intro-skip{position:absolute;top:calc(env(safe-area-inset-top) + 14px);right:16px;z-index:2;min-height:40px;border:1px solid rgba(43,50,67,.25);border-radius:999px;background:rgba(251,249,244,.75);padding:0 16px;color:#4b5161;font-size:13px}
+.intro-dialog{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);translate:-50% 0;width:min(720px,calc(100vw - 24px));display:flex;gap:14px;align-items:flex-end;
+  animation:dialog-in .45s var(--spring) both}
+@keyframes dialog-in{from{opacity:0;transform:translateY(24px)}}
+.intro-face{flex:0 0 auto;width:132px;height:132px;object-fit:contain;filter:drop-shadow(0 10px 18px rgba(40,40,30,.25));margin-bottom:-6px;animation:breathe 4.2s ease-in-out infinite}
+.intro-body{flex:1;min-width:0;background:#fbf9f4;color:#1c2230;border-radius:18px;padding:16px 18px 14px;box-shadow:0 0 0 1.5px #2b3243,6px 6px 0 #2b3243;position:relative}
+.intro-name{position:absolute;top:-14px;left:16px;background:#5d8a4c;color:#fbf9f4;font:700 13px var(--serif);padding:3px 12px;border-radius:8px;box-shadow:0 0 0 1.5px #2b3243}
+.intro-text{margin:6px 0 10px;font:500 17px/1.75 var(--serif);min-height:3.5em;cursor:pointer}
+.intro-form{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 10px}
+.intro-form label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:#4b5161}
+.intro-form input{min-height:40px;border:0;border-radius:9px;background:#f4f1ea;padding:8px 10px;font-size:16px;box-shadow:inset 0 0 0 1px rgba(28,34,48,.15)}
+.intro-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}
+.intro .ink-btn{background:#1c2230;color:#fbf9f4}.intro .ghost-btn{color:#4b5161;border-color:rgba(28,34,48,.25)}
+@media (max-width: 640px){.intro-face{width:88px;height:88px}.intro-form{grid-template-columns:1fr}.intro-text{font-size:16px}.intro-dialog{gap:8px}}
+
+/* ---------- guided tour ---------- */
+.tour{position:fixed;inset:0;z-index:45;pointer-events:none}
+.tour-hole{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(20,22,26,.42),0 0 0 3px var(--sprout);transition:left .35s var(--ease),top .35s var(--ease),width .35s var(--ease),height .35s var(--ease)}
+.tour.is-free{background:rgba(20,22,26,.42)}
+.tour-bubble{position:fixed;width:min(360px,calc(100vw - 24px));pointer-events:auto;background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:0 0 0 1.5px var(--ink),5px 5px 0 var(--ink)}
+.tour-bubble.is-in{animation:dialog-in .38s var(--spring) both}
+.tour-head{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-3)}
+.tour-head img{border-radius:50%;background:var(--sprout-soft)}
+.tour-skip{margin-left:auto;border:0;background:none;color:var(--ink-3);font-size:12px;min-height:32px;text-decoration:underline;text-underline-offset:3px}
+.tour-text{margin:8px 0 4px;font:500 15.5px/1.7 var(--serif)}
+.tour-hint{margin:0 0 6px;font-size:12.5px;color:var(--ink-3)}
+.tour-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.tour-actions .ghost-btn,.tour-actions .ink-btn{min-height:40px}
+
 /* ---------- week ---------- */
 .week-grid{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-top:1px solid var(--rule-strong)}
 .wday{padding:10px 8px 14px;border-right:1px solid var(--rule);min-height:220px}
