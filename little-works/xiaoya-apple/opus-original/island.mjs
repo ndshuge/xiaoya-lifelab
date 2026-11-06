@@ -1,12 +1,12 @@
-// 小芽的立体书 v3 · A paper pop-up diorama rendered with Three.js r180 (vendored) + post-processing.
-// Look: cardstock with fibre normals, cut edges in a darker tone, layered contour terrain, tilt-shift miniature
-// depth of field, ACES tone mapping, glowing lamps at night, vignette and paper grain.
-// Data is physical: a busy day rises into a hill; courses are cut-paper houses (lit windows at night),
-// events are tents, deadlines are lighthouses, free time is meadow, goals are crossed-card trees grown by
-// real check-ins, Xiaoya's pencils are dashed stepping stones. Season view: weeks as plots, completed work as
-// paper towers, goal actions as flowers, recorded mood tints the plot (local only).
+// 小芽生活小岛 · Three.js r180 (vendored), authored cardstock models and a living shoreline.
+// One mast per day/week, with bounded hanging records; colour and ! distinguish schedule states.
+// Representative houses/tents retain their folds; the deadline lighthouse telescopes vertically.
+// A reference-shaped Xiaoya follows the pointer along collision-checked paths. The meadow is decorative.
+// Season view keeps actual completed work, check-ins and recorded mood local to the original archive.
 import * as THREE from './vendor/three/three.module.min.js';
 import {createPaperKit} from './paper-kit.mjs';
+import {islandLayout,insideLand,clearPoint,clearSegment,nearestOpenPoint,planIslandPath,flagState,flagRows} from './island-layout.mjs';
+import {createCoastalLife} from './coastal-life.mjs';
 import {EffectComposer} from './vendor/three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/three/addons/postprocessing/RenderPass.js';
 import {ShaderPass} from './vendor/three/addons/postprocessing/ShaderPass.js';
@@ -145,7 +145,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  composer.addPass(new OutputPass());
 
  // ---------- the book ----------
- const book=new THREE.Group();scene.add(book);
+ const book=new THREE.Group();scene.add(book);book.visible=false;
  const pageMat=new THREE.MeshStandardMaterial({color:C.page,roughness:.95,map:paper.map,normalMap:paper.normal,normalScale:new THREE.Vector2(.12,.12)});
  const edgeMat=P(C.pageEdge);
  for(const side of [-1,1]){
@@ -169,7 +169,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
 
  // ---------- dynamic world ----------
  const world=new THREE.Group();scene.add(world);
- const pickables=[],pops=[],ripples=[],flags=[],waves=[],timeUniforms=[];
+ const pickables=[],pops=[],flags=[],waves=[],timeUniforms=[];
  let known=new Set(),firstBuild=true,clock=0,last=performance.now(),labelScale=1,night=0;
  const windowMat=new THREE.MeshStandardMaterial({color:C.window,emissive:0x000000,roughness:.9});
  const lampMats=[];
@@ -186,29 +186,19 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   const isNew=!known.has(key),spawn=!reduced()&&!firstBuild&&isNew?0:1;
   pops.push({obj,delay:delay*.52,dur:.9,spawn,master:true});
   reveal(obj,Math.min(spawn,clamp((unfold*foldDuration-delay*.52)/.9,0,1)));
-  if(spawn===0&&obj.userData.pick)ripple(obj.position,.2);
  }
- function ripple(at,delay=0){const r=new THREE.Mesh(new THREE.RingGeometry(.2,.26,56),new THREE.MeshBasicMaterial({color:C.sprout,transparent:true,opacity:0,depthWrite:false}));
-  r.rotation.x=-Math.PI/2;r.position.set(at.x,at.y+.04,at.z);world.add(r);ripples.push({mesh:r,t:-delay})}
  function pickable(obj,data){obj.userData.pick=data;obj.traverse(o=>{if(o.isMesh||o.isLineSegments){o.userData.pick=data;o.userData.root=obj;if(o.isMesh)pickables.push(o)}})}
 
  // Terrain: base island + per-stop contour hills. heightAt() keeps everything sitting on the paper.
- const BASE_TOP=.34,STEP=.075;let hills=[];
+ const BASE_TOP=.34,STEP=.045;let hills=[],bounds=islandLayout(7,false),obstacles=[],coastalLife=null;
  function heightAt(x,z){let h=BASE_TOP;for(const hl of hills){let n=0;for(const r of hl.radii){const dx=(x-hl.x)/(r*1.12),dz=(z-hl.z)/(r*.9);if(dx*dx+dz*dz<1)n++}h=Math.max(h,BASE_TOP+n*STEP)}return h}
  function buildTerrain(k,stops){
-  const sea=new THREE.Group();
-  [[3.78,.07,9,0,C.sea1,.0],[3.6,.06,11,1.3,C.sea2,.025],[3.43,.045,13,2.6,C.sea3,.05]].forEach(([r,a,w,ph,col,y],j)=>{
-   const shape=portrait?waveRing(r,a,w,ph,.82,1.18):waveRing(r,a,w,ph);const m=extrudeFlat(shape,.03,M('sea'+j,col),M('seaE',C.seaEdge));m.position.y=y;m.receiveShadow=true;m.castShadow=false;sea.add(m);waves.push({m,phase:ph,amp:.012+j*.004,y})});
-  world.add(sea);pop(sea,0,k('sea'));
-  const isl=new THREE.Group();
-  const layers=[[2.95,2.2,C.sand,C.sandEdge,0,.1],[2.82,2.08,C.g1,C.gEdge,.1,.1],[2.66,1.95,C.g2,C.gEdge,.2,.07],[2.5,1.82,C.g3,C.gEdge,.27,.07]];
-  // Landscape: the island is wide. Portrait (phones): the same island turned lengthwise to fill the screen.
-  layers.forEach(([rx,rz,c,e,y,d],j)=>{const ax=rx*1.18,az=rz;const m=extrudeFlat(portrait?blobShape(az*1.1,ax*.92,11,36,.12):blobShape(ax,az,11,36,.12),d,M('l'+j,c),M('le'+j,e));m.position.y=y;isl.add(m)});
-  hills=[];
-  stops.forEach((s,i)=>{const levels=clamp(s.levels|0,0,4);const radii=[];const g=new THREE.Group();
-   for(let l=1;l<=levels;l++){const r=.66-(l-1)*.12;radii.push(r);const col=[C.g4,C.g5,0xeee9cf,0xf3ecd6][l-1];const m=extrudeFlat(blobShape(r*1.12,r*.9,i*17+l,24,.16),STEP,M('h'+l,col),M('he',C.gEdge));m.position.set(s.x,BASE_TOP+(l-1)*STEP,s.z);g.add(m)}
-   hills.push({x:s.x,z:s.z,radii});isl.add(g)});
-  world.add(isl);pop(isl,.05,k('island:'+stops.map(s=>s.levels).join('')));
+  const isl=new THREE.Group();hills=[];
+  const colors=[C.sand,0x88a66c,0xa5bf83,0xb8cc96];
+  for(let j=0;j<4;j++){const shrink=j*.13;const m=extrudeFlat(blobShape(bounds.rx-shrink,bounds.rz-shrink*.8,11,64,.045),[.1,.1,.07,.07][j],M('land-v2-'+j,colors[j]),M('land-edge-v2-'+j,j===0?0xbcaa7d:0x76935c));m.position.y=[0,.1,.2,.27][j];isl.add(m);}
+  stops.forEach((at,i)=>{const levels=clamp(at.levels|0,0,2),radii=[];
+   for(let l=1;l<=levels;l++){const r=.46-(l-1)*.12;radii.push(r);const layer=extrudeFlat(blobShape(r*1.12,r*.9,i*17+l,24,.09),STEP,M('hill-v2-'+l,l===1?0xc7d7aa:0xd5dfb9),M('hill-edge-v2',0x91a87a));layer.position.set(at.x,BASE_TOP+(l-1)*STEP,at.z);isl.add(layer);}hills.push({x:at.x,z:at.z,radii});
+  });world.add(isl);pop(isl,.05,k('island:'+stops.map(s=>s.levels).join('')));
  }
  function buildPath(pts,k){
   curve=new THREE.CatmullRomCurve3(pts.map(p=>new THREE.Vector3(p.x,0,p.z)));const g=new THREE.Group();
@@ -233,84 +223,95 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   const bumps=[[-.34,.0,.2],[-.12,.1,.26],[.14,.08,.24],[.36,-.01,.18]];s.moveTo(-.55,-.1);
   for(const [x,y,r] of bumps)s.absarc(x,y,r,Math.PI,0,true);s.lineTo(.55,-.1);s.closePath();
   const m=extrudeFlat(s,.05,M('cloud',C.cloud,{transparent:true,opacity:.96}),M('cloudE',C.cloudEdge));m.rotation.x=0;g.add(m);return g}
- function addBanner(g,kicker,main,{accent,bg,height=.72}={}){
-  const geo=new THREE.PlaneGeometry(.78,.34,8,2);geo.translate(.39,0,0);
-  const tex=bannerTexture(kicker,main,{accent,bg});
-  // A touch of self-light keeps the lettering legible when the banner faces away from the sun.
-  const banner=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({map:tex,emissive:0xffffff,emissiveMap:tex,emissiveIntensity:.32,side:THREE.DoubleSide,roughness:.85,transparent:true,alphaTest:.5}));
-  banner.position.set(0,height+.12,0);banner.scale.setScalar(labelScale);banner.castShadow=false;banner.userData.rest=geo.attributes.position.array.slice();banner.userData.seed=Math.random()*6;
-  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.011,.011,height+.2),M('ink',C.ink,{map:null}));pole.position.y=(height+.2)/2;pole.castShadow=true;
-  const knob=new THREE.Mesh(new THREE.SphereGeometry(.022,10,8),M('knob',C.today,{map:null}));knob.position.y=height+.21;
-  g.add(pole,knob,banner);g.userData.flag=banner;flags.push(banner);
+ function mastTexture(kicker,main,state='empty',small=false){
+  const c=document.createElement('canvas');c.width=512;c.height=small?150:210;const g=c.getContext('2d');
+  const palette=state==='attention'?['#f5cec3','#b47460']:state==='busy'?['#ffe6a5','#ad9553']:['#fffdf4','#929c84'];
+  g.fillStyle=palette[0];g.fillRect(0,0,512,c.height);g.fillStyle=palette[1];g.fillRect(0,0,6,c.height);
+  g.globalCompositeOperation='destination-out';g.beginPath();g.moveTo(512,0);g.lineTo(484,c.height/2);g.lineTo(512,c.height);g.fill();g.globalCompositeOperation='source-over';
+  g.fillStyle='#6e765b';g.textAlign='left';g.textBaseline='middle';
+  if(!small&&kicker.startsWith('周')){g.fillStyle='#3e493a';g.font='600 96px '+FONT;g.fillText(kicker+' '+String(main).replace(' 日',''),27,105,450);}
+  else{g.font='500 '+(small?32:66)+'px '+FONT;g.fillText(kicker,27,small?30:45);g.fillStyle='#3e493a';g.font='600 '+(small?75:82)+'px '+FONT;const limit=small?5:10;const text=[...String(main)];g.fillText(text.length>limit?text.slice(0,limit-1).join('')+'…':String(main),27,small?101:141,450);}
+  const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=4;return tex;
+ }
+ function addBanner(g,kicker,main,{state='empty',rows=[],data=null,height=1.13}={}){
+  const pole=new THREE.Mesh(new THREE.CylinderGeometry(.012,.015,height+.17,10),M('mast-wood',0x8e7955,{map:null}));pole.position.y=(height+.17)/2;pole.castShadow=true;g.add(pole);
+  const knob=new THREE.Mesh(new THREE.SphereGeometry(.025,8,6),M('mast-cap',0xc3a66f,{map:null}));knob.position.y=height+.17;g.add(knob);
+  const labels=[];
+  const add=(a,b,state,y,small,pick)=>{const w=small?.76:.86,h=small?.22:.34,geo=new THREE.PlaneGeometry(w,h,8,2);geo.translate(w/2+.015,0,0);const tex=mastTexture(a,b,state,small);
+   const banner=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide,transparent:true,alphaTest:.5}));banner.position.set(0,y,0);banner.userData.rest=geo.attributes.position.array.slice();banner.userData.seed=y*3;banner.userData.tooltipLift=.04;g.add(banner);flags.push(banner);labels.push({banner,pick});};
+  add(kicker,main,state,height,false,data);
+  rows.forEach((r,i)=>add(r.time||r.kicker||'',r.title,r.attention?'attention':'busy',height-.34-i*.245,true,r.pick||null));
+  g.userData.labels=labels;return labels;
  }
 
  let curve=null,stopsCount=7,xiaoya=null,clouds=[];
- const walk={t:null,target:0,wanderAt:0,face:1,stop:0};
+ const walk={t:null,target:0,wanderAt:0,face:1,stop:0,x:0,z:0,path:[],pointer:null,gaze:null,navAt:0,lastPointer:0,latency:0};
  const faceTex={};
  function face(n){if(!faceTex[n]&&faces[n]){faceTex[n]=loader.load(faces[n]);faceTex[n].colorSpace=THREE.SRGBColorSpace}return faceTex[n]}
  const keepTex=new Set([paper.map,paper.normal,fibre.map,fibre.normal,shadowTex]);
  function clearWorld(){
   for(const o of [...world.children]){world.remove(o);o.traverse(x=>{x.geometry?.dispose();(Array.isArray(x.material)?x.material:[x.material]).forEach(m=>{if(!m||m===windowMat||Object.values(mats).includes(m))return;if(m.map&&!keepTex.has(m.map)&&!Object.values(faceTex).includes(m.map))m.map.dispose();m.dispose?.()})})}
-  pops.length=0;pickables.length=0;flags.length=0;lampMats.length=0;ripples.length=0;waves.length=0;timeUniforms.length=0;
+  pops.length=0;pickables.length=0;flags.length=0;lampMats.length=0;waves.length=0;timeUniforms.length=0;
  }
  let model=null,visualKey=null;
  let portrait=false;
  // Stops along an S: left→right on wide screens, far→near on portrait phones.
- function stopPoints(n){const out=[];for(let i=0;i<n;i++){const u=lerp(-1,1,i/(n-1)),s=i%2?-1:1;
-  out.push(portrait?{x:s*.62,z:u*2.75}:{x:u*2.55,z:(i%2?-.6:.52)*1.04})}return out}
-
+ function stopPoints(n){bounds=islandLayout(n,portrait);return bounds.points;}
+ function addObstacle(obj,r){obstacles.push({x:obj.position.x,z:obj.position.z,r,key:obj.userData.popKey||obj.name});}
+ function addFlagObstacle(mast,rows){if(rows.length)obstacles.push({x:mast.position.x+.4,z:mast.position.z,r:.43,flag:mast,key:'hanging-flags'});}
  function placeXiaoya(focusIndex,k){
-  const stand=character();stand.scale.setScalar(1.04);
-  const blob=new THREE.Mesh(new THREE.PlaneGeometry(.55,.38),new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.position.y=.003;stand.add(blob);
+  const stand=character();stand.scale.setScalar(.66);
+  const blob=new THREE.Mesh(new THREE.PlaneGeometry(.58,.4),new THREE.MeshBasicMaterial({map:shadowTex,transparent:true,depthWrite:false}));blob.rotation.x=-Math.PI/2;blob.position.y=.004;stand.add(blob);
   pickable(stand,{kind:'xiaoya',label:'小芽 · 点我'});world.add(stand);xiaoya=stand;
-  walk.target=focusIndex/(stopsCount-1);walk.stop=focusIndex;
-  if(walk.t===null||firstBuild)walk.t=reduced()?walk.target:Math.max(0,walk.target-.12);
-  lastHeight=null;positionXiaoya(0);pop(stand,1.5,k('xiaoya'));
+  const home=nearestOpenPoint({x:0,z:bounds.rz*.6},bounds,obstacles,.29);
+  if(!clearPoint(walk,bounds,obstacles,.29)||firstBuild){walk.x=home?.x||0;walk.z=home?.z||0;}
+  walk.home=home||{x:walk.x,z:walk.z};walk.path=[];walk.gaze=null;walk.pointer=null;walk.planned=null;walk.wanderAt=clock+10;
+  lastHeight=null;positionXiaoya(0);stand.rotation.y=-yaw;pop(stand,1.5,k('xiaoya'));
  }
- function positionXiaoya(bob){
-  if(!xiaoya||!curve)return;const t=clamp(walk.t,0,1),p=curve.getPointAt(t),tan=curve.getTangentAt(t);
-  const side=new THREE.Vector3(-tan.z,0,tan.x).normalize().multiplyScalar(.3);const x=p.x+side.x,z=p.z+side.z;
-  const h=heightAt(x,z);lastHeight=lastHeight===null?h:lastHeight+(h-lastHeight)*Math.min(1,lastDt*12);xiaoya.position.set(x,lastHeight+bob,z);
+ function positionXiaoya(bob=0){
+  if(!xiaoya)return;let h=heightAt(walk.x,walk.z);
+  for(let i=0;i<8;i++){const a=i/8*Math.PI*2;h=Math.max(h,heightAt(walk.x+Math.cos(a)*.15,walk.z+Math.sin(a)*.15));}
+  h+=.012;lastHeight=lastHeight===null||h>lastHeight?h:lastHeight+(h-lastHeight)*Math.min(1,lastDt*16);xiaoya.position.set(walk.x,lastHeight+bob,walk.z);
  }
-
+ function followGround(e){
+  if(!xiaoya||folding||unfold<.98||down)return;
+  const r=renderer.domElement.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,camera);
+  const at=new THREE.Vector3();if(!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-BASE_TOP),at))return;
+  world.worldToLocal(at);walk.gaze={x:at.x,z:at.z,pitch:clamp(-ptr.y*.16,-.18,.18)};walk.lastPointer=clock;walk.eventAt=performance.now();walk.inputPending=true;
+  if(!hoverRoot&&insideLand(at,bounds,.35))walk.pointer={x:at.x,z:at.z};else {walk.pointer=null;if(hoverRoot){walk.path=[];walk.planned=null}}
+  frame();
+ }
  function update(m){
   model=m;const signature=JSON.stringify({...m,speech:undefined,hour:undefined,xiaoyaFace:undefined});
   if(signature===visualKey&&!firstBuild){applySky(m.hour??new Date().getHours());frame();return}
-  visualKey=signature;const keys=new Set();clearWorld();const k=s=>{keys.add(s);return s};
+  visualKey=signature;const keys=new Set();clearWorld();obstacles=[];const k=s=>{keys.add(s);return s};
   tip.hidden=true;say.hidden=true;hoverRoot=null;
   if(m.kind==='season')buildSeason(m,k);else buildWeek(m,k);
-  clouds=[];[[-3.4,2.7,-2.5,1],[3.2,3,-2.9,.85],[.5,3.3,-3.6,1.1]].forEach(([x,y,z,s])=>{const c=cloud();c.position.set(x,y,z);c.scale.setScalar(s);world.add(c);clouds.push(c)});
+  coastalLife=createCoastalLife({bounds,lite,heightAt,obstacles,material:M});world.add(coastalLife.group);
+  clouds=[];
   applySky(m.hour??new Date().getHours()+new Date().getMinutes()/60);
-  known=keys;firstBuild=false;frame();
+  known=keys;firstBuild=false;fit();frame();
  }
  function buildWeek(m,k){
   stopsCount=7;const pts=stopPoints(7);
-  const busy=m.days.map(d=>d.items.reduce((n,it)=>n+Math.max(0,toMin(it.end)-toMin(it.start)),0)/60);
-  buildTerrain(k,pts.map((p,i)=>({...p,levels:Math.round(busy[i]/1.1)})));
-  buildPath(pts,k);
+  buildTerrain(k,pts.map((p,i)=>({...p,levels:Math.min(2,Math.round(m.days[i].items.length/2))})));buildPath(pts,k);
   m.days.forEach((d,i)=>{
-   const at=pts[i],top=heightAt(at.x,at.z);const g=new THREE.Group();g.position.set(at.x,top,at.z);
-   const disc=new THREE.Mesh(new THREE.CylinderGeometry(d.isToday?.29:.23,d.isToday?.29:.23,.04,36),M(d.isToday?'stopT':'stop',d.isToday?C.today:C.stop));disc.position.y=.02;disc.receiveShadow=true;disc.castShadow=true;g.add(disc);
-   addBanner(g,d.label,String(d.dom),{accent:d.isToday?'#dc8c69':'#2b3243',bg:d.isToday?'#fff3e6':'#fbf6ea'});
-   if(d.isToday){const halo=new THREE.Mesh(new THREE.RingGeometry(.35,.4,48),new THREE.MeshBasicMaterial({color:C.today,transparent:true,opacity:.6,depthWrite:false}));halo.rotation.x=-Math.PI/2;halo.position.y=.045;g.add(halo);g.userData.halo=halo}
-   const busyText=d.items.length?d.items.length+' 项课程或活动'+(busy[i]?' · 约 '+Math.round(busy[i]*10)/10+' 小时':''):'没有课程或活动';
-   pickable(g,{kind:'day',date:d.key,label:d.label+' '+d.dom+' 日 · '+busyText+(d.due.length?' · '+d.due.length+' 项截止':''),dive:true});
-   world.add(g);pop(g,.4+i*.07,k('day:'+d.key));
-   const ring=(n,idx,rad=.6)=>{const a=(idx/Math.max(1,n))*Math.PI*1.25+(i%2?Math.PI*.88:-Math.PI*.12);return [Math.cos(a)*rad,Math.sin(a)*rad*.8]};
-   const items=d.items.slice(0,5);
-   items.forEach((it,j)=>{const b=it.kind==='course'?house():tent();b.scale.setScalar(1.45);const [x,z]=ring(items.length,j);const px=at.x+x,pz=at.z+z;b.position.set(px,heightAt(px,pz),pz);b.rotation.y=Math.atan2(-x,-z)*.25;
-    if(it.conflict){const pen=new THREE.Mesh(new THREE.PlaneGeometry(.1,.06),M('alarmS',C.alarm,{side:THREE.DoubleSide}));pen.position.set(0,.52,0);b.add(pen)}
-    pickable(b,{kind:it.kind,id:it.id,date:d.key,recurring:it.recurring,occurrenceDate:it.occurrenceDate,label:it.title+' · '+it.start+'–'+it.end+(it.place?' · '+it.place:'')+(it.conflict?' · 有重叠':'')});
-    world.add(b);pop(b,.65+i*.07+j*.05,k(it.kind+':'+it.id+'@'+d.key))});
-   d.due.slice(0,3).forEach((t,j)=>{const l=lighthouse(t.done?'done':t.urgent?'urgent':'later');l.scale.setScalar(1.55);const side=i%2?-1:1;const px=at.x+(j-.5*(Math.min(3,d.due.length)-1))*.34,pz=at.z+side*.7;l.position.set(px,heightAt(px,pz),pz);
-    pickable(l,{kind:'task',id:t.id,label:(t.done?'已交 · ':'截止 '+t.time+' · ')+t.title});world.add(l);pop(l,.75+i*.07+j*.05,k('due:'+t.id+':'+(t.done?1:0)))});
-   const tufts=Math.min(7,Math.round(d.freeMinutes/55));const r=seeded(i*31+5);
-   if(tufts){const grass=new THREE.InstancedMesh(new THREE.ConeGeometry(.028,.11,5),M('grass-batch',0xffffff),tufts),dummy=new THREE.Object3D();
-    for(let j=0;j<tufts;j++){const a=r()*Math.PI*2,rr=.3+r()*.25,px=at.x+Math.cos(a)*rr,pz=at.z+Math.sin(a)*rr*.7;dummy.position.set(px,heightAt(px,pz)+.05,pz);dummy.updateMatrix();grass.setMatrixAt(j,dummy.matrix);grass.setColorAt(j,new THREE.Color(j%2?C.leaf:C.leaf2));}grass.receiveShadow=true;world.add(grass);}
-   d.pencilIds.slice(0,3).forEach((id,j)=>{const s=stone();s.scale.setScalar(1.35);const px=at.x+(j-1)*.4,pz=at.z+(i%2?.42:-.42);s.position.set(px,heightAt(px,pz)+.03,pz);s.rotation.y=.2*j;pickable(s,{kind:'pencil',id,date:d.key,label:'小芽的铅笔建议 · 点开看依据',dive:true});world.add(s);pop(s,.95+i*.06+j*.05,k('pencil:'+id))});
+   const at=pts[i],mast=new THREE.Group();mast.name='day-mast';mast.position.set(at.x+.18,heightAt(at.x+.18,at.z),at.z);
+   const state=flagState(d),dayPick={kind:'day',date:d.key,label:d.label+' '+d.dom+' 日 · '+d.items.length+' 项安排'+(d.due.length?' · '+d.due.length+' 项截止':''),dive:true};mast.userData.state=state;
+   const disc=new THREE.Mesh(new THREE.CylinderGeometry(.16,.18,.025,24),M(d.isToday?'today-v2':'day-base-v2',d.isToday?0xe6bc68:0xeee7d2));disc.position.y=.013;disc.receiveShadow=true;mast.add(disc);
+   const rows=flagRows(d,portrait?2:3).map(r=>({...r,pick:r.kind==='summary'?dayPick:{kind:r.kind,id:r.id,date:d.key,recurring:r.recurring,occurrenceDate:r.occurrenceDate,label:r.title+(r.time?' · '+r.time:'')}}));
+   if(!rows.length&&d.pencilIds.length)rows.push({title:d.pencilIds.length+' 笔铅笔建议',kicker:'待你确认',pick:{kind:'pencil',id:d.pencilIds[0],date:d.key,label:'小芽的铅笔建议',dive:true}});
+   rows.forEach(r=>{if(r.attention)r.time='! '+(r.time||'需关注')});
+   const labels=addBanner(mast,d.label+(state==='attention'?' !':''),d.dom+' 日',{state,rows,data:dayPick});pickable(mast,dayPick);for(const l of labels)if(l.pick)pickable(l.banner,l.pick);
+   world.add(mast);pop(mast,.3+i*.04,k('mast:'+d.key+':'+state));addObstacle(mast,.32);addFlagObstacle(mast,rows);
+   // One representative building per lot; the flags and the list retain every actual record.
+   const it=d.items[0];if(it){const b=it.kind==='course'?house():tent();b.scale.setScalar(.9);b.position.set(at.x-.43,heightAt(at.x-.43,at.z+.05),at.z+.05);b.rotation.y=-.18;
+    pickable(b,{kind:it.kind,id:it.id,date:d.key,recurring:it.recurring,occurrenceDate:it.occurrenceDate,label:it.title+' · '+it.start+'–'+it.end});world.add(b);pop(b,.6+i*.035,k(it.kind+':'+it.id+'@'+d.key));addObstacle(b,.28);}
+   d.pencilIds.slice(0,1).forEach(id=>{const stoneObj=stone();stoneObj.scale.setScalar(.65);stoneObj.position.set(at.x-.1,heightAt(at.x-.1,at.z+.44)+.025,at.z+.44);pickable(stoneObj,{kind:'pencil',id,date:d.key,label:'小芽的铅笔建议',dive:true});world.add(stoneObj);pop(stoneObj,.9,k('pencil:'+id));});
   });
-  goalsRim(m.goals,k);
-  const idx=Math.max(0,m.days.findIndex(d=>d.isToday));placeXiaoya(m.attentionDay??idx,k);
+  const deadlines=m.days.flatMap(d=>d.due.map(t=>({...t,date:d.key}))).filter(t=>!t.done);
+  if(deadlines.length){const t=deadlines.find(x=>x.urgent)||deadlines[0],l=lighthouse(t.urgent?'urgent':'later');l.scale.setScalar(1.65);const at=portrait?{x:bounds.rx*.7,z:bounds.rz*.54}:{x:bounds.rx*.69,z:bounds.rz*.53};l.position.set(at.x,heightAt(at.x,at.z),at.z);pickable(l,{kind:'task',id:t.id,label:'灯塔 · '+t.title+' · '+deadlines.length+' 项截止'});world.add(l);pop(l,.8,k('due:'+t.id));addObstacle(l,.33);}
+  goalsRim(m.goals,k);placeXiaoya(m.attentionDay??0,k);
  }
  function moodColor(v){if(v==null)return null;const lo=new THREE.Color(0x9fb3c8),hi=new THREE.Color(0xf2c47a);return lo.lerp(hi,clamp((v-1)/4,0,1)).getHex()}
  function buildSeason(m,k){
@@ -322,23 +323,24 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
    const mood=moodColor(w.mood);
    const disc=new THREE.Mesh(new THREE.CylinderGeometry(w.isCurrent?.29:.24,w.isCurrent?.29:.24,.04,36),w.isFuture?new THREE.MeshBasicMaterial({color:C.pencil,transparent:true,opacity:.18,depthWrite:false}):(w.isCurrent?M('stopT',C.today):P(mood??C.stop)));disc.position.y=.02;disc.receiveShadow=true;g.add(disc);
    if(w.isFuture){const e=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.CylinderGeometry(.24,.24,.04,24)),new THREE.LineDashedMaterial({color:0x4f5560,dashSize:.035,gapSize:.025}));e.computeLineDistances();e.position.y=.02;g.add(e)}
-   addBanner(g,w.isCurrent?'本周':w.isFuture?'未来':'第 '+(i+1)+' 格',w.label,{accent:w.isCurrent?'#dc8c69':w.isFuture?'#8a8f99':'#2b3243',bg:w.isFuture?'#f1efe9':'#fbf6ea',height:.78});
+   g.position.x+=.15;const weekRows=[...(w.done?[{kicker:'真实完成',title:w.done+' 件事项'}]:[]),...(w.checkins?[{kicker:'目标行动',title:w.checkins+' 次'}]:[])];
+   addBanner(g,w.teachingWeek?'第 '+w.teachingWeek+' 周':w.isCurrent?'本周':w.isFuture?'未来':'这一周',w.label,{state:w.done||w.checkins||w.intentions?'busy':'empty',rows:weekRows,height:1.1});g.name='week-mast';addFlagObstacle(g,weekRows);
    const parts=[w.done?'完成 '+w.done+' 项':'',w.checkins?'目标行动 '+w.checkins+' 次 · '+w.minutes+' 分钟':'',w.mood!=null?'心情均值 '+w.mood:'',w.isFuture&&w.intentions?'铅笔意向 '+w.intentions+' 次':''].filter(Boolean);
    pickable(g,{kind:'week',start:w.key,label:(w.isCurrent?'本周':w.label+' 这一周')+(parts.length?' · '+parts.join(' · '):' · 还没有记录'),dive:true});
-   world.add(g);pop(g,.4+i*.06,k('wk:'+w.key));
-   if(w.done){const t=tower(Math.min(7,w.done));const px=at.x-.3,pz=at.z+(i%2?.3:-.3);t.position.set(px,heightAt(px,pz),pz);pickable(t,{kind:'week',start:w.key,label:'完成 '+w.done+' 项',dive:true});world.add(t);pop(t,.65+i*.06,k('tw:'+w.key+':'+w.done))}
+   world.add(g);pop(g,.4+i*.04,k('wk:'+w.key));addObstacle(g,.34);
+   if(w.done){const t=tower(Math.min(4,w.done));t.scale.setScalar(.75);const px=at.x-.3,pz=at.z+(i%2?.3:-.3);t.position.set(px,heightAt(px,pz),pz);pickable(t,{kind:'week',start:w.key,label:'完成 '+w.done+' 项',dive:true});world.add(t);pop(t,.65+i*.06,k('tw:'+w.key+':'+w.done))}
    const r=seeded(i*13+3);
-   for(let j=0;j<Math.min(7,w.checkins);j++){const f=flower(j%2?C.petal:C.petal2);f.scale.setScalar(1.35);const a=r()*Math.PI*2,rr=.25+r()*.2;const px=at.x+.22+Math.cos(a)*rr*.6,pz=at.z+Math.sin(a)*rr*.5;f.position.set(px,heightAt(px,pz),pz);f.rotation.y=r()*Math.PI;world.add(f);pop(f,.8+i*.06+j*.03,k('fl:'+w.key+':'+j))}
+   for(let j=0;j<Math.min(2,w.checkins);j++){const f=flower(j%2?C.petal:C.petal2);f.scale.setScalar(.9);const a=r()*Math.PI*2,rr=.25+r()*.2;const px=at.x+.22+Math.cos(a)*rr*.6,pz=at.z+Math.sin(a)*rr*.5;f.position.set(px,heightAt(px,pz),pz);f.rotation.y=r()*Math.PI;world.add(f);pop(f,.8+i*.06+j*.03,k('fl:'+w.key+':'+j))}
    if(w.isFuture&&w.intentions){for(let j=0;j<Math.min(3,w.intentions);j++){const s=stone();const px=at.x+(j-1)*.32,pz=at.z+(i%2?.4:-.4);s.position.set(px,heightAt(px,pz)+.03,pz);world.add(s)}}
   });
   goalsRim(m.goals,k);
   placeXiaoya(Math.max(0,m.weeks.findIndex(w=>w.isCurrent)),k);
  }
  function goalsRim(goals,k){
-  goals.slice(0,8).forEach((g,j)=>{const level=g.checkins?clamp(1+Math.floor(g.checkins/2),1,5):0;const t=tree(level,!g.checkins);t.scale.setScalar(1.5);
-   let x,z;if(portrait){x=(j%2?1:-1)*1.75;z=-2.6+Math.floor(j/2)*.55}else{const a=Math.PI*(1.1+j*.105);x=Math.cos(a)*2.5*1.1;z=-Math.abs(Math.sin(a))*1.75-.1}
-   t.position.set(x,heightAt(x,z),z);t.rotation.y=j*.5;
-   pickable(t,{kind:'goal',id:g.id,label:g.title+' · '+(g.checkins?g.checkins+' 次真实行动':'还没有第一次行动')});world.add(t);pop(t,1.15+j*.06,k('goal:'+g.id+':'+level))});
+  goals.slice(0,4).forEach((g,j)=>{const level=g.checkins?clamp(1+Math.floor(g.checkins/2),1,4):0,t=tree(level,!g.checkins);t.scale.setScalar(.92);
+   const a=portrait?Math.PI*(.15+j*.24):Math.PI*(1.08+j*.27);const x=Math.cos(a)*bounds.rx*.78,z=Math.sin(a)*bounds.rz*.7;
+   t.position.set(x,heightAt(x,z),z);t.rotation.y=j*.5;pickable(t,{kind:'goal',id:g.id,label:g.title+' · '+g.checkins+' 次真实行动'});world.add(t);pop(t,1.1+j*.04,k('goal:'+g.id+':'+level));addObstacle(t,.32);
+  });
  }
  function applySky(hour){
   const s=skyAt(hour);night=s.night;
@@ -352,6 +354,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   // Bloom only catches true light sources (lamps, lit windows): the threshold sits above lit paper.
   if(bloom){bloom.enabled=night>.25;bloom.strength=.45*night;bloom.threshold=1.05;bloom.radius=.45}
   grade.uniforms.warm.value=night>.5?-.015:.02;
+  for(const f of flags)f.material.color.setScalar(1-night*.32);
  }
 
  // ---------- camera ----------
@@ -361,8 +364,8 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   const w=host.clientWidth||1,h=host.clientHeight||1;renderer.setSize(w,h,false);composer.setSize(w,h);camera.aspect=w/h;
   tilt.uniforms.resolution.value.set(w*renderer.getPixelRatio(),h*renderer.getPixelRatio());
   const wantPortrait=camera.aspect<.9;
-  if(wantPortrait!==portrait){portrait=wantPortrait;book.rotation.y=portrait?Math.PI/2:0;visualKey=null;camBase.y=portrait?10.2:8;camBase.z=portrait?5:6.9;if(model&&!opening){const m=model;known=new Set([...known]);update(m)}}
-  camDist=portrait?clamp(1.17/camera.aspect,.9,2.5):clamp(1.48/camera.aspect,.9,2.8);labelScale=clamp(.82+camDist*.12,.9,1.1);for(const f of flags)f.scale.setScalar(labelScale);
+  if(wantPortrait!==portrait){portrait=wantPortrait;book.rotation.y=portrait?Math.PI/2:0;visualKey=null;camBase.y=portrait?9.6:8;camBase.z=portrait?9.2:6.9;if(model&&!opening){const m=model;known=new Set([...known]);update(m)}}
+  const baseLength=Math.hypot(camBase.y,camBase.z),vertical=2*bounds.rz*camBase.y/baseLength+1.8,horizontal=2*bounds.rx+1.7;camDist=Math.max(vertical/(baseLength*.536),horizontal/(baseLength*.536*camera.aspect))*1.03;labelScale=portrait?1.17:1.04;for(const f of flags)f.scale.setScalar(labelScale);
   tilt.uniforms.amount.value=lite?2.2:3.2;tilt.uniforms.band.value=camera.aspect<1?.3:.26;
   camera.updateProjectionMatrix();placeCamera();frame();
  }
@@ -383,7 +386,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  function screenOf(obj,lift=.85){const v=new THREE.Vector3();obj.getWorldPosition(v);v.y+=lift;v.project(camera);return {x:(v.x+1)/2*host.clientWidth,y:(1-v.y)/2*host.clientHeight}}
  function showTip(root){
   if(!root){tip.hidden=true;return}
-  const p=root.userData.pick;tip.textContent=p.label||'';tip.hidden=!p.label;const s=screenOf(root);
+  const p=root.userData.pick;tip.textContent=p.label||'';tip.hidden=!p.label;const s=screenOf(root,root.userData.tooltipLift??.8);
   tip.style.left=clamp(s.x,90,host.clientWidth-90)+'px';tip.style.top=Math.max(8,s.y-8)+'px';
  }
  renderer.domElement.addEventListener('pointerdown',e=>{if(dive||folding)return;down={x:e.clientX,y:e.clientY,yaw:targetYaw,moved:false};renderer.domElement.setPointerCapture?.(e.pointerId)});
@@ -392,11 +395,13 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   if(down){const dx=e.clientX-down.x;if(Math.abs(dx)>6){down.moved=true;tip.hidden=true;say.hidden=true}targetYaw=clamp(down.yaw+dx/r.width*1.6,-.7,.7);frame();return}
   // No pointer parallax: a camera that follows the mouse moves targets out from under the cursor.
   if(e.pointerType==='mouse'){
-   const o=hitObj(e),root=o?.userData.root||null;if(root!==hoverRoot){hoverRoot=root;renderer.domElement.style.cursor=root?'pointer':'grab'}showTip(hoverRoot);frame()}
+   const o=hitObj(e),root=o?.userData.root||null;if(root!==hoverRoot){hoverRoot=root;renderer.domElement.style.cursor=root?'pointer':'grab'}showTip(hoverRoot);followGround(e);frame()}
  });
- renderer.domElement.addEventListener('pointerleave',()=>{hoverRoot=null;tip.hidden=true;frame()});
+ renderer.domElement.addEventListener('pointerleave',e=>{hoverRoot=null;tip.hidden=true;
+  // A touch pointer leaves after every tap; its deliberate destination must survive that event.
+  if(e.pointerType==='mouse'){walk.gaze=null;walk.pointer=null;walk.planned=null;walk.path=[];}frame()});
  renderer.domElement.addEventListener('pointerup',e=>{const d=down;down=null;if(!d||d.moved||dive||folding)return;const o=hitObj(e),p=o?.userData.pick;
-  if(!p){say.hidden=true;return}
+  if(!p){say.hidden=true;followGround(e);if(reduced()&&walk.pointer){const at=nearestOpenPoint(walk.pointer,bounds,obstacles,.29);if(at){walk.x=at.x;walk.z=at.z;positionXiaoya();frame()}}return}
   if(p.kind==='xiaoya'){hop=1;speak();return}
   // Days, weeks and pencils: the camera dives toward the stop, then the page turns to paper.
   if(p.dive&&!reduced()){const v=new THREE.Vector3();o.userData.root.getWorldPosition(v);dive={t:0,dur:.6,to:v,pick:p};tip.hidden=true;frame();return}
@@ -431,11 +436,11 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
    else if(!p.done){p.t+=dt;const u=clamp(p.t/p.dur,0,1);reveal(p.obj,u);p.done=u>=1;busy=busy||!p.done;}
   }
   host.dataset.fold=unfold.toFixed(3);if(!scrubbing)foldSlider.value=Math.round(unfold*100);foldToggle.textContent=unfoldTarget===1?'收起':'展开';
-  for(const r of ripples){r.t+=dt;if(r.t<0){busy=true;continue}const u=clamp(r.t/1.3,0,1);r.mesh.scale.setScalar(1+u*5.5);r.mesh.material.opacity=.9*(1-u);if(u<1)busy=true;else r.mesh.visible=false}
   if(opening){busy=opening(wallDt)||busy}
   if(dive){dive.t+=dt;busy=true;if(dive.t>=dive.dur){const p=dive.pick;dive=null;onPick(p)}}
   yaw+=(targetYaw-yaw)*Math.min(1,dt*8);world.rotation.y=yaw;if(Math.abs(targetYaw-yaw)>.001)busy=true;
   viewZoom+=(zoomTarget-viewZoom)*Math.min(1,dt*7);if(Math.abs(viewZoom-zoomTarget)>.001)busy=true;
+  camLook.lerp(camLookTarget,1-Math.exp(-dt*10));
   for(const o of pickables){const root=o.userData.root;if(folding||unfold<1||!root||root.userData.baseY===undefined||root===xiaoya)continue;
    const want=root.userData.baseY+(root===hoverRoot?.07:0);if(Math.abs(root.position.y-want)>.001){root.position.y+=(want-root.position.y)*Math.min(1,dt*12);busy=true}}
   camera.getWorldPosition(camW);
@@ -446,16 +451,24 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
    for(const f of flags){const a=f.geometry.attributes.position,rest=f.userData.rest;for(let i=0;i<a.count;i++){const x=rest[i*3];a.array[i*3+2]=Math.sin(clock*3.2+x*7+f.userData.seed)*.035*(x/.66)}a.needsUpdate=true}
    for(const lm of lampMats)if(lm.userData.state==='urgent')lm.emissiveIntensity=1.4+Math.sin(clock*5)*1.2;
    if(xiaoya&&!opening&&!folding&&unfold>.98){
-    const diff=walk.target-walk.t;const moving=Math.abs(diff)>.002;
-    if(moving){const speed=.48/Math.max(.1,curve.getLength());const step=Math.sign(diff)*Math.min(Math.abs(diff),dt*speed);walk.t+=step;walk.face=Math.sign(diff);posePhase+=Math.abs(step)*curve.getLength()*25;}
-    else if(clock>walk.wanderAt){walk.wanderAt=clock+8+Math.random()*5;const home=walk.stop/(stopsCount-1);walk.target=clamp(home+(Math.random()-.5)*.08,0,1);}
-    positionXiaoya(0);
-    const tangent=curve.getTangentAt(clamp(walk.t,0,1));const desired=moving?Math.atan2(tangent.x*walk.face,tangent.z*walk.face):Math.atan2(camW.x-xiaoya.position.x,camW.z-xiaoya.position.z)-yaw-.13;
-    const delta=THREE.MathUtils.euclideanModulo(desired-xiaoya.rotation.y+Math.PI,Math.PI*2)-Math.PI;xiaoya.rotation.y+=delta*Math.min(1,dt*6);
-    const jump=hop>0?Math.sin(hop*Math.PI):0;xiaoya.userData.pose({time:clock,dt,moving:moving?1:0,phase:posePhase,jump,talking:!say.hidden});if(hop>0)hop=Math.max(0,hop-dt*1.7);placeSay();
+    for(const o of obstacles)if(o.flag){const a=-yaw-.26;o.x=o.flag.position.x+.4*Math.cos(a);o.z=o.flag.position.z-.4*Math.sin(a);}
+    if(!clearPoint(walk,bounds,obstacles,.29)){const safe=nearestOpenPoint(walk,bounds,obstacles,.29);if(safe){walk.x=safe.x;walk.z=safe.z;walk.path=[];walk.planned=null;}}
+    if(walk.pointer&&clock>=walk.navAt){walk.navAt=clock+.09;const target=nearestOpenPoint(walk.pointer,bounds,obstacles,.29);if(target&&(!walk.planned||Math.hypot(target.x-walk.planned.x,target.z-walk.planned.z)>.15)){walk.path=planIslandPath(walk,target,bounds,obstacles,.29);walk.planned=target;}}
+    if(!walk.pointer&&clock-walk.lastPointer>8&&clock>walk.wanderAt){walk.wanderAt=clock+9;const h=walk.home,target=nearestOpenPoint({x:h.x+Math.sin(clock)*.45,z:h.z+Math.cos(clock)*.25},bounds,obstacles,.29);if(target)walk.path=planIslandPath(walk,target,bounds,obstacles,.29);}
+    let moving=false,heading=xiaoya.rotation.y;
+    const dest=walk.path[0];if(dest){const dx=dest.x-walk.x,dz=dest.z-walk.z,dist=Math.hypot(dx,dz),step=Math.min(dist,dt*1.15);
+     if(dist>.012){const next={x:walk.x+dx/dist*step,z:walk.z+dz/dist*step};if(clearSegment(walk,next,bounds,obstacles,.29)){walk.x=next.x;walk.z=next.z;posePhase+=step*28;heading=Math.atan2(dx,dz);moving=true;}else{walk.path=[];walk.planned=null;}}
+     if(dist<.04)walk.path.shift();}
+    positionXiaoya();
+    let gazeYaw=0,gazePitch=0;const gaze=walk.gaze;
+    if(!moving)heading=Math.atan2(camW.x-xiaoya.position.x,camW.z-xiaoya.position.z)-yaw;
+    const delta=THREE.MathUtils.euclideanModulo(heading-xiaoya.rotation.y+Math.PI,Math.PI*2)-Math.PI;xiaoya.rotation.y+=delta*(1-Math.exp(-dt*16));
+    if(gaze){const a=Math.atan2(gaze.x-walk.x,gaze.z-walk.z);gazeYaw=THREE.MathUtils.euclideanModulo(a-xiaoya.rotation.y+Math.PI,Math.PI*2)-Math.PI;gazePitch=gaze.pitch;if(walk.inputPending){walk.latency=performance.now()-(walk.eventAt||performance.now());walk.inputPending=false;}}
+    const jump=hop>0?Math.sin(hop*Math.PI):0;xiaoya.userData.pose({time:clock,dt,moving:moving?1:0,phase:posePhase,jump,talking:!say.hidden,gazeYaw,gazePitch});if(hop>0)hop=Math.max(0,hop-dt*1.7);placeSay();
    }
    busy=true;
-  }else if(xiaoya){walk.t=walk.target;positionXiaoya(0);xiaoya.userData.pose({time:0,dt:1});}
+  }else if(xiaoya){positionXiaoya();const a=walk.gaze?Math.atan2(walk.gaze.x-walk.x,walk.gaze.z-walk.z)-xiaoya.rotation.y:0;xiaoya.userData.pose({time:0,dt:1,still:true,gazeYaw:a});}
+  coastalLife?.tick(clock,night,reduced());
   // Banners face the camera fully (pitch included) so the lettering stays readable from a top-down phone view;
   // a small yaw keeps them from looking pasted onto the screen.
   for(const f of flags){f.parent.getWorldQuaternion(tmpQ).invert();f.quaternion.copy(tmpQ.multiply(camera.quaternion));f.rotateY(-.26)}
@@ -490,7 +503,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  host.append(controls);const foldToggle=controls.querySelector('[data-fold-toggle]'),foldSlider=controls.querySelector('input');let scrubbing=false;
  foldToggle.onclick=()=>{if(opening)return;unfoldTarget=unfoldTarget===1?0:1;if(reduced())setFold(unfoldTarget);else folding=true;tip.hidden=true;say.hidden=true;frame()};
  controls.querySelector('[data-fold-replay]').onclick=()=>{if(opening)return;if(reduced()){setFold(1);return}unfold=0;unfoldTarget=1;folding=true;tip.hidden=true;say.hidden=true;frame()};
- controls.querySelector('[data-scene-zoom]').onclick=e=>{zoomTarget=zoomTarget===1?.78:1;e.currentTarget.textContent=zoomTarget===1?'近看':'全景';e.currentTarget.setAttribute('aria-pressed',zoomTarget===1?'false':'true');if(reduced())viewZoom=zoomTarget;frame()};
+ controls.querySelector('[data-scene-zoom]').onclick=e=>{zoomTarget=zoomTarget===1?.55:1;if(zoomTarget===1)camLookTarget.set(0,.15,.35);else if(xiaoya){const at=new THREE.Vector3();xiaoya.getWorldPosition(at);camLookTarget.set(at.x,.42,at.z);}e.currentTarget.textContent=zoomTarget===1?'近看':'全景';e.currentTarget.setAttribute('aria-pressed',zoomTarget===1?'false':'true');if(reduced()){viewZoom=zoomTarget;camLook.copy(camLookTarget)}frame()};
  foldSlider.addEventListener('input',()=>{if(opening)return;scrubbing=true;setFold(Number(foldSlider.value)/100)});foldSlider.addEventListener('change',()=>{scrubbing=false});
  let lastModel=null;
  return {
@@ -501,7 +514,8 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   /** What would be picked at host-relative CSS pixel (x,y) — QA/diagnostics. */
   pickAt(x,y){const r=renderer.domElement.getBoundingClientRect();return hitObj({clientX:r.left+x,clientY:r.top+y})?.userData.pick?.kind||null},
   locate(kind){let root=null;for(const o of pickables){if(o.userData.pick?.kind===kind){root=o.userData.root;break}}if(!root)return null;const s=screenOf(root,kind==='xiaoya'?.6:.15);return {x:s.x,y:s.y}},
-  diagnostics(){return {fold:unfold,folding,yaw,puppet:xiaoya?.name,calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,post:tilt.enabled?'tilt':(bloom?.enabled?'grade+bloom':'grade'),dpr:renderer.getPixelRatio(),objects:pickables.length}},
+  groundAt(x,z){const v=new THREE.Vector3(x,heightAt(x,z)+.015,z);world.localToWorld(v);v.project(camera);return {x:(v.x+1)/2*host.clientWidth,y:(1-v.y)/2*host.clientHeight,clear:clearPoint({x,z},bounds,obstacles,.29)};},
+  diagnostics(){return {fold:unfold,folding,yaw,puppet:xiaoya?.name,identity:xiaoya?.userData.identity,navigation:{x:walk.x,z:walk.z,path:walk.path.length,target:walk.pointer,route:walk.path.map(p=>({...p})),gaze:!!walk.gaze,clear:clearPoint(walk,bounds,obstacles,.29),inputLatencyMs:walk.latency,gazeYaw:xiaoya?.getObjectByName('xiaoya-head')?.rotation.y},buildings:world.children.filter(x=>x.name==='fold-house'||x.name==='fold-tent').length,flagPanels:flags.length,masts:world.children.filter(x=>x.name.endsWith('-mast')).length,flagStates:world.children.filter(x=>x.name==='day-mast').map(x=>x.userData.state),obstacles:obstacles.length,coast:coastalLife?.diagnostics(),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,post:tilt.enabled?'tilt':(bloom?.enabled?'grade+bloom':'grade'),dpr:renderer.getPixelRatio(),objects:pickables.length}},
   dispose(){disposed=true;opening=null;openingResolve?.();openingResolve=null;clearTimeout(speak.t);controls.remove();cancelAnimationFrame(raf);clearInterval(skyTimer);io.disconnect();ro.disconnect();document.removeEventListener('visibilitychange',onVis);clearWorld();Object.values(mats).forEach(m=>m.dispose());scene.background?.dispose?.();scene.environment?.dispose?.();composer.dispose?.();pmrem.dispose();renderer.dispose();renderer.domElement.remove();tip.remove();say.remove()},
   canvas:renderer.domElement
  };

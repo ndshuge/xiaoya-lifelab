@@ -309,8 +309,8 @@ function renderWeek(data){
  const isThis=ui.weekStart===dateKey(monday(now));
  return '<section class="week" aria-labelledby="week-title"><div class="day-nav"><button type="button" class="nav-arrow" data-week-shift="-1" aria-label="上一周">‹</button><h1 id="week-title">'+(isThis?'本周':md(w.start)+' 起')+'<small>'+md(w.start)+' – '+md(w.end)+(w.teachingWeek?' · 第 '+w.teachingWeek+' 教学周':'')+'</small></h1><button type="button" class="nav-arrow" data-week-shift="1" aria-label="下一周">›</button>'+(isThis?'':'<button type="button" class="nav-today" data-week-today>回到本周</button>')+'</div>'+
   '<p class="voice"><img src="'+assetFace(3)+'" alt="" width="30" height="30">'+esc(weekSentence(w))+'</p>'+
-  '<div class="island-slot" id="island-slot" aria-label="这一周的纸岛：房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是目标，虚线踏脚石是小芽的建议。下方列表包含同样的内容。"></div>'+
-  '<p class="island-legend"><span>房子＝课</span><span>帐篷＝活动</span><span>灯塔＝截止</span><span>草地＝空闲</span><span>树＝目标</span><span>虚线踏脚石＝小芽的铅笔</span><span class="island-tip">拖动转岛 · 点一下翻回纸面</span></p>'+
+  '<div class="island-slot" id="island-slot" aria-label="生活小岛：旗杆顶端是日期，下方是事项。白旗为空闲，浅黄旗为有安排，浅红旗为需要关注。灯塔汇总截止，下方列表显示全部记录。"></div>'+
+  '<p class="island-legend"><span>白旗 · 空闲</span><span>浅黄 · 有安排</span><span>浅红 · 需关注</span><span>灯塔 · 截止</span><span>树 · 目标</span><span class="island-tip">移动鼠标陪小芽散步 · 手机点草地 · 拖动转岛</span></p>'+
   '<ol class="week-grid">'+w.days.map(d=>'<li class="wday'+(d.isToday?' is-today':'')+(d.isPast?' is-past':'')+'"><button type="button" class="wday-head" data-goto-day="'+d.key+'"><span>'+d.label+'</span><b>'+d.dom+'</b>'+(d.pencils?'<i class="pencil-count" title="'+d.pencils+' 笔铅笔建议">✎'+d.pencils+'</i>':'')+'</button>'+
    '<span class="busy" style="--busy:'+Math.min(1,d.busyMinutes/600)+'" title="已记录 '+Math.round(d.busyMinutes/6)/10+' 小时"></span>'+
    '<ul>'+d.items.map(x=>'<li class="witem '+x.kind+(x.conflict?' is-conflict':'')+(x.moved?' is-moved':'')+'"><button type="button" '+(x.recurring?'data-occurrence="'+x.kind+'|'+esc(x.id)+'|'+x.occurrenceDate+'"':'data-edit="'+x.kind+'" data-id="'+esc(x.id)+'"')+'><time>'+x.start+(x.moved?' · 调课':'')+'</time>'+esc(x.title)+'</button></li>').join('')+
@@ -344,7 +344,7 @@ function seasonModel(){
  const L=buildLongLine(data,entries,{now,plan:ui.plan});
  const weeks=L.weeks.map((w,i)=>{const done=L.doneRow[i];const moods=L.moodRow[i].map(x=>x.mood).filter(v=>v!=null);
   const intentions=L.goals.reduce((n,g)=>n+(g.cells[i]?.intention||0),0);
-  return {key:w.start,label:w.label,isCurrent:w.isCurrent,isFuture:w.isFuture,done:done?.done||0,checkins:done?.checkins||0,minutes:done?.minutes||0,
+  return {key:w.start,label:w.label,teachingWeek:teachingWeek(data,new Date(w.start+'T12:00')),isCurrent:w.isCurrent,isFuture:w.isFuture,done:done?.done||0,checkins:done?.checkins||0,minutes:done?.minutes||0,
    mood:moods.length?Math.round(moods.reduce((a,b)=>a+b,0)/moods.length*10)/10:null,intentions}});
  const c=L.current;
  const speech=(greeting(now)||'')+(L.hasEvidence||c.done||c.checkins?'这周完成 '+c.done+' 项、目标行动 '+c.checkins+' 次。往回看，每一格都是你真实走过的路。':'长线上还没有足迹。完成一件事，或者为目标记一次真实行动，这里就会开出第一朵花。');

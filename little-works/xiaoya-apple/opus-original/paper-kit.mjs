@@ -49,7 +49,7 @@ export function createPaperKit({material:M,windowMat,lampMats}){
   g.userData.fold=u=>{folds.forEach(f=>f(u));chimney.visible=u>.85;};g.userData.fold(1);return batch(g);
  }
  function tent(){
-  const g=new T.Group(),cloth=M('paper-tent',0xc87954),seam=M('paper-tent-seam',0xf4d5a8);box(g,.45,.015,.4,edge,0,.008,0);
+  const g=new T.Group(),cloth=M('paper-tent',0xc87954),seam=M('paper-tent-seam',0xf4d5a8);g.name='fold-tent';box(g,.45,.015,.4,edge,0,.008,0);
   const a=new T.Shape();a.moveTo(-.21,0);a.lineTo(.21,0);a.lineTo(0,.33);a.closePath();
   const front=pivot(g,0,.015,.18);const panel=plate(a,.014,cloth,edge);front.add(panel);
   const door=new T.Shape();door.moveTo(-.06,0);door.lineTo(.06,0);door.lineTo(0,.17);door.closePath();const d=plate(door,.016,ink);d.position.z=.012;front.add(d);
@@ -58,18 +58,23 @@ export function createPaperKit({material:M,windowMat,lampMats}){
   g.userData.fold=u=>{const e=smooth(u);front.rotation.x=-(1-e)*Math.PI/2;sides.forEach(({p,sign})=>p.rotation.z=sign*(Math.PI/2-e*.99))};g.userData.fold(1);return g;
  }
  function lighthouse(state){
-  const g=new T.Group(),tower=new T.Group();g.add(tower);g.name='fold-lighthouse';
-  mesh(new T.CylinderGeometry(.16,.18,.035,12),edge,g,0,.017,0);
+  const g=new T.Group();g.name='telescoping-lighthouse';
+  mesh(new T.CylinderGeometry(.17,.19,.035,20),edge,g,0,.017,0);
+  const assembly=pivot(g,0,.035,0),middle=pivot(assembly),upper=pivot(middle);
   const red=M(state==='done'?'paper-lh-done':'paper-lh-red',state==='done'?0xa7afa0:0xc97b58);
-  let y=.035;for(const [r1,r2,h,m] of [[.115,.1,.14,wall],[.1,.085,.085,red],[.085,.073,.1,wall]]){mesh(new T.CylinderGeometry(r2,r1,h,12),m,tower,0,y+h/2,0);y+=h;}
+  mesh(new T.CylinderGeometry(.12,.137,.16,24),wall,assembly,0,.08,0);
+  mesh(new T.CylinderGeometry(.099,.112,.15,24),red,middle,0,.075,0);
+  mesh(new T.CylinderGeometry(.077,.089,.15,24),wall,upper,0,.075,0);
   const color=state==='urgent'?0xf4a35e:state==='done'?0xc6d4b1:0xffd897;
   const lightMat=new T.MeshStandardMaterial({color,emissive:color,emissiveIntensity:state==='done'?.15:1.6,roughness:.45});lightMat.userData={state,color};lampMats.push(lightMat);
-  mesh(new T.CylinderGeometry(.074,.074,.09,12),lightMat,tower,0,.405,0);
-  for(let i=0;i<6;i++){const a=i/6*Math.PI*2;box(tower,.009,.11,.009,ink,Math.cos(a)*.075,.405,Math.sin(a)*.075);}
-  mesh(new T.CylinderGeometry(.106,.106,.015,16),ink,tower,0,.355,0);
-  mesh(new T.ConeGeometry(.115,.09,12),roof,tower,0,.5,0);
-  box(tower,.018,.065,.018,roofEdge,0,.568,0);
-  g.userData.fold=u=>{tower.rotation.x=-(1-smooth(u))*Math.PI/2};return g;
+  const lantern=pivot(upper,0,.15,0);
+  mesh(new T.CylinderGeometry(.1,.1,.018,20),ink,lantern,0,0,0);
+  mesh(new T.CylinderGeometry(.066,.066,.082,20),lightMat,lantern,0,.05,0);
+  for(let i=0;i<6;i++){const a=i/6*Math.PI*2;box(lantern,.007,.09,.007,ink,Math.cos(a)*.073,.05,Math.sin(a)*.073);}
+  mesh(new T.ConeGeometry(.108,.075,20),roof,lantern,0,.13,0);
+  box(lantern,.014,.044,.014,roofEdge,0,.19,0);
+  g.userData.stages=[assembly,middle,upper];
+  g.userData.fold=u=>{assembly.position.y=.035-.105*(1-smooth(clamp(u*3)));middle.position.y=.015+.125*smooth(clamp((u-.15)/.55));upper.position.y=.012+.12*smooth(clamp((u-.4)/.6));};g.userData.fold(1);return g;
  }
  function tree(level,pencil){
   const g=new T.Group(),h=.44+level*.115;
@@ -80,32 +85,42 @@ export function createPaperKit({material:M,windowMat,lampMats}){
   g.userData.fold=u=>{const e=smooth(u);g.rotation.x=-(1-e)*Math.PI/2;fans.forEach(({p,a})=>{p.rotation.y=a*e;p.rotation.x=0})};return g;
  }
  function character(){
-  const root=new T.Group();root.name='xiaoya-paper-puppet';const rig=pivot(root),body=pivot(rig,0,.22,0),head=pivot(rig,0,.56,0);
-  const hood=M('puppet-hood',0x8fa66b),face=M('puppet-face',0xffefd1),eye=M('puppet-eye',0x455541,{map:null}),blush=M('puppet-blush',0xe6b38e,{map:null});
-  const oval=(g,sx,sy,sz,m,x,y,z)=>{const o=mesh(new T.SphereGeometry(1,24,16),m,g,x,y,z);o.scale.set(sx,sy,sz);return o};
-  oval(body,.16,.22,.125,cream,0,.03,0);
-  oval(head,.265,.26,.19,hood,0,0,0);oval(head,.218,.2,.075,face,0,-.012,.158);
-  for(const s of [-1,1]){oval(head,.021,.027,.014,eye,s*.082,.015,.229);oval(head,.038,.017,.009,blush,s*.136,-.038,.215);}
-  const smile=new T.CatmullRomCurve3([new T.Vector3(-.029,-.039,.235),new T.Vector3(0,-.052,.242),new T.Vector3(.029,-.039,.235)]);mesh(new T.TubeGeometry(smile,12,.005,5,false),eye,head);
-  // A folded hood seam gives the back the same authored identity as the face.
-  const seam=new T.CatmullRomCurve3([new T.Vector3(0,.23,-.07),new T.Vector3(0,.08,-.19),new T.Vector3(0,-.19,-.1)]);mesh(new T.TubeGeometry(seam,16,.007,5,false),M('puppet-seam',0x6d8651),head);
+  const root=new T.Group();root.name='xiaoya-paper-puppet';root.userData.identity='reference-hood-v2';
+  const rig=pivot(root),body=pivot(rig,0,.245,0),head=pivot(rig,0,.655,0);head.name='xiaoya-head';
+  const hood=M('puppet-hood-v2',0xa8b780,{roughness:.92}),face=M('puppet-face-v2',0xfff0d8,{map:null,roughness:.88}),eye=M('puppet-eye-v2',0x786a48,{map:null}),blush=M('puppet-blush-v2',0xf0bb93,{map:null}),cloak=M('puppet-cloak-v2',0x849a65);
+  const oval=(g,sx,sy,sz,m,x,y,z)=>{const o=mesh(new T.SphereGeometry(1,28,20),m,g,x,y,z);o.scale.set(sx,sy,sz);return o};
+  const hoodShape=new T.Shape();hoodShape.moveTo(0,.365);hoodShape.bezierCurveTo(-.28,.35,-.49,-.025,-.405,-.24);hoodShape.bezierCurveTo(-.37,-.32,-.22,-.27,0,-.26);hoodShape.bezierCurveTo(.22,-.27,.37,-.32,.405,-.24);hoodShape.bezierCurveTo(.49,-.025,.28,.35,0,.365);
+  const hoodGeo=new T.ExtrudeGeometry(hoodShape,{depth:.19,bevelEnabled:true,bevelSegments:3,steps:1,bevelSize:.028,bevelThickness:.035,curveSegments:22});hoodGeo.translate(0,0,-.11);
+  mesh(hoodGeo,hood,head);
+  oval(head,.319,.254,.105,face,0,-.014,.112);
+  oval(body,.224,.215,.146,face,0,.01,.01);
+  // A short leaf cape, rather than a spherical back, matches the drawing's drooping hood.
+  oval(rig,.29,.25,.11,cloak,0,.265,-.095);
+  const eyes=[];for(const side of [-1,1]){const e=oval(head,.026,.033,.015,eye,side*.13,.035,.214);e.userData.eye=true;eyes.push(e);oval(head,.052,.035,.009,blush,side*.214,-.047,.199);}
+  const smile=new T.CatmullRomCurve3([new T.Vector3(-.043,-.049,.222),new T.Vector3(0,-.06,.229),new T.Vector3(.043,-.049,.222)]);mesh(new T.TubeGeometry(smile,16,.006,6,false),eye,head);
   const arms=[],legs=[],leaves=[];
-  for(const s of [-1,1]){const arm=pivot(rig,s*.155,.38,0);oval(arm,.049,.105,.055,cream,s*.025,-.075,.005);arms.push(arm);
-   const leg=pivot(rig,s*.08,.11,0);oval(leg,.065,.07,.09,cream,0,-.045,.03);legs.push(leg);
-   const leaf=pivot(head,0,.235,0);const shape=new T.Shape();shape.moveTo(0,0);shape.bezierCurveTo(s*.03,.21,s*.28,.2,s*.26,.12);shape.bezierCurveTo(s*.21,.015,s*.08,-.01,0,0);
-   const blade=plate(shape,.021,M('puppet-leaf-'+s,s===1?0xa4b77c:0x7f9d5d),M('puppet-leaf-edge',0x688349));blade.castShadow=true;leaf.rotation.z=s*.18;leaf.rotation.y=s*.22;leaf.add(blade);leaves.push(leaf);
+  for(const side of [-1,1]){
+   const arm=pivot(rig,side*.205,.365,.01);oval(arm,.065,.105,.065,face,side*.027,-.065,.02);arm.rotation.z=side*.22;arms.push(arm);
+   const leg=pivot(rig,side*.105,.105,0);oval(leg,.102,.085,.125,face,0,-.014,.03);legs.push(leg);
+   const leaf=pivot(head,0,.35,-.012);leaf.name=side<0?'large-left-leaf':'small-right-leaf';const shape=new T.Shape();shape.moveTo(0,0);
+   if(side<0){shape.bezierCurveTo(-.09,.285,-.48,.43,-.47,.25);shape.bezierCurveTo(-.46,.045,-.13,.05,0,0);}
+   else{shape.bezierCurveTo(.045,.18,.33,.31,.32,.19);shape.bezierCurveTo(.30,.035,.12,.005,0,0);}
+   const blade=plate(shape,.028,M('puppet-leaf-v2-'+side,side<0?0xa3b67a:0xb0bf87),M('puppet-leaf-edge-v2',0x8ca168));blade.castShadow=true;leaf.add(blade);
+   const vein=new T.CatmullRomCurve3([new T.Vector3(0,.01,.018),new T.Vector3(side*.12,.105,.019),new T.Vector3(side*(side<0?.33:.24),side<0?.23:.19,.019)]);mesh(new T.TubeGeometry(vein,12,.004,4,false),M('puppet-vein',0x91a66b),leaf);
+   leaf.rotation.y=side*.14;leaves.push(leaf);
   }
-  let speed=0;
-  root.userData.pose=({time,dt,moving=0,phase=0,jump=0,talking=false})=>{
-   speed+=(moving-speed)*Math.min(1,dt*9);const gait=Math.sin(phase);
-   rig.position.y=Math.abs(Math.sin(phase))*speed*.018+jump*.22;
-   body.rotation.z=Math.sin(phase)*speed*.045;head.rotation.z=Math.sin(time*1.6)*.025+gait*speed*.025;head.rotation.x=talking?-.06:Math.sin(time*1.3)*.018;
-   arms[0].rotation.x=gait*speed*.45;arms[1].rotation.x=-gait*speed*.45;arms[1].rotation.z=talking?-.8-Math.sin(time*5)*.12:-.12;
-   legs[0].rotation.x=-gait*speed*.45;legs[1].rotation.x=gait*speed*.45;
-   leaves.forEach((l,i)=>{l.rotation.z=(i?1:-1)*.18+Math.sin(time*2.4-i*.8)*.065+gait*speed*.04;});
-   const blink=Math.pow(Math.max(0,Math.cos(time*1.15)),32);head.children.filter(o=>o.material===eye&&o.geometry.type==='SphereGeometry').forEach(o=>o.scale.y=.027*(1-blink*.94));
+  let speed=0,look=0,pitch=0;
+  root.userData.pose=({time,dt,moving=0,phase=0,jump=0,talking=false,gazeYaw=0,gazePitch=0,still=false})=>{
+   speed+=(moving-speed)*Math.min(1,dt*14);const gait=Math.sin(phase);
+   look+=(Math.max(-.7,Math.min(.7,gazeYaw))-look)*(1-Math.exp(-dt*22));pitch+=(Math.max(-.22,Math.min(.2,gazePitch))-pitch)*(1-Math.exp(-dt*22));
+   rig.position.y=Math.abs(Math.sin(phase))*speed*.013+jump*.16;
+   body.rotation.z=gait*speed*.035;head.rotation.y=look;head.rotation.z=Math.sin(time*1.5)*.016;head.rotation.x=pitch+(talking?-.04:0);
+   arms[0].rotation.x=gait*speed*.4;arms[1].rotation.x=-gait*speed*.4;arms[1].rotation.z=talking?-.9-Math.sin(time*5)*.12:.22;
+   legs[0].rotation.x=-gait*speed*.3;legs[1].rotation.x=gait*speed*.3;
+   leaves.forEach((l,i)=>l.rotation.z=Math.sin(time*2.2-i*.8)*.045+gait*speed*.035);
+   const blink=still?0:Math.pow(Math.max(0,Math.cos(time*1.03)),48);eyes.forEach(o=>o.scale.y=.033*(1-blink*.96));
   };
-  root.userData.fold=u=>{rig.rotation.x=-(1-smooth(u))*Math.PI/2};return root;
+  root.userData.fold=u=>{rig.position.y=-.18*(1-smooth(u));rig.rotation.x=0;};return root;
  }
   return {house,tent,lighthouse,tree,character};
 }
