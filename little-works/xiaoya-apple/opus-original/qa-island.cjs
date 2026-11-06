@@ -47,27 +47,60 @@ async function run(type,label){
    assert.equal(mem.profile.name,'阿芽');assert.ok(mem.facts.some(f=>f.includes('西安交通大学')));
    assert.match(await a.page.locator('.voice').first().innerText(),/早上好，阿芽/);
   });
-  await step(label+' guided tour: write a line → open pencil → ink → erase → week island',async()=>{
-   const p=a.page;
-   await p.locator('.tour-bubble',{hasText:'第一课'}).waitFor();await p.waitForTimeout(400);await shot(p,label+'-tour-1-line');
+  await step(label+' guided tour: three chapters, every step driven by the real control',async()=>{
+   const p=a.page,bubble=t=>p.locator('.tour-bubble',{hasText:t}).waitFor({timeout:10000});
+   // 第一章 · 记下来
+   await bubble('第一章 · 记下来');await p.waitForTimeout(400);await shot(p,label+'-tour-1-line');
+   assert.equal(await p.locator('.tour-dots i').count(),3,'three chapter dots');
    await p.locator('[data-tour="action"]').click();await p.locator('#line-input').press('Enter');
-   await p.locator('.tour-bubble',{hasText:'第二课'}).waitFor();await p.waitForTimeout(300);await shot(p,label+'-tour-2-pencil');
+   await bubble('口袋');await p.locator('[data-tour="action"]').click();await p.locator('#line-input').press('Enter');
+   await bubble('有起止时间');await p.locator('[data-tour="action"]').click();await p.locator('#line-input').press('Enter');
+   const d=await p.evaluate(()=>window.__XY_OPUS.getData());
+   assert.ok(d.tasks.some(t=>t.title.includes('洗衣液')&&!t.due),'pocket task has no due');
+   assert.ok(d.events.some(e=>e.title?.includes('社团例会')||e.name?.includes('社团例会')),'event written');
+   // 第二章 · 排进去
+   await bubble('第二章 · 排进去');await p.waitForTimeout(300);await shot(p,label+'-tour-2-pencil');
    await p.locator('.blk.pencil').first().click();
-   await p.locator('.tour-bubble',{hasText:'落墨'}).waitFor();
+   await bubble('满意就「落墨」');
    await p.locator('.note.is-open [data-approve]').click();
-   await p.locator('.tour-bubble',{hasText:'擦掉'}).waitFor();await p.waitForTimeout(7000);
+   await bubble('擦掉');await p.waitForTimeout(7000);
    assert.ok(await p.locator('#whisper.show [data-whisper-action]').isVisible(),'whisper stays while the tour waits');
    await shot(p,label+'-tour-3-erase');
    await p.locator('#whisper [data-whisper-action]').click();
-   await p.locator('.tour-bubble',{hasText:'第三课'}).waitFor();
+   await bubble('空白带');await p.locator('[data-tour="next"]').click();
+   await bubble('把纸立起来');
    await p.locator('#scale [data-scale="week"]').click();
    await p.locator('.island-canvas').waitFor({timeout:15000});
-   await p.locator('.tour-bubble',{hasText:'房子是课'}).waitFor({timeout:8000});await p.waitForTimeout(2600);
-   await shot(p,label+'-tour-4-island');
-   await p.locator('[data-tour="next"]').click();await p.locator('[data-tour="next"]').click();
+   await bubble('只改「这一次」');await shot(p,label+'-tour-4-occurrence');
+   await p.locator('.week-grid .witem.course button').first().click();
+   await p.locator('#sheet[open] .occ-choices').waitFor();await p.locator('#sheet [data-close="sheet"]').first().click();
+   // 第三章 · 看见自己
+   await bubble('房子是课');await p.waitForTimeout(2600);await shot(p,label+'-tour-5-island');
+   await p.locator('[data-tour="next"]').click();
+   await bubble('季节岛');await p.locator('#scale [data-scale="line"]').click();
+   await bubble('真实做了几次');await p.waitForTimeout(1200);await shot(p,label+'-tour-6-season');
+   await p.locator('[data-tour="next"]').click();
+   await bubble('选一个心情');await p.locator('.mood').nth(3).click();
+   await bubble('点我');await p.locator('#xiaoya').click();
+   await bubble('试着问一句');await p.locator('[data-tour="action"]').click();await p.locator('#line-input').press('Enter');
+   await bubble('封底');await shot(p,label+'-tour-7-cover');
+   await p.locator('[data-tour="next"]').click();
    await p.locator('#confirm[open]',{hasText:'新手任务完成'}).waitFor();
-   await shot(p,label+'-tour-5-graduate');
+   await shot(p,label+'-tour-8-graduate');
    await p.locator('#confirm-cancel').click();
+  });
+  await step(label+' tour: 跳过本章 jumps to the next chapter; 跳过教学 ends it',async()=>{
+   const p=a.page;
+   await p.evaluate(()=>window.__XY_OPUS.startTour());
+   await p.locator('.tour-bubble',{hasText:'第一章'}).waitFor();
+   await p.locator('[data-tour="chapter"]').click();
+   await p.locator('.tour-bubble',{hasText:'第二章'}).waitFor();
+   await p.locator('[data-tour="chapter"]').click();
+   await p.locator('.tour-bubble',{hasText:'第三章'}).waitFor();
+   assert.equal(await p.locator('[data-tour="chapter"]').count(),0,'last chapter has no chapter skip');
+   await p.locator('[data-tour="skip"]').click();
+   await p.locator('.tour').waitFor({state:'detached'});
+   await p.evaluate(()=>window.__XY_OPUS.setScale('week'));
   });
   await step(label+' island renders real objects and picking a day flips back to paper',async()=>{
    const p=a.page;

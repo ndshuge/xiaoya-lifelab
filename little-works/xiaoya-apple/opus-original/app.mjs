@@ -475,7 +475,7 @@ draftEl.addEventListener('click',e=>{
 $('#line-form').addEventListener('submit',e=>{
  e.preventDefault();const text=lineInput.value.trim();if(!text)return;
  if(!parsed)updateDraft();
- if(parsed.intent==='question'){talk.ask(parsed.fields.question);clearLine();return}
+ if(parsed.intent==='question'){talk.ask(parsed.fields.question);clearLine();emit('asked');return}
  if(e.submitter?.dataset.refine){refineDraft();return}
  if(commitDraft(parsed)){clearLine();emit('line-committed',parsed?.intent)}
 });
@@ -590,6 +590,7 @@ function occurrenceSheet(kind,id,date){
   '<div class="occ-replace" id="occ-replace">'+field('调到哪天','targetDate',tgt.targetDate||date,'date')+'<div class="row2">'+field('开始','start',tgt.start,'time')+field('结束','end',tgt.end,'time')+'</div>'+field('地点（可选）','place',tgt.place??'')+'</div>'+
   '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-edit="'+kind+'" data-id="'+esc(id)+'">修改整门'+label+'（所有周）</button></div>',
   {ok:'落墨',onOk:form=>saveOccurrence(kind,id,date,form)});
+ emit('occurrence-opened',kind);
  const sync=()=>{$('#occ-replace').hidden=$('#sheet-body input[name=occ]:checked')?.value!=='replace'};
  $$('#sheet-body input[name=occ]').forEach(r=>r.addEventListener('change',sync));sync();
 }
@@ -865,7 +866,7 @@ document.addEventListener('click',e=>{
  if(ds.open==='model'){closeSheet();setTimeout(()=>talk.connectSheet(),reduced()?0:190);return}
  if(ds.close==='talk')return talk.close();
  if(ds.close==='sheet')return closeSheet();
- if(t.id==='xiaoya')return talk.toggle(t);
+ if(t.id==='xiaoya'){talk.toggle(t);if(talk.isOpen())emit('talk-opened');return}
  if(ds.expand)return expand(ds.expand);
  if(ds.expandContext)return expandContext(ds.expandContext);
  if(ds.approve)return approve(ds.approve);
@@ -885,7 +886,7 @@ document.addEventListener('click',e=>{
  if(ds.dayToday!==undefined){ui.date=dateKey(new Date());return render()}
  if(ds.weekShift){ui.weekStart=dateKey(plusDays(new Date(ui.weekStart+'T12:00'),7*Number(ds.weekShift)));return render()}
  if(ds.weekToday!==undefined){ui.weekStart=dateKey(monday(new Date()));return render()}
- if(ds.mood){const date=ui.date,cur=drafts.get(draftKey(date))||{};drafts.set(draftKey(date),{...cur,mood:Number(ds.mood),note:$('#journal-note')?.value??cur.note});$$('.mood').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.mood===ds.mood)));$('#journal-status').textContent='未保存';return}
+ if(ds.mood){const date=ui.date,cur=drafts.get(draftKey(date))||{};drafts.set(draftKey(date),{...cur,mood:Number(ds.mood),note:$('#journal-note')?.value??cur.note});$$('.mood').forEach(b=>b.setAttribute('aria-checked',String(b.dataset.mood===ds.mood)));$('#journal-status').textContent='未保存';emit('mood-picked',ds.mood);return}
  if(ds.journalSave!==undefined)return saveJournal();
  if(ds.journalDelete!==undefined)return deleteJournal();
  if(ds.goal)return goalSheet(ds.goal);
@@ -982,23 +983,41 @@ function startTour(){
  if(tour?.isActive())return;
  switchMode('demo');ui.scale='day';ui.date=dateKey(new Date());talk.close();render();
  tour=createTutorial({esc,face:n=>FACES[n]||FACES[4],
-  onStep:s=>{if(s.id==='erase')clearTimeout(whisperTimer);if(s.id==='line'&&ui.scale!=='day'){ui.scale='day';render()}},
+  onStep:s=>{if(s.id==='erase')clearTimeout(whisperTimer)},
   onFinish:reason=>{if(reason==='done')graduate();else whisper('教学已跳过；封底里可以随时重新开始')},
-  steps:[
-   {id:'line',target:'#line-input',face:4,text:'第一课：写一行。像发消息一样把要做的事写下来，我来理解成一条记录。',hint:'写好后按回车（或点「落笔」）落墨。',
-    action:{label:'帮我写一句',run:()=>{lineInput.value='周六下午三点前交电路实验报告 60分钟';updateDraft();lineInput.focus({preventScroll:true})}},until:'line-committed'},
-   {id:'open',target:'.blk.pencil|.note.is-pencil .note-head',face:5,text:'第二课：铅笔。虚线框是我画的建议——还没写进你的日程。点开它，看看我为什么这样排。',until:'pencil-opened'},
-   {id:'ink',target:'.note.is-open [data-approve]',face:4,text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
-   {id:'erase',target:'#whisper [data-whisper-action]',face:3,text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
-   {id:'week',target:'#scale [data-scale="week"]',face:5,text:'第三课：把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
-   {id:'island',target:'#island-slot',face:4,pad:4,text:'房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是你的目标，虚线踏脚石是我的建议。点岛上任何东西，都会翻回纸面。',next:'明白了'},
-   {id:'me',target:'#xiaoya',face:5,text:'最后：想问我什么、想让我记住什么，就点我，或者在输入框里直接问。',next:'完成'}
-  ]});
+  steps:tourSteps()});
  tour.start();
+}
+const fill=text=>()=>{lineInput.value=text;updateDraft();lineInput.focus({preventScroll:true})};
+const toDay=()=>{const today=dateKey(new Date());if(ui.scale!=='day'){ui.date=today;setScale('day')}else if(ui.date!==today){ui.date=today;ui.open=null;render()}};
+/** Three chapters, each step waiting for the real action. Every chapter can be skipped on its own. */
+function tourSteps(){
+ const C1='第一章 · 记下来',C2='第二章 · 排进去',C3='第三章 · 看见自己';
+ return [
+  {id:'line',chapter:C1,enter:toDay,target:'#line-input',face:4,text:'写一行。像发消息一样把要做的事写下来，我来理解成一条记录：有截止的是事项，有时间段的是活动。',hint:'写好后按回车（或点「落笔」）落墨。',
+   action:{label:'帮我写一句',run:fill('周六下午三点前交电路实验报告 60分钟')},until:'line-committed'},
+  {id:'pocket',chapter:C1,target:'#line-input',face:5,text:'没有截止时间的小事也能写。它不会占用时间带，而是放进页面下方的「口袋」，有空时再拿出来。',
+   action:{label:'帮我写一句',run:fill('买洗衣液')},until:'line-committed'},
+  {id:'event',chapter:C1,target:'#line-input',face:4,text:'写一个有起止时间的活动，它会画进今天或那一天的时间带。和别的事重叠时，我会标出冲突。',hint:'写下时，输入框上方会先显示我的理解；点那个标签可以改成事项 / 活动 / 目标 / 提问。',
+   action:{label:'帮我写一句',run:fill('明天晚上7点到8点半 社团例会 在活动中心')},until:'line-committed'},
+  {id:'open',chapter:C2,enter:toDay,target:'.blk.pencil|.note.is-pencil .note-head',face:5,optional:true,text:'铅笔：虚线框是我画的建议——还没写进你的日程。点开它，看看我为什么这样排。',until:'pencil-opened'},
+  {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',face:4,optional:true,text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
+  {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',face:3,optional:true,text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
+  {id:'free',chapter:C2,target:'.free-band:not(.is-past)',face:4,optional:true,text:'浅色的空白带是你真正空着的时间。点一下就能在这里放一件事，或者从口袋里拿一件进来。',next:'知道了'},
+  {id:'week',chapter:C2,target:'#scale [data-scale="week"]',face:5,text:'把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
+  {id:'occ',chapter:C2,target:'.week-grid .witem.course button',face:4,optional:true,text:'每周重复的课，可以只改「这一次」：停课会留下一道划掉的痕迹，调课会搬到新的时段。点一门课看看。',hint:'只是看看的话，直接关上就好，不会改动任何东西。',until:'occurrence-opened',delay:300},
+  {id:'island',chapter:C3,enter:()=>{if(ui.scale!=='week')setScale('week')},target:'#island-slot',face:4,pad:4,text:'房子是课，帐篷是活动，灯塔是截止，草地是空闲，树是你的目标，虚线踏脚石是我的建议。点岛上任何东西，都会翻回纸面。',next:'明白了'},
+  {id:'season',chapter:C3,target:'#scale [data-scale="line"]',face:5,text:'再退远一点：「长线」把最近几周连成一座季节岛，每块地是一周，花是你完成的事，心情会变成天气。',until:'scale:line',delay:1600},
+  {id:'goals',chapter:C3,target:'.lgrid-scroll',face:4,pad:4,text:'下面的格子记着每个目标每周真实做了几次。点目标名可以打卡、看成长路线，或让我帮你画一条新路线。',next:'下一步'},
+  {id:'mood',chapter:C3,enter:()=>{toDay();requestAnimationFrame(()=>$('.moods')?.scrollIntoView({block:'center',behavior:'instant'}))},target:'.moods',face:3,text:'每天的页脚：选一个心情，写一句话，合上这一页。它只存在这台设备上，不会自动发给任何模型。',until:'mood-picked'},
+  {id:'talk',chapter:C3,target:'#xiaoya',face:5,text:'我一直在这儿。点我，打开页边对话：可以问日程、让我记住事情，接上你自己的模型后还能帮你排一整天。',until:'talk-opened'},
+  {id:'ask',chapter:C3,target:'#line-input',face:4,text:'对话打开时，输入框就是在问我。试着问一句。',action:{label:'帮我问一句',run:fill('我这周哪天最空？')},until:'asked',delay:900},
+  {id:'cover',chapter:C3,enter:()=>talk.close(),target:'#mast [data-open="cover"]|[data-open="cover"]',face:5,text:'最后是封底：切换演示 / 私人档案、备份恢复、天气与心情授权、连接模型，以及重新看这段教学，都在这里。',next:'完成'}
+ ];
 }
 function graduate(){
  const n=(()=>{try{return memory.profile.get().name}catch{return ''}})();
- askConfirm({title:'新手任务完成'+(n?'，'+n:'')+'！',body:'你已经会写一行、看懂铅笔、落墨和擦掉，也见过这一周的纸岛了。',facts:['刚才的操作都在演示档案里，不影响你的记录。','封底里可以随时重新走一遍。'],ok:'开始我的生活',cancel:'继续逛演示'})
+ askConfirm({title:'新手任务完成'+(n?'，'+n:'')+'！',body:'你已经会记下事项、活动和口袋小事，会看铅笔、落墨和擦掉，会调一次课，也见过这一周的纸岛和长线的季节岛了。',facts:['刚才的操作都在演示档案里，不影响你的记录。','封底里可以随时重新走一遍。'],ok:'开始我的生活',cancel:'继续逛演示'})
   .then(go=>{if(go){switchMode('personal');ui.scale='day';render();whisper('欢迎回来。这一页是你的了。')}});
  setXiaoya('happy',2600);
 }
