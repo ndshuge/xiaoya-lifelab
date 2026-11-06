@@ -1,4 +1,4 @@
-// End-to-end verification of the original contest Pages URL and all five editions.
+// End-to-end verification of the original contest Pages URL and all six editions.
 const assert=require('node:assert/strict');
 const fs=require('node:fs'),path=require('node:path'),http=require('node:http');
 const {chromium}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
@@ -37,7 +37,16 @@ const server=http.createServer((req,res)=>{
    if(process.env.XIAOYA_SCREENSHOT_DIR){fs.mkdirSync(process.env.XIAOYA_SCREENSHOT_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.XIAOYA_SCREENSHOT_DIR,'native-settings-mobile.png')})}
    await page.locator('#v4-version-library').click();
    assert.match(page.url(),/\/versions\//);
-   assert.equal(await page.locator('.version-card').count(),5);
+   assert.equal(await page.locator('.version-card').count(),6);
+  });
+  await check('Opus demo opens from version library and can switch back',async()=>{
+   await page.locator('#version-opus').click();
+   assert.match(page.url(),/\/opus-original\/\?judge=1/);
+   await page.waitForSelector('.day,.week,.line-scale');
+   assert.equal(await page.locator('#opus-version-library').isVisible(),true);
+   await page.locator('#opus-version-library').click();
+   assert.match(page.url(),/\/versions\//);
+   assert.equal(await page.locator('#version-native').isVisible(),true);
   });
   await check('switch to classic edition keeps original source accessible',async()=>{
    await page.locator('#version-classic').click();
@@ -56,9 +65,9 @@ const server=http.createServer((req,res)=>{
    assert.equal(await page.locator('#xiaoya-version-trigger').isVisible(),true);
    assert.match(page.url(),/\/xiaoya-lifelab\/pro\//);
   });
-  await check('version library has five working entry points',async()=>{
+  await check('version library has six working entry points',async()=>{
    await page.goto(base+'versions/',{waitUntil:'networkidle'});
-   assert.equal(await page.locator('.version-card').count(),5);
+   assert.equal(await page.locator('.version-card').count(),6);
    await page.locator('#version-native').click();
    assert.match(page.url(),/\/xiaoya-lifelab\/little-works\/xiaoya-apple\/native-v4\//);
   });

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f1ea">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15171b">
+<meta name="description" content="小芽 · 铅笔与墨水 — 一页会生长的时间。实验版 Opus Original。">
+<title>小芽 · 铅笔与墨水</title>
+<link rel="icon" href="../assets/brand/xiaoya_sprite_v1.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="./style.css?v=1">
+<script type="module" src="./app.mjs?v=1" onerror="document.documentElement.dataset.boot='error'"></script>
+</head>
+<body>
+<a class="skip" href="#page">跳到页面内容</a>
+<div class="app" id="app">
+  <header class="mast">
+    <div class="mast-date" id="mast-date"><span class="mast-day">小芽</span></div>
+    <nav class="scale" id="scale" role="tablist" aria-label="时间尺度">
+      <button role="tab" type="button" data-scale="day" aria-selected="true">日</button>
+      <button role="tab" type="button" data-scale="week" aria-selected="false">周</button>
+      <button role="tab" type="button" data-scale="line" aria-selected="false">长线</button>
+      <span class="scale-thumb" aria-hidden="true"></span>
+    </nav>
+    <a id="opus-version-library" class="archive-link" href="../../../versions/" aria-label="切换小芽版本">版本</a>
+    <button type="button" class="cover-btn" data-open="cover" aria-label="封底：档案、授权与设置">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h11.5a2.5 2.5 0 0 1 2.5 2.5v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H19"/></svg>
+    </button>
+  </header>
+  <main id="page" class="page" tabindex="-1" aria-live="polite" aria-busy="true">
+    <div class="boot" aria-label="正在打开这一页">
+      <div class="boot-line"></div><div class="boot-line short"></div>
+      <p class="boot-error" role="alert">这一页没能打开。请检查网络后 <a href="">重新载入</a>。</p>
+      <noscript><p>需要开启 JavaScript 才能读取保存在这台设备上的记录。</p></noscript>
+    </div>
+  </main>
+</div>
+
+<div class="dock" id="dock">
+  <div class="draft" id="draft" hidden></div>
+  <form class="line" id="line-form" autocomplete="off">
+    <button type="button" class="xiaoya" id="xiaoya" data-state="idle" aria-label="打开页边对话" aria-expanded="false" aria-controls="talk">
+      <img src="../native-v4/assets/xiaoya-mood-3-hi.webp" alt="" width="44" height="44" decoding="async">
+    </button>
+    <label class="sr-only" for="line-input">写一行</label>
+    <input id="line-input" name="line" maxlength="200" enterkeyhint="done" placeholder="写一行：明晚十点前交工数习题 45分钟" aria-describedby="draft">
+    <button type="submit" class="line-send" id="line-send">落笔</button>
+  </form>
+</div>
+
+<aside class="talk" id="talk" hidden aria-label="页边对话" role="dialog" aria-modal="false">
+  <header class="talk-head">
+    <button type="button" class="talk-id" data-close="talk" aria-label="收起页边对话">
+      <img src="../native-v4/assets/xiaoya-mood-4-hi.webp" alt="" width="36" height="36">
+      <span><strong>页边对话</strong><small id="talk-status">本地规则 · 不联网</small></span>
+    </button>
+    <button type="button" class="talk-connect" data-open="model">连接模型</button>
+    <button type="button" class="icon-x" data-close="talk" aria-label="关闭">×</button>
+  </header>
+  <div class="envelope" id="envelope"></div>
+  <div class="talk-log" id="talk-log" role="log" aria-live="polite"></div>
+  <div class="talk-quick" id="talk-quick">
+    <button type="button" data-ask="今天先做什么">今天先做什么</button>
+    <button type="button" data-ask="明天什么时候有空">明天什么时候有空</button>
+    <button type="button" data-ask="这周有冲突吗">这周有冲突吗</button>
+    <button type="button" data-ask="目标进度怎么样">目标进度怎么样</button>
+  </div>
+</aside>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+  <form method="dialog" class="sheet-frame" id="sheet-form" novalidate>
+    <header class="sheet-head">
+      <button type="button" class="sheet-cancel" data-close="sheet">取消</button>
+      <h2 id="sheet-title">纸片</h2>
+      <button type="submit" class="sheet-ok" id="sheet-ok">保存</button>
+    </header>
+    <div class="sheet-body" id="sheet-body"></div>
+  </form>
+</dialog>
+
+<dialog class="confirm" id="confirm" aria-labelledby="confirm-title" aria-describedby="confirm-body">
+  <form method="dialog" class="confirm-card">
+    <h2 id="confirm-title">确认</h2>
+    <div id="confirm-body" class="confirm-body"></div>
+    <div class="confirm-actions"><button type="submit" value="cancel" class="ghost-btn" id="confirm-cancel">取消</button><button type="submit" value="ok" class="ink-btn" id="confirm-ok">确认</button></div>
+  </form>
+</dialog>
+<div class="whisper" id="whisper" role="status" aria-live="polite"></div>
+<input type="file" id="import-json" accept=".json,application/json" hidden>
+<input type="file" id="import-cal" accept=".csv,.ics,text/calendar,text/csv" hidden>
+</body>
+</html>

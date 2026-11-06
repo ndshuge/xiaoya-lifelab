@@ -15,6 +15,7 @@
 | 版本 | 仓库内路径 | 状态 |
 | --- | --- | --- |
 | **Apple Native V4 / DAYFLOW** | `little-works/xiaoya-apple/native-v4/` | 正式最新入口：今天／事项／发展 |
+| **Opus Original · 铅笔与墨水** | `little-works/xiaoya-apple/opus-original/` | 独立原创实验版；版本档案默认进入 `?judge=1` 演示模式，不覆盖正式版 |
 | **Apple Native V3** | `little-works/xiaoya-apple/native-v3/` | 2026-11-02 完整存档：原始 Apple 新版与 AI、成长规划 |
 | **Apple 早期版** | `little-works/xiaoya-apple/` | 保留历史设计 |
 | **经典 LifeLab** | `original.html` | 保留经典成熟功能 |
