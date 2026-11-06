@@ -303,6 +303,13 @@ body.intro-open .dock,body.intro-open .whisper{visibility:hidden}
 @media (max-width: 640px){.intro-face{width:88px;height:88px}.intro-form{grid-template-columns:1fr}.intro-text{font-size:16px}.intro-dialog{gap:8px}}
 
 /* ---------- guided tour ---------- */
+.tip{position:fixed;z-index:44;display:flex;align-items:flex-start;gap:8px;width:min(330px,calc(100vw - 24px));padding:10px 10px 10px 12px;background:var(--card);border-radius:14px;box-shadow:0 0 0 1.5px var(--ink),4px 4px 0 var(--ink);pointer-events:none;opacity:0;transform:translateY(6px) rotate(-.4deg);transition:opacity .25s var(--ease),transform .35s var(--spring)}
+.tip.is-in{opacity:1;transform:none}
+.tip img{flex:none;border-radius:50%;background:var(--sprout-soft)}
+.tip p{margin:0;flex:1;font-size:13px;line-height:1.6;color:var(--ink-2,var(--ink))}
+.tip p b{display:block;font-size:11px;letter-spacing:.06em;color:var(--sprout);font-weight:600}
+.tip-x{pointer-events:auto;flex:none;align-self:flex-end;border:0;background:none;color:var(--ink-3);font-size:12px;min-height:32px;text-decoration:underline;text-underline-offset:3px}
+body.reduce .tip{transition:none}
 .tour{position:fixed;inset:0;z-index:45;pointer-events:none}
 .tour-hole{position:fixed;border-radius:14px;box-shadow:0 0 0 9999px rgba(20,22,26,.42),0 0 0 3px var(--sprout);transition:left .35s var(--ease),top .35s var(--ease),width .35s var(--ease),height .35s var(--ease)}
 .tour.is-free{background:rgba(20,22,26,.42)}

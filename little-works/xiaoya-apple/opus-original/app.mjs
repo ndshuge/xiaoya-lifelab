@@ -18,6 +18,7 @@ import {createTalk} from './talk.mjs';
 import {createMemory} from './memory.mjs';
 import {createIntro} from './intro.mjs';
 import {createTutorial} from './tutorial.mjs';
+import {createTips} from './tips.mjs';
 import {needsDemoHistory,buildDemoHistory} from './demo-history.mjs';
 // The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
 const loadIsland=()=>import('./island.mjs');
@@ -152,8 +153,10 @@ $('#sheet').addEventListener('click',e=>{if(e.target===$('#sheet'))closeSheet()}
 const talk=createTalk({esc,getData:state,getJournal:()=>consent.mood?journalAll():[],getContext:safeContext,getCandidates:feed,getMoodToday:()=>consent.mood?moodToday():moodToday(),openSheet,closeSheet,whisper,setXiaoya,onChange:()=>syncLineMode()});
 
 // ---------- rendering ----------
+let tips=null; // first-time tips; created at boot
 function render(){
  let data;try{data=state()}catch(e){$('#page').innerHTML='<section class="fatal"><h1>无法读取档案</h1><p class="fatal-msg">'+esc(e.message)+'</p></section>';return}
+ tips?.hide();
  document.body.classList.toggle('reduce',reduced());
  document.body.dataset.scale=ui.scale;document.body.dataset.mode=store.mode();
  renderMast(data);
@@ -166,6 +169,7 @@ function render(){
  if(ui.scale==='week'||ui.scale==='line')mountIsland();
  if(ui.scale==='line'){const sc=$('.lgrid-scroll'),cur=$('.lgrid-head .is-current');if(sc&&cur&&sc.scrollWidth>sc.clientWidth)sc.scrollLeft=Math.max(0,cur.offsetLeft-sc.clientWidth*.55)}
  talk.refresh();
+ tips?.check({scale:ui.scale});
  if(!$('#xiaoya').dataset.state||['idle','sleepy'].includes($('#xiaoya').dataset.state))setXiaoya(null);
 }
 function renderMast(data){
@@ -785,7 +789,7 @@ function coverSheet(){
    '<div class="sheet-row wrap"><button type="button" class="ghost-btn" data-cover="weather">获取预报</button><button type="button" class="text-danger" data-cover="revoke">全部撤销</button></div>'+
    '<p class="hint">'+(consent.forecast&&consent.weather?'已获取：'+esc(consent.forecast.cityLabel)+' · '+esc(new Date(consent.forecast.fetchedAt).toLocaleString('zh-CN')):'尚未获取天气；未授权时不发任何网络请求。')+'</p></section>'+
   '<section class="cover-sec"><h3>模型</h3><p class="hint">'+(model?'已连接 '+esc(model.providerName)+' · '+esc(model.model)+'（密钥仅在内存）':'未连接。小芽的所有基础功能都不需要模型。')+'</p><div class="sheet-row"><button type="button" class="ghost-btn" data-open="model">'+(model?'模型设置':'连接你自己的模型')+'</button></div></section>'+
-  '<section class="cover-sec"><h3>开场与教学</h3><div class="sheet-row wrap"><button type="button" class="ghost-btn" data-replay="intro">重新看开场</button><button type="button" class="ghost-btn" data-replay="tour">重新走一遍新手任务</button></div></section>'+
+  '<section class="cover-sec"><h3>开场与教学</h3><div class="sheet-row wrap"><button type="button" class="ghost-btn" data-replay="intro">重新看开场</button><button type="button" class="ghost-btn" data-replay="tour">重新走一遍新手任务</button><button type="button" class="ghost-btn" data-replay="tips">重新显示「第一次见到」提示</button></div></section>'+
   '<section class="cover-sec"><h3>关于</h3><p class="hint">实验分支 experiment/xiaoya-opus-original-20261105。正式版不受影响：<a href="../native-v4/">打开正式版 V5.9</a>。</p></section>',
   {ok:'保存设置',onOk:saveCover,wide:true});
 }
@@ -898,6 +902,7 @@ document.addEventListener('click',e=>{
  if(ds.growthPreview)return growthPreview(ds.growthPreview);
  if(ds.erase)return erase(ds.erase);
  if(ds.attentionConflict!==undefined){const n=document.querySelector('.note[data-note^="conflict"]');if(n){n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('.note-head')?.click()}else whisper('这里有两件事重叠，点开时间块可以调整');return}
+ if(ds.replay==='tips'){closeSheet();tips.reset();whisper('提示已重置：之后第一次见到的功能会再解释一次');setTimeout(()=>tips.check({scale:ui.scale}),400);return}
  if(ds.replay){closeSheet();setTimeout(()=>ds.replay==='intro'?playIntro():startTour(),reduced()?0:200);return}
  if(ds.try){lineInput.value=ds.try;updateDraft();lineInput.focus({preventScroll:true});return}
  if(ds.cover)return coverAction(ds.cover);
@@ -984,7 +989,7 @@ function startTour(){
  switchMode('demo');ui.scale='day';ui.date=dateKey(new Date());talk.close();render();
  tour=createTutorial({esc,face:n=>FACES[n]||FACES[4],
   onStep:s=>{if(s.id==='erase')clearTimeout(whisperTimer)},
-  onFinish:reason=>{if(reason==='done')graduate();else whisper('教学已跳过；封底里可以随时重新开始')},
+  onFinish:reason=>{if(reason==='done'){tips?.mark(['pencil','free','pocket','week','line','talk']);graduate()}else whisper('教学已跳过；封底里可以随时重新开始')},
   steps:tourSteps()});
  tour.start();
 }
@@ -1023,7 +1028,10 @@ function graduate(){
 }
 
 // ---------- boot ----------
-window.__XY_OPUS={version:'opus-original-2',island:()=>islandApi,getData:state,getMode:()=>store.mode(),store,journal,memory,setScale,render,remind,ui,startTour,playIntro};
+tips=createTips({esc,face:n=>FACES[n]||FACES[4],disabled:params.get('tips')==='0',
+ blocked:()=>!!(tour?.isActive()||introOpen||$('#sheet').open||$('#confirm').open||document.querySelector('.intro'))});
+document.addEventListener('xy',e=>{if(e.detail?.type==='talk-opened')tips.check({scale:ui.scale,event:'talk-opened'})});
+window.__XY_OPUS={version:'opus-original-3',island:()=>islandApi,getData:state,getMode:()=>store.mode(),store,journal,memory,setScale,render,remind,ui,startTour,playIntro,tips};
 enrichDemo();render();setXiaoya(null);syncLineMode();
 {
  const force=params.get('intro');let seen=false;try{seen=localStorage.getItem(ONBOARD_KEY)==='1'}catch{}

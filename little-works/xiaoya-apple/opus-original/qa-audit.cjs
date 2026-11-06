@@ -28,7 +28,7 @@ async function run(type,label){
  const page=await context.newPage();await page.clock.setFixedTime(NOW);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  page.on('dialog',d=>{errors.push('native dialog: '+d.message());d.dismiss()});
- await page.goto(base+'/little-works/xiaoya-apple/opus-original/?judge=1&intro=0&history=0');await page.waitForSelector('.day');
+ await page.goto(base+'/little-works/xiaoya-apple/opus-original/?judge=1&intro=0&history=0&tips=0');await page.waitForSelector('.day');
  const data=()=>page.evaluate(()=>window.__XY_OPUS.getData());
  const S=async(name,fn)=>{await closeLayers(page);await page.evaluate(()=>{window.__XY_OPUS.ui.date=new Date().toLocaleDateString('sv-SE');window.__XY_OPUS.render()});await step(label+' '+name,fn)};
  try{
