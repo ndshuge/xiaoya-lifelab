@@ -211,7 +211,7 @@ function noteFor(c,{dated=false,rival=null}={}){
    '<div class="note-actions">'+(a&&pv&&!pv.error?'<button type="button" class="ink-btn" data-approve="'+esc(c.id)+'">落墨</button>':'')+
    '<button type="button" class="ghost-btn" data-snooze="'+esc(c.id)+'">明天再说</button><button type="button" class="ghost-btn" data-reject="'+esc(c.id)+'">不需要</button></div></div>';
  }
- return '<article class="note is-pencil'+(open?' is-open':'')+'" data-note="'+esc(c.id)+'"><button type="button" class="note-head" data-expand="'+esc(c.id)+'" aria-expanded="'+open+'"><span class="note-kicker">'+esc(kicker)+'</span><strong>'+esc(c.title)+'</strong><span class="note-desc">'+esc(c.description)+'</span></button>'+proof+'</article>';
+ return '<article class="note is-pencil'+(open?' is-open':'')+'" data-note="'+esc(c.id)+'"'+(a?' data-actionable':'')+'><button type="button" class="note-head" data-expand="'+esc(c.id)+'" aria-expanded="'+open+'"><span class="note-kicker">'+esc(kicker)+'</span><strong>'+esc(c.title)+'</strong><span class="note-desc">'+esc(c.description)+'</span></button>'+proof+'</article>';
 }
 function contextNote(s){
  const open=ui.open===s.id,pv=ui.previews.get(s.id);
@@ -1168,26 +1168,29 @@ const toDay=()=>{const today=dateKey(new Date());if(ui.scale!=='day'){ui.date=to
 /** Three chapters, each step waiting for the real action. Every chapter can be skipped on its own. */
 function tourSteps(){
  const C1='第一章 · 记下来',C2='第二章 · 排进去',C3='第三章 · 看见自己';
+ // The writing steps light the whole composer (and the draft preview above it); the tag walks from the input to 「落笔」.
+ const filled=()=>!!$('#line-input').value.trim();
+ const LINE={target:'#line-form',also:'#draft:not([hidden])',tap:()=>filled()?'#line-send':'#line-input',tapLabel:()=>filled()?'点「落笔」':'写在这里'};
  return [
-  {id:'line',chapter:C1,enter:toDay,target:'#line-input',face:4,text:'写一行。像发消息一样把要做的事写下来，我来理解成一条记录：有截止的是事项，有时间段的是活动。',hint:'写好后按回车（或点「落笔」）落墨。',
+  {id:'line',chapter:C1,enter:toDay,...LINE,face:4,text:'写一行。像发消息一样把要做的事写下来，我来理解成一条记录：有截止的是事项，有时间段的是活动。',hint:'写好后按回车（或点「落笔」）落墨。',
    action:{label:'帮我写一句',run:fill('周六下午三点前交电路实验报告 60分钟')},until:'line-committed'},
-  {id:'pocket',chapter:C1,target:'#line-input',face:5,text:'没有截止时间的小事也能写。它不会占用时间带，而是放进页面下方的「口袋」，有空时再拿出来。',
+  {id:'pocket',chapter:C1,...LINE,face:5,text:'没有截止时间的小事也能写。它不会占用时间带，而是放进页面下方的「口袋」，有空时再拿出来。',
    action:{label:'帮我写一句',run:fill('买洗衣液')},until:'line-committed'},
-  {id:'event',chapter:C1,target:'#line-input',face:4,text:'写一个有起止时间的活动，它会画进今天或那一天的时间带。和别的事重叠时，我会标出冲突。',hint:'写下时，输入框上方会先显示我的理解；点那个标签可以改成事项 / 活动 / 目标 / 提问。',
+  {id:'event',chapter:C1,...LINE,face:4,text:'写一个有起止时间的活动，它会画进今天或那一天的时间带。和别的事重叠时，我会标出冲突。',hint:'写下时，输入框上方会先显示我的理解；点那个标签可以改成事项 / 活动 / 目标 / 提问。',
    action:{label:'帮我写一句',run:fill('明天晚上7点到8点半 社团例会 在活动中心')},until:'line-committed'},
-  {id:'plan',chapter:C2,enter:toDay,target:'#plan-card .plan-int',face:4,optional:true,text:'这是我替你排的今天：带编号的虚线块就是方案。先选强度——轻松、平衡还是冲刺，下面写着件数和小时。',hint:'每一笔都写了为什么这样排；不想要的点 × 去掉。',until:'plan-intensity'},
-  {id:'open',chapter:C2,target:'.blk.pencil[data-expand]|.note.is-pencil .note-head',face:5,optional:true,text:'除了方案，我还会留意别的事。点开一条，看看我的依据。',until:'pencil-opened'},
-  {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',face:4,after:'open',text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
-  {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',face:3,after:'ink',text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
+  {id:'plan',chapter:C2,enter:toDay,target:'#plan-card .plan-int',tap:'#plan-card .plan-int button[aria-checked="false"]',tapLabel:'换一档试试',face:4,optional:true,text:'这是我替你排的今天：带编号的虚线块就是方案。先选强度——轻松、平衡还是冲刺，下面写着件数和小时。',hint:'每一笔都写了为什么这样排；不想要的点 × 去掉。',until:'plan-intensity'},
+  {id:'open',chapter:C2,target:'.blk.pencil:not(.plan)[data-expand]|.note.is-pencil[data-actionable] .note-head',tapLabel:'点开看看',face:5,optional:true,text:'除了方案，我还会留意别的事。点开一条，看看我的依据。',until:'pencil-opened'},
+  {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',tapLabel:'点「落墨」',face:4,after:'open',optional:true,text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
+  {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',tapLabel:'点「擦掉」',face:3,after:'ink',text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
   {id:'free',chapter:C2,target:'.free-band:not(.is-past)',face:4,optional:true,text:'浅色的空白带是你真正空着的时间。点一下就能在这里放一件事，或者从口袋里拿一件进来。',next:'知道了'},
-  {id:'week',chapter:C2,target:'#scale [data-scale="week"]',face:5,text:'把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
-  {id:'occ',chapter:C2,target:'.week-grid .witem.course button',face:4,optional:true,text:'每周重复的课，可以只改「这一次」：停课会留下一道划掉的痕迹，调课会搬到新的时段。点一门课看看。',hint:'只是看看的话，直接关上就好，不会改动任何东西。',until:'occurrence-opened',delay:300},
+  {id:'week',chapter:C2,target:'#scale [data-scale="week"]',tapLabel:'点「周」',face:5,text:'把纸立起来。点「周」，这一周会折成一座纸岛。',until:'scale:week',delay:1600},
+  {id:'occ',chapter:C2,target:'.week-grid .witem.course button',tapLabel:'点一门课',face:4,optional:true,text:'每周重复的课，可以只改「这一次」：停课会留下一道划掉的痕迹，调课会搬到新的时段。点一门课看看。',hint:'只是看看的话，直接关上就好，不会改动任何东西。',until:'occurrence-opened',delay:300},
   {id:'island',chapter:C3,enter:()=>{if(ui.scale!=='week')setScale('week')},target:'#island-slot',face:4,pad:4,text:'每天一根日期旗杆：白旗是空闲，浅黄旗是有安排，浅红旗是要留意。房子是课，灯塔汇总截止，树是你的目标。点岛上任何东西，都会翻回纸面；移动鼠标，我会陪你散步。',next:'明白了'},
-  {id:'season',chapter:C3,target:'#scale [data-scale="line"]',face:5,text:'再退远一点：「长线」把最近几周连成一座季节岛，每块地是一周，花是你完成的事，心情会变成天气。',until:'scale:line',delay:1600},
+  {id:'season',chapter:C3,target:'#scale [data-scale="line"]',tapLabel:'点「长线」',face:5,text:'再退远一点：「长线」把最近几周连成一座季节岛，每块地是一周，花是你完成的事，心情会变成天气。',until:'scale:line',delay:1600},
   {id:'goals',chapter:C3,target:'.lgrid-scroll',face:4,pad:4,text:'下面的格子记着每个目标每周真实做了几次。点目标名可以打卡、看成长路线，或让我帮你画一条新路线。',next:'下一步'},
-  {id:'mood',chapter:C3,enter:()=>{toDay();requestAnimationFrame(()=>$('.moods')?.scrollIntoView({block:'center',behavior:'instant'}))},target:'.moods',face:3,text:'每天的页脚：选一个心情，写一句话，合上这一页。它只存在这台设备上，不会自动发给任何模型。',until:'mood-picked'},
-  {id:'talk',chapter:C3,target:'#xiaoya',face:5,text:'我一直在这儿。点我，打开页边对话：可以问日程、让我记住事情，接上你自己的模型后还能帮你排一整天。',until:'talk-opened'},
-  {id:'ask',chapter:C3,target:'#line-input',face:4,text:'对话打开时，输入框就是在问我。试着问一句。',action:{label:'帮我问一句',run:fill('我这周哪天最空？')},until:'asked',delay:900},
+  {id:'mood',chapter:C3,enter:()=>{toDay();requestAnimationFrame(()=>$('.moods')?.scrollIntoView({block:'center',behavior:'instant'}))},target:'.moods',tapLabel:'选一个心情',face:3,text:'每天的页脚：选一个心情，写一句话，合上这一页。它只存在这台设备上，不会自动发给任何模型。',until:'mood-picked'},
+  {id:'talk',chapter:C3,target:'#xiaoya',tapLabel:'点我',face:5,text:'我一直在这儿。点我，打开页边对话：可以问日程、让我记住事情，接上你自己的模型后还能帮你排一整天。',until:'talk-opened'},
+  {id:'ask',chapter:C3,...LINE,tap:()=>$('#line-input').value.trim()?'#line-send':'#line-input',tapLabel:()=>$('#line-input').value.trim()?'点「问」':'在这里问',face:4,text:'对话打开时，输入框就是在问我。试着问一句。',action:{label:'帮我问一句',run:fill('我这周哪天最空？')},until:'asked',delay:900},
   {id:'cover',chapter:C3,enter:()=>talk.close(),target:'#mast [data-open="cover"]|[data-open="cover"]',face:5,text:'最后是封底：切换演示 / 私人档案、备份恢复、天气与心情授权、连接模型，以及重新看这段教学，都在这里。',next:'完成'}
  ];
 }
