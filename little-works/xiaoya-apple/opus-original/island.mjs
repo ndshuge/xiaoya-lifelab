@@ -7,6 +7,7 @@ import * as THREE from './vendor/three/three.module.min.js';
 import {createPaperKit} from './paper-kit.mjs';
 import {islandLayout,insideLand,clearPoint,clearSegment,nearestOpenPoint,planIslandPath,flagState,flagRows} from './island-layout.mjs';
 import {createCoastalLife} from './coastal-life.mjs';
+import {canTapWater} from './water-touch.mjs';
 import {EffectComposer} from './vendor/three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/three/addons/postprocessing/RenderPass.js';
 import {ShaderPass} from './vendor/three/addons/postprocessing/ShaderPass.js';
@@ -190,7 +191,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  function pickable(obj,data){obj.userData.pick=data;obj.traverse(o=>{if(o.isMesh||o.isLineSegments){o.userData.pick=data;o.userData.root=obj;if(o.isMesh)pickables.push(o)}})}
 
  // Terrain: base island + per-stop contour hills. heightAt() keeps everything sitting on the paper.
- const BASE_TOP=.34,STEP=.045;let hills=[],bounds=islandLayout(7,false),obstacles=[],coastalLife=null;
+ const BASE_TOP=.34,STEP=.045;let hills=[],bounds=islandLayout(7,false),obstacles=[],coastalLife=null,lighthouseSite=null;
  function heightAt(x,z){let h=BASE_TOP;for(const hl of hills){let n=0;for(const r of hl.radii){const dx=(x-hl.x)/(r*1.12),dz=(z-hl.z)/(r*.9);if(dx*dx+dz*dz<1)n++}h=Math.max(h,BASE_TOP+n*STEP)}return h}
  function buildTerrain(k,stops){
   const isl=new THREE.Group();hills=[];
@@ -284,10 +285,10 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  function update(m){
   model=m;const signature=JSON.stringify({...m,speech:undefined,hour:undefined,xiaoyaFace:undefined});
   if(signature===visualKey&&!firstBuild){applySky(m.hour??new Date().getHours());frame();return}
-  visualKey=signature;const keys=new Set();clearWorld();obstacles=[];const k=s=>{keys.add(s);return s};
+  visualKey=signature;const keys=new Set();clearWorld();obstacles=[];lighthouseSite=null;const k=s=>{keys.add(s);return s};
   tip.hidden=true;say.hidden=true;hoverRoot=null;
   if(m.kind==='season')buildSeason(m,k);else buildWeek(m,k);
-  coastalLife=createCoastalLife({bounds,lite,heightAt,obstacles,material:M});world.add(coastalLife.group);
+  coastalLife=createCoastalLife({bounds,lite,heightAt,obstacles,material:M,beacon:lighthouseSite});world.add(coastalLife.group);
   clouds=[];
   applySky(m.hour??new Date().getHours()+new Date().getMinutes()/60);
   known=keys;firstBuild=false;fit();frame();
@@ -310,7 +311,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
    d.pencilIds.slice(0,1).forEach(id=>{const stoneObj=stone();stoneObj.scale.setScalar(.65);stoneObj.position.set(at.x-.1,heightAt(at.x-.1,at.z+.44)+.025,at.z+.44);pickable(stoneObj,{kind:'pencil',id,date:d.key,label:'小芽的铅笔建议',dive:true});world.add(stoneObj);pop(stoneObj,.9,k('pencil:'+id));});
   });
   const deadlines=m.days.flatMap(d=>d.due.map(t=>({...t,date:d.key}))).filter(t=>!t.done);
-  if(deadlines.length){const t=deadlines.find(x=>x.urgent)||deadlines[0],l=lighthouse(t.urgent?'urgent':'later');l.scale.setScalar(1.65);const at=portrait?{x:bounds.rx*.7,z:bounds.rz*.54}:{x:bounds.rx*.69,z:bounds.rz*.53};l.position.set(at.x,heightAt(at.x,at.z),at.z);pickable(l,{kind:'task',id:t.id,label:'灯塔 · '+t.title+' · '+deadlines.length+' 项截止'});world.add(l);pop(l,.8,k('due:'+t.id));addObstacle(l,.33);}
+  if(deadlines.length){const t=deadlines.find(x=>x.urgent)||deadlines[0],l=lighthouse(t.urgent?'urgent':'later');l.scale.setScalar(1.65);const at=portrait?{x:bounds.rx*.7,z:bounds.rz*.54}:{x:bounds.rx*.69,z:bounds.rz*.53};l.position.set(at.x,heightAt(at.x,at.z),at.z);lighthouseSite={x:at.x,z:at.z};pickable(l,{kind:'task',id:t.id,label:'灯塔 · '+t.title+' · '+deadlines.length+' 项截止'});world.add(l);pop(l,.8,k('due:'+t.id));addObstacle(l,.33);}
   goalsRim(m.goals,k);placeXiaoya(m.attentionDay??0,k);
  }
  function moodColor(v){if(v==null)return null;const lo=new THREE.Color(0x9fb3c8),hi=new THREE.Color(0xf2c47a);return lo.lerp(hi,clamp((v-1)/4,0,1)).getHex()}
@@ -382,6 +383,11 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  }
  const ray=new THREE.Raycaster(),ptr=new THREE.Vector2();
  let down=null,hoverRoot=null;
+ function waterPoint(e){
+  const r=renderer.domElement.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,camera);
+  const at=new THREE.Vector3();if(!ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),.025),at))return null;
+  world.worldToLocal(at);return {x:at.x,z:at.z};
+ }
  function hitObj(e){if(folding||unfold<.98)return null;const r=renderer.domElement.getBoundingClientRect();ptr.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(ptr,camera);return ray.intersectObjects(pickables,false)[0]?.object||null}
  function screenOf(obj,lift=.85){const v=new THREE.Vector3();obj.getWorldPosition(v);v.y+=lift;v.project(camera);return {x:(v.x+1)/2*host.clientWidth,y:(1-v.y)/2*host.clientHeight}}
  function showTip(root){
@@ -401,7 +407,12 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   // A touch pointer leaves after every tap; its deliberate destination must survive that event.
   if(e.pointerType==='mouse'){walk.gaze=null;walk.pointer=null;walk.planned=null;walk.path=[];}frame()});
  renderer.domElement.addEventListener('pointerup',e=>{const d=down;down=null;if(!d||d.moved||dive||folding)return;const o=hitObj(e),p=o?.userData.pick;
-  if(!p){say.hidden=true;followGround(e);if(reduced()&&walk.pointer){const at=nearestOpenPoint(walk.pointer,bounds,obstacles,.29);if(at){walk.x=at.x;walk.z=at.z;positionXiaoya();frame()}}return}
+  if(!p){
+    const at=waterPoint(e);
+    if(at&&canTapWater({bounds,x:at.x,z:at.z,dragged:d.moved,reduced:reduced()})){
+      if(coastalLife?.tap(at.x,at.z,clock))frame();
+    }
+    say.hidden=true;followGround(e);if(reduced()&&walk.pointer){const at=nearestOpenPoint(walk.pointer,bounds,obstacles,.29);if(at){walk.x=at.x;walk.z=at.z;positionXiaoya();frame()}}return}
   if(p.kind==='xiaoya'){hop=1;speak();return}
   // Days, weeks and pencils: the camera dives toward the stop, then the page turns to paper.
   if(p.dive&&!reduced()){const v=new THREE.Vector3();o.userData.root.getWorldPosition(v);dive={t:0,dur:.6,to:v,pick:p};tip.hidden=true;frame();return}
@@ -515,6 +526,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   pickAt(x,y){const r=renderer.domElement.getBoundingClientRect();return hitObj({clientX:r.left+x,clientY:r.top+y})?.userData.pick?.kind||null},
   locate(kind){let root=null;for(const o of pickables){if(o.userData.pick?.kind===kind){root=o.userData.root;break}}if(!root)return null;const s=screenOf(root,kind==='xiaoya'?.6:.15);return {x:s.x,y:s.y}},
   groundAt(x,z){const v=new THREE.Vector3(x,heightAt(x,z)+.015,z);world.localToWorld(v);v.project(camera);return {x:(v.x+1)/2*host.clientWidth,y:(1-v.y)/2*host.clientHeight,clear:clearPoint({x,z},bounds,obstacles,.29)};},
+   waterAt(x,z){const v=new THREE.Vector3(x,-.025,z);world.localToWorld(v);v.project(camera);return {x:(v.x+1)/2*host.clientWidth,y:(1-v.y)/2*host.clientHeight};},
   diagnostics(){return {fold:unfold,folding,yaw,puppet:xiaoya?.name,identity:xiaoya?.userData.identity,navigation:{x:walk.x,z:walk.z,path:walk.path.length,target:walk.pointer,route:walk.path.map(p=>({...p})),gaze:!!walk.gaze,clear:clearPoint(walk,bounds,obstacles,.29),inputLatencyMs:walk.latency,gazeYaw:xiaoya?.getObjectByName('xiaoya-head')?.rotation.y},buildings:world.children.filter(x=>x.name==='fold-house'||x.name==='fold-tent').length,flagPanels:flags.length,masts:world.children.filter(x=>x.name.endsWith('-mast')).length,flagStates:world.children.filter(x=>x.name==='day-mast').map(x=>x.userData.state),obstacles:obstacles.length,coast:coastalLife?.diagnostics(),calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,post:tilt.enabled?'tilt':(bloom?.enabled?'grade+bloom':'grade'),dpr:renderer.getPixelRatio(),objects:pickables.length}},
   dispose(){disposed=true;opening=null;openingResolve?.();openingResolve=null;clearTimeout(speak.t);controls.remove();cancelAnimationFrame(raf);clearInterval(skyTimer);io.disconnect();ro.disconnect();document.removeEventListener('visibilitychange',onVis);clearWorld();Object.values(mats).forEach(m=>m.dispose());scene.background?.dispose?.();scene.environment?.dispose?.();composer.dispose?.();pmrem.dispose();renderer.dispose();renderer.domElement.remove();tip.remove();say.remove()},
   canvas:renderer.domElement
