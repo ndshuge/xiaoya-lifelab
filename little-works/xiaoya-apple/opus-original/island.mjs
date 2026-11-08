@@ -7,6 +7,7 @@ import * as THREE from './vendor/three/three.module.min.js';
 import {createPaperKit} from './paper-kit.mjs';
 import {islandLayout,insideLand,clearPoint,clearSegment,nearestOpenPoint,planIslandPath,flagState,flagRows} from './island-layout.mjs';
 import {createCoastalLife} from './coastal-life.mjs';
+import {createLandform} from './island-landform.mjs';
 import {canTapWater} from './water-touch.mjs';
 import {EffectComposer} from './vendor/three/addons/postprocessing/EffectComposer.js';
 import {RenderPass} from './vendor/three/addons/postprocessing/RenderPass.js';
@@ -194,9 +195,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  const BASE_TOP=.34,STEP=.045;let hills=[],bounds=islandLayout(7,false),obstacles=[],coastalLife=null,lighthouseSite=null;
  function heightAt(x,z){let h=BASE_TOP;for(const hl of hills){let n=0;for(const r of hl.radii){const dx=(x-hl.x)/(r*1.12),dz=(z-hl.z)/(r*.9);if(dx*dx+dz*dz<1)n++}h=Math.max(h,BASE_TOP+n*STEP)}return h}
  function buildTerrain(k,stops){
-  const isl=new THREE.Group();hills=[];
-  const colors=[C.sand,0x88a66c,0xa5bf83,0xb8cc96];
-  for(let j=0;j<4;j++){const shrink=j*.13;const m=extrudeFlat(blobShape(bounds.rx-shrink,bounds.rz-shrink*.8,11,64,.045),[.1,.1,.07,.07][j],M('land-v2-'+j,colors[j]),M('land-edge-v2-'+j,j===0?0xbcaa7d:0x76935c));m.position.y=[0,.1,.2,.27][j];isl.add(m);}
+  const isl=createLandform(bounds,M);hills=[];
   stops.forEach((at,i)=>{const levels=clamp(at.levels|0,0,2),radii=[];
    for(let l=1;l<=levels;l++){const r=.46-(l-1)*.12;radii.push(r);const layer=extrudeFlat(blobShape(r*1.12,r*.9,i*17+l,24,.09),STEP,M('hill-v2-'+l,l===1?0xc7d7aa:0xd5dfb9),M('hill-edge-v2',0x91a87a));layer.position.set(at.x,BASE_TOP+(l-1)*STEP,at.z);isl.add(layer);}hills.push({x:at.x,z:at.z,radii});
   });world.add(isl);pop(isl,.05,k('island:'+stops.map(s=>s.levels).join('')));

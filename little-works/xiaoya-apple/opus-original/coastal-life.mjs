@@ -4,11 +4,13 @@ import * as T from './vendor/three/three.module.min.js';
 import {nearestOpenPoint,insideLand} from './island-layout.mjs';
 import {createFishSchool} from './fish-school.mjs';
 import {seaArtFragment} from './sea-art-glsl.mjs';
+import {createSailboat,mergeRigidParts} from './model-craft.mjs';
+import {coastRadii,coastRadius} from './island-landform.mjs';
 const rand=seed=>{let n=seed;return()=>((n=n*16807%2147483647)/2147483647)};
 export function waveHeight(x,z,t){return -.025+.025*Math.sin(x*1.6+z*.7-t*1.45)+.015*Math.sin(-x*.9+z*2.9+t*1.2);}
 export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material:M,beacon=null}){
  const group=new T.Group();group.name='living-shoreline';
- const shoreRand=rand(11*7919+13),radii=Array.from({length:64},()=>1+(shoreRand()-.5)*.09);
+ const radii=coastRadii();
  const fishSchool=createFishSchool(bounds,lite?6:12);
  const fishUniforms=fishSchool.sample(0).map(p=>new T.Vector4(p.x,p.z,p.heading,p.size));
  const tapUniforms=Array.from({length:3},()=>new T.Vector4(-100,-100,-100,0));
@@ -50,45 +52,61 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  gl_FragColor=vec4(col,1.);}
  `}));ocean.name='ocean-waves';group.add(ocean);
  const sphere=new T.SphereGeometry(1,16,12),cylinder=new T.CylinderGeometry(1,1,1,10);
- const mesh=(g,geo,mat,x=0,y=0,z=0)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.receiveShadow=true;g.add(m);return m};
+ const mesh=(g,geo,mat,x=0,y=0,z=0)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;g.add(m);return m};
  const oval=(g,x,y,z,sx,sy,sz,mat)=>{const m=mesh(g,sphere,mat,x,y,z);m.scale.set(sx,sy,sz);return m};
  const box=(g,x,y,z,w,h,d,mat)=>mesh(g,new T.BoxGeometry(w,h,d),mat,x,y,z);
- const ivory=M('shore-ivory',0xf5ecd7),wood=M('shore-wood',0xa37b50),hullMat=M('shore-hull',0x496f78),coral=M('shore-sail-coral',0xc88468),dark=M('shore-dark',0x4d5b48);
- function boat(){
-  const g=new T.Group();g.name='coastal-sailboat';
-  const s=new T.Shape();s.moveTo(0,-.45);s.bezierCurveTo(-.12,-.35,-.2,-.11,-.17,.2);s.quadraticCurveTo(0,.37,.17,.2);s.bezierCurveTo(.2,-.11,.12,-.35,0,-.45);
-  const hullGeo=new T.ExtrudeGeometry(s,{depth:.1,bevelEnabled:true,bevelSegments:2,bevelSize:.025,bevelThickness:.025,curveSegments:14});hullGeo.rotateX(-Math.PI/2);mesh(g,hullGeo,hullMat,0,-.05,0);
-  const deck=new T.ShapeGeometry(s);deck.rotateX(-Math.PI/2);const d=mesh(g,deck,wood,0,.06,0);d.scale.setScalar(.88);
-  for(const z of [-.18,0,.18])box(g,0,.071,z,.26,.012,.019,ivory);
-  const mast=mesh(g,cylinder,wood,0,.39,-.04);mast.scale.set(.012,.64,.012);
-  const sail=new T.Group();sail.position.set(0,.19,-.04);sail.rotation.y=Math.PI/2;g.add(sail);
-  for(const [side,mat] of [[1,ivory],[-1,coral]]){const shape=new T.Shape();shape.moveTo(side*.015,.05);shape.lineTo(side*.015,.48);shape.quadraticCurveTo(side*.27,.22,side*.25,.06);shape.closePath();const sailMat=mat.clone();sailMat.side=T.DoubleSide;mesh(sail,new T.ShapeGeometry(shape),sailMat);}
-  g.userData.sail=sail;g.scale.setScalar(lite?.85:1);return g;
- }
+ const ivory=M('shore-ivory',0xf5ecd7),dark=M('shore-dark',0x4d5b48);
+ const boat=()=>createSailboat(M,lite);
  const boats=[];
  for(let i=0;i<(lite?1:2);i++){const b=boat();group.add(b);boats.push({root:b,phase:1.12+i*2.7});}
  // Low-cost V-shaped wakes follow each hull on the water, rather than tilting with the deck.
  const wakeMat=new T.MeshBasicMaterial({color:0xd0e5db,transparent:true,opacity:.34,side:T.DoubleSide,depthWrite:false});
  const wakes=boats.map(()=>{const s=new T.Shape();s.moveTo(-.12,0);s.lineTo(-.28,.8);s.lineTo(-.25,.8);s.lineTo(-.08,0);s.closePath();s.moveTo(.12,0);s.lineTo(.28,.8);s.lineTo(.25,.8);s.lineTo(.08,0);s.closePath();const geo=new T.ShapeGeometry(s);geo.rotateX(Math.PI/2);const w=mesh(group,geo,wakeMat);return w});
  // Three curved blades per tuft, all tufts in one draw call.
- const pos=[],norm=[];
- for(let blade=0;blade<3;blade++){const a=blade*Math.PI/3,cs=Math.cos(a),sn=Math.sin(a),verts=[[-.016,0,0],[.016,0,0],[.027,.075,.008],[-.016,0,0],[.027,.075,.008],[.01,.145,.018]];
-  for(const [x,y,z] of verts){pos.push(x*cs-z*sn,y,x*sn+z*cs);norm.push(-sn,0,cs);}}
- const grassGeo=new T.BufferGeometry();grassGeo.setAttribute('position',new T.Float32BufferAttribute(pos,3));grassGeo.setAttribute('normal',new T.Float32BufferAttribute(norm,3));
+ const pos=[];
+ for(let blade=0;blade<5;blade++){
+  const a=blade*Math.PI/2.5+.2,cs=Math.cos(a),sn=Math.sin(a),height=[.12,.16,.14,.11,.13][blade];
+  const p=(t,side)=>{const x=side*.018*(1-t)+t*t*.035,z=t*t*.024;return [x*cs-z*sn,t*height,x*sn+z*cs]};
+  for(let segment=0;segment<3;segment++){const a=segment/3,b=(segment+1)/3;pos.push(...p(a,-1),...p(a,1),...p(b,1),...p(a,-1),...p(b,1),...p(b,-1));}
+ }
+ const grassGeo=new T.BufferGeometry();grassGeo.setAttribute('position',new T.Float32BufferAttribute(pos,3));grassGeo.computeVertexNormals();
  const grassTime={value:0},grassMat=new T.MeshStandardMaterial({color:0xffffff,side:T.DoubleSide,roughness:.96});
  grassMat.onBeforeCompile=sh=>{sh.uniforms.uGrassTime=grassTime;sh.vertexShader='uniform float uGrassTime;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\ntransformed.x+=sin(uGrassTime*1.6+instanceMatrix[3].x*3.)*position.y*.16;')};grassMat.customProgramCacheKey=()=> 'xiaoya-meadow-v2';
  const r=rand(771),sites=[];
  for(let tries=0;tries<1500&&sites.length<(lite?100:200);tries++){const p={x:(r()-.5)*bounds.rx*1.75,z:(r()-.5)*bounds.rz*1.75};if(!insideLand(p,bounds,.15)||obstacles.some(o=>Math.hypot(p.x-o.x,p.z-o.z)<o.r+.28)||Math.abs(p.z)<.15)continue;sites.push(p);}
+ for(let i=0;i<(lite?12:24);i++){
+  const a=i/(lite?12:24)*Math.PI*2+.15,rad=coastRadius(a)*.928,p={x:Math.cos(a)*bounds.rx*rad,z:Math.sin(a)*bounds.rz*rad};
+  if(obstacles.every(o=>Math.hypot(p.x-o.x,p.z-o.z)>o.r+.20))sites.push(p);
+ }
  const grass=new T.InstancedMesh(grassGeo,grassMat,sites.length),dummy=new T.Object3D();
  sites.forEach((p,i)=>{dummy.position.set(p.x,heightAt(p.x,p.z)+.004,p.z);dummy.scale.setScalar(.55+r()*.55);dummy.rotation.y=r()*6.28;dummy.updateMatrix();grass.setMatrixAt(i,dummy.matrix);grass.setColorAt(i,new T.Color().setHSL(.23+r()*.035,.25+r()*.12,.33+r()*.13));});grass.receiveShadow=true;group.add(grass);
  const rabbits=[];
  for(let i=0;i<2;i++){
   const at=nearestOpenPoint({x:bounds.rx*(i?-.58:.5),z:bounds.rz*.49},bounds,obstacles,.24);if(!at)continue;
-  const g=new T.Group();g.name='meadow-rabbit';g.position.set(at.x,heightAt(at.x,at.z)+.018,at.z);g.rotation.y=i?-.6:.9;group.add(g);obstacles.push({...at,r:.24,key:'rabbit-'+i});
+  const g=new T.Group();g.name='meadow-rabbit';g.position.set(at.x,heightAt(at.x,at.z)+.002,at.z);g.rotation.y=i?-.6:.9;group.add(g);obstacles.push({...at,r:.24,key:'rabbit-'+i});
   oval(g,0,.1,0,.13,.1,.19,ivory);oval(g,0,.18,.12,.1,.09,.095,ivory);oval(g,0,.1,-.18,.055,.05,.055,ivory);
   for(const side of [-1,1]){oval(g,side*.085,.026,.05,.043,.027,.085,ivory);oval(g,side*.045,.29,.1,.028,.12,.037,ivory);oval(g,side*.047,.295,.127,.013,.075,.007,M('rabbit-ear',0xdcbca2));oval(g,side*.052,.195,.197,.011,.014,.009,dark);}
-  oval(g,0,.167,.213,.018,.012,.011,M('rabbit-nose',0xb99b83));rabbits.push({root:g,at,i});
+  oval(g,0,.167,.213,.018,.012,.011,M('rabbit-nose',0xb99b83));mergeRigidParts(g);rabbits.push({root:g,at,i});
  }
+ // Low clover patches are instanced; keep the walking and hanging-sign clearances.
+ const leafSites=sites.filter((_,i)=>i%13===4),clover=new T.InstancedMesh(sphere,M('meadow-clover',0x718e58,{map:null,roughness:.95}),leafSites.length*3);
+ let leafIndex=0;for(const at of leafSites)for(let j=0;j<3;j++){
+  const angle=j*Math.PI*2/3;dummy.position.set(at.x+Math.cos(angle)*.019,heightAt(at.x,at.z)+.014,at.z+Math.sin(angle)*.019);dummy.scale.set(.018,.005,.028);dummy.rotation.set(0,-angle,0);dummy.updateMatrix();clover.setMatrixAt(leafIndex++,dummy.matrix);
+ }clover.name='clover-patches';clover.receiveShadow=true;group.add(clover);
+ // Small faceted rock clusters emerge through the same wet shoreline as the beach.
+ const rockGeo=new T.IcosahedronGeometry(1,1),rockColours=[],rockPositions=rockGeo.attributes.position;
+ for(let i=0;i<rockPositions.count;i++){const x=rockPositions.getX(i),y=rockPositions.getY(i),z=rockPositions.getZ(i);rockPositions.setXYZ(i,x*(1+.15*Math.sin(y*5+z*3)),y*(.84+.12*Math.cos(x*6-z*3)),z*(1+.12*Math.sin(x*4+y*7)));}rockGeo.computeVertexNormals();
+ for(let i=0;i<rockGeo.attributes.position.count;i++){
+  const shade=new T.Color(0x8b9584).multiplyScalar(.9+Math.max(0,rockGeo.attributes.position.getY(i))*.16);rockColours.push(shade.r,shade.g,shade.b);
+ }rockGeo.setAttribute('color',new T.Float32BufferAttribute(rockColours,3));
+ const rockAngles=lite?[.4,.49,2.65,3.9,5.3,5.43]:[.4,.49,1.38,2.65,2.76,3.9,4.55,5.3,5.43],rocks=new T.InstancedMesh(rockGeo,M('shore-stone',0xffffff,{map:null,normalMap:null,vertexColors:true,roughness:.93}),rockAngles.length);
+ rockAngles.forEach((a,i)=>{const radius=coastRadius(a)*1.018,size=.08+(i%3)*.038;dummy.position.set(Math.cos(a)*bounds.rx*radius,-.018,Math.sin(a)*bounds.rz*radius);dummy.rotation.set(.2+i*.17,a,.12);dummy.scale.set(size*1.3,size*.75,size);dummy.updateMatrix();rocks.setMatrixAt(i,dummy.matrix);});rocks.name='shore-rock-clusters';rocks.castShadow=true;rocks.receiveShadow=true;group.add(rocks);
+ // Shared feathered contact map, one draw for the grounded props, never a hit target.
+ const shadowPixels=new Uint8Array(32*32*4);for(let y=0;y<32;y++)for(let x=0;x<32;x++){const i=(y*32+x)*4,d=((x-15.5)/15.5)**2+((y-15.5)/15.5)**2;shadowPixels[i]=shadowPixels[i+1]=shadowPixels[i+2]=255;shadowPixels[i+3]=Math.max(0,1-d)**3*110;}
+ const shadowTex=new T.DataTexture(shadowPixels,32,32);shadowTex.needsUpdate=true;shadowTex.magFilter=T.LinearFilter;shadowTex.minFilter=T.LinearFilter;
+ const shadowMaterial=new T.MeshBasicMaterial({map:shadowTex,color:0x384b2d,transparent:true,opacity:.5,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1});
+ const contacts=obstacles.filter(o=>!o.flag),contactGeometry=new T.PlaneGeometry(1,1).rotateX(-Math.PI/2),contactsMesh=new T.InstancedMesh(contactGeometry,shadowMaterial,contacts.length);
+ contacts.forEach((o,i)=>{const radius=o.key?.startsWith('mast:')?.17:o.key?.startsWith('goal:')?.18:o.r*.9;dummy.position.set(o.x,heightAt(o.x,o.z)+.004,o.z);dummy.rotation.set(0,0,0);dummy.scale.set(radius*2,1,radius*1.6);dummy.updateMatrix();contactsMesh.setMatrixAt(i,dummy.matrix);});contactsMesh.name='soft-ground-contact';group.add(contactsMesh);
  // Small flying silhouettes over the sea; no flock of foreground props.
  const gulls=[];for(let i=0;i<2;i++){const g=new T.Group();const body=oval(g,0,0,0,.028,.035,.12,ivory),wings=[];for(const side of [-1,1]){const shape=new T.Shape();shape.moveTo(0,0);shape.quadraticCurveTo(side*.2,.03,side*.3,-.065);shape.lineTo(side*.18,-.03);shape.lineTo(0,-.025);const mat=new T.MeshStandardMaterial({color:0xf3eee2,side:T.DoubleSide,roughness:1});const wing=mesh(g,new T.ShapeGeometry(shape),mat);wing.rotation.x=-Math.PI/2;wings.push(wing);}group.add(g);gulls.push({root:g,wings,i});}
  return {group,water:ocean,
@@ -99,7 +117,7 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
    fishSchool.sample(t).forEach((f,i)=>fishUniforms[i].set(f.x,f.z,f.heading,f.size));
    boats.forEach(({root,phase},i)=>{const a=phase+t*.022,rx=bounds.rx+1.15,rz=bounds.rz+1.0,x=Math.cos(a)*rx,z=Math.sin(a)*rz;root.position.set(x,waveHeight(x,z,t)+.015,z);root.rotation.set(Math.sin(t*1.3+i)*.035,Math.atan2(rx*Math.sin(a),-rz*Math.cos(a)),Math.cos(t*1.05+i)*.04);root.userData.sail.rotation.y=Math.PI/2+Math.sin(t*.9+i)*.06;
     const w=wakes[i];w.position.set(x,.012,z);w.rotation.y=root.rotation.y;});
-   rabbits.forEach(({root,at,i})=>{root.rotation.y=(i?-.6:.9)+Math.sin(t*.43+i)*.14;root.position.y=heightAt(at.x,at.z)+.018+Math.max(0,Math.sin(t*.7+i)-.9)*.15;});
+   rabbits.forEach(({root,at,i})=>{root.rotation.y=(i?-.6:.9)+Math.sin(t*.43+i)*.14;root.position.y=heightAt(at.x,at.z)+.002+Math.max(0,Math.sin(t*.7+i)-.9)*.15;});
    gulls.forEach(({root,wings,i})=>{const a=t*.06+i*3.2;root.position.set(Math.cos(a)*(bounds.rx+1.1),1.65+Math.sin(t*.3+i)*.12,Math.sin(a)*(bounds.rz+.8));root.rotation.y=-a;wings.forEach((w,j)=>w.rotation.z=Math.sin(t*4.5+i)*(j?1:-1)*.24);});
   },
   diagnostics(){return {boats:boats.length,rabbits:rabbits.length,gulls:gulls.length,grass:sites.length,fish:fishUniforms.length,taps:tapCount,beacon:!!beacon,fishSchool:fishSchool.diagnostics(),boatClearance:Math.min(...boats.map(({root:b})=>Math.hypot(b.position.x/bounds.rx,b.position.z/bounds.rz))),waterTime:uniforms.uTime.value};}
