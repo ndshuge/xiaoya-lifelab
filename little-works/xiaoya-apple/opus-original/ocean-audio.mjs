@@ -5,7 +5,7 @@ export function createOceanAudio({
  setIntervalFn=globalThis.setInterval.bind(globalThis),
  clearIntervalFn=globalThis.clearInterval.bind(globalThis)
 }={}){
- let context=null,source=null,master=null,foam=null,timer=null,playing=false,disposed=false,t=0;
+ let context=null,source=null,master=null,foam=null,timer=null,playing=false,disposed=false,t=0,revision=0;
 
  function build(){
   context=new Context();
@@ -45,9 +45,11 @@ export function createOceanAudio({
   async start(){
    if(disposed||!Context)return false;
    if(playing)return true;
+   const revisionAtStart=++revision;
    try{
     if(!context)build();
     await context.resume(); // invoked only from the click handler (iOS Safari user gesture)
+    if(disposed||revisionAtStart!==revision){try{await context.suspend()}catch{}return false}
     playing=true;
     swell();
     timer=setIntervalFn(swell,160);
@@ -57,7 +59,7 @@ export function createOceanAudio({
    }
   },
   async stop(){
-   playing=false;clearTimer();
+   revision++;playing=false;clearTimer();
    if(context&&context.state!=='closed'){
     master.gain.setTargetAtTime(0,context.currentTime,.04);
     try{await context.suspend()}catch{/* user may have closed the tab */}
@@ -66,7 +68,7 @@ export function createOceanAudio({
   },
   async dispose(){
    if(disposed)return;
-   disposed=true;playing=false;clearTimer();
+   disposed=true;revision++;playing=false;clearTimer();
    try{source?.stop()}catch{}
    try{source?.disconnect()}catch{}
    try{await context?.close()}catch{}

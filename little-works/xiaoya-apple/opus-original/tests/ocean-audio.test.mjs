@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createOceanAudio} from '../ocean-audio.mjs';
 
-function fakeWebAudio(){
+function fakeWebAudio({deferResume=false}={}){
  const stats={contexts:0,resumes:0,suspends:0,closes:0,starts:0,stops:0,ticks:null};
  class Node{
   connect(){return this}
@@ -16,7 +16,7 @@ function fakeWebAudio(){
   createBufferSource(){return Object.assign(new Node(),{loop:false})}
   createBiquadFilter(){return Object.assign(new Node(),{type:'',frequency:{value:0},Q:{value:0}})}
   createGain(){return Object.assign(new Node(),{gain:{value:0,setTargetAtTime(){}}})}
-  async resume(){stats.resumes++;this.state='running'}
+  async resume(){stats.resumes++;if(deferResume)await new Promise(resolve=>{stats.releaseResume=resolve});this.state='running'}
   async suspend(){stats.suspends++;this.state='suspended'}
   async close(){stats.closes++;this.state='closed'}
  }
@@ -45,6 +45,20 @@ test('silent until explicit start, then one resumable audio graph',async()=>{
  assert.equal(stats.closes,1);
  assert.equal(stats.stops,1);
  assert.equal(audio.isPlaying(),false);
+});
+
+test('leaving island during pending Web Audio resume cannot restart sound',async()=>{
+ const {Context,stats}=fakeWebAudio({deferResume:true});
+ let scheduled=0;
+ const audio=createOceanAudio({Context,setIntervalFn(){scheduled++;return 7},clearIntervalFn(){}});
+ const pending=audio.start();
+ await audio.stop();
+ stats.releaseResume();
+ assert.equal(await pending,false);
+ assert.equal(audio.isPlaying(),false);
+ assert.equal(scheduled,0,'must not schedule a pump after the island was left');
+ assert.ok(stats.suspends>=1);
+ await audio.dispose();
 });
 
 test('unavailable Web Audio remains silent without throwing',async()=>{
