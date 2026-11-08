@@ -36,6 +36,8 @@ export const TOOLS=Object.freeze([
   parameters:obj({title:{type:'string'},date:{type:'string',description:'YYYY-MM-DD'},start:{type:'string',description:'HH:MM'},end:{type:'string',description:'HH:MM'},place:{type:'string'},reason:{type:'string'}},['title','date','start','end'])},
  {name:'draft_goal',category:null,label:'铅笔：目标',description:'画一个长期目标草稿（铅笔）。不会写入，需用户落墨。',
   parameters:obj({title:{type:'string'},weekly_target:{type:'integer',description:'每周几次 1–7'},reason:{type:'string'}},['title'])},
+ {name:'ask_user',category:null,label:'问你',description:'信息不确定、会影响安排时（例如提交方式、预计时长、是否必须今天做），向用户提一个简短问题，可带 2–3 个选项。不要猜测。',
+  parameters:obj({question:{type:'string'},options:{type:'array',items:{type:'string'}}},['question'])},
  {name:'remember',category:null,label:'记住',description:'把关于用户的一条稳定事实记在本机（例如偏好、作息、重要的人和事）。不要记录密码、证件号等敏感信息。',
   parameters:obj({fact:{type:'string'}},['fact'])}
 ]);
@@ -122,6 +124,11 @@ export function runTool(name,args,ctx){
     const draft=makeDraft(name.slice(6),a,now);
     return {content:JSON.stringify({ok:true,draft_id:draft.id,note:'已画成铅笔草稿，等待用户落墨。不要声称已经写入。'}),trace:{name,label:t.label,note:draft.fields.title||draft.fields.name},draft};
    }
+   case 'ask_user':{
+    const question=clip(a.question,120).trim();if(!question)throw Error('问题是空的');
+    const options=(Array.isArray(a.options)?a.options:[]).map(o=>clip(o,24).trim()).filter(Boolean).slice(0,3);
+    return {content:JSON.stringify({ok:true,note:'问题已展示给用户；先按最稳妥的假设给出方案，并说明这一点。'}),trace:{name,label:t.label,note:question},question:{question,options}};
+   }
    case 'remember':{
     const fact=clip(a.fact,200).trim();
     if(!fact)throw Error('内容是空的');
@@ -159,7 +166,7 @@ class AgentError extends Error{constructor(message,code){super(message);this.cod
  * Returns {text, trace:[...], drafts:[...], remembered:[...], mode:'tools'|'plain'}.
  */
 export async function runAgent({question,model,history=[],ctx,fetchImpl=globalThis.fetch,maxRounds=4,signal}){
- const consent=ctx.consent;const trace=[],drafts=[],remembered=[];
+ const consent=ctx.consent;const trace=[],drafts=[],remembered=[],questions=[];
  const sys=systemPrompt({consent,facts:consent.memory?(ctx.facts||[]):[],profile:ctx.profile,now:ctx.now});
  const messages=[{role:'system',content:sys},...history.slice(-12).map(m=>({role:m.role,content:clip(m.content,1500)})),{role:'user',content:clip(question,2000)}];
  const tools=toolSpecs(consent);
@@ -181,13 +188,13 @@ export async function runAgent({question,model,history=[],ctx,fetchImpl=globalTh
   if(!calls.length){
    const text=typeof msg.content==='string'?msg.content.trim():'';
    if(!text)throw new AgentError('模型没有返回内容','empty');
-   return {text:text.slice(0,6000),trace,drafts,remembered,mode};
+   return {text:text.slice(0,6000),trace,drafts,remembered,questions,mode};
   }
   messages.push({role:'assistant',content:msg.content||'',tool_calls:calls});
   for(const c of calls){
    let args={};try{args=JSON.parse(c.function?.arguments||'{}')}catch{}
    const r=runTool(c.function?.name,args,ctx);
-   trace.push(r.trace);if(r.draft)drafts.push(r.draft);if(r.remembered)remembered.push(r.remembered);
+   trace.push(r.trace);if(r.draft)drafts.push(r.draft);if(r.remembered)remembered.push(r.remembered);if(r.question)questions.push(r.question);
    messages.push({role:'tool',tool_call_id:c.id,content:r.content});
   }
  }
@@ -197,9 +204,9 @@ export async function runAgent({question,model,history=[],ctx,fetchImpl=globalTh
   trace.push({name:'snapshot',label:'摘要',note:'这个模型不支持工具调用，改为附带已授权内容的摘要'+(snap.cats.length?'（'+snap.cats.join('、')+'）':'')});
   const msg=await call({messages:[{role:'system',content:sys+'\n（本模型无法调用工具；以下是用户已授权的记录摘要，无法画铅笔草稿，请建议用户在页面上操作。）\n'+snap.text},...messages.slice(1)]});
   const text=typeof msg.content==='string'?msg.content.trim():'';if(!text)throw new AgentError('模型没有返回内容','empty');
-  return {text:text.slice(0,6000),trace,drafts,remembered,mode};
+  return {text:text.slice(0,6000),trace,drafts,remembered,questions,mode};
  }
- return {text:drafts.length?'我画了 '+drafts.length+' 笔铅笔，你看看合不合适。':'我查了一圈，但没整理出结论。换个问法试试？',trace,drafts,remembered,mode};
+ return {text:drafts.length?'我画了 '+drafts.length+' 笔铅笔，你看看合不合适。':'我查了一圈，但没整理出结论。换个问法试试？',trace,drafts,remembered,questions,mode};
 }
 function snapshot(ctx){
  const parts=[],cats=[];const run=(name,args)=>JSON.parse(runTool(name,args,ctx).content);
@@ -222,28 +229,98 @@ export function memoryCommand(text){
 }
 export const isPlanRequest=s=>/(?:帮我)?(?:排|安排|规划|计划)(?:一下)?(?:今天|今日|今晚|下午|剩下)|AI\s*排今天/.test(String(s||''));
 
+/** How much a plan asks of the day. Budget = total focus minutes; block = longest single sitting. */
+export const INTENSITIES=Object.freeze({
+ light:{key:'light',label:'轻松',max:2,budget:100,block:50,goals:false},
+ balanced:{key:'balanced',label:'平衡',max:4,budget:200,block:60,goals:true},
+ sprint:{key:'sprint',label:'冲刺',max:6,budget:320,block:90,goals:true}
+});
+const FOCUS='专注：';
+const hm=m=>toHM(Math.round(m));
+/**
+ * 小芽的今日方案 (local engine). Understand → analyse → plan with reasons. Never writes.
+ * Returns {date, intensity, drafts:[{n,…draft}], looked:[…], reasons:[…], summary, review, minutes:{course,act,work,goal}, options}.
+ * - Splits work longer than one sitting ("第 1/3 步"), clears near deadlines first, adds one goal block when
+ *   the week is behind, leaves 10 minutes between blocks, and trims the day when yesterday's plan slipped.
+ * - Skips work that already has a 专注 block today (so a plan that was inked is not planned twice).
+ */
+export function planDay(data,date,{now=new Date(),intensity='balanced',journal=[],facts=[],variant=0,_quick=false}={}){
+ const I=INTENSITIES[intensity]||INTENSITIES.balanced;
+ const isToday=date===dateKey(now);
+ const occ=occurrences(data,new Date(date+'T00:00'),plusDays(new Date(date+'T00:00'),1));
+ const courseMin=occ.filter(o=>o.kind==='course').reduce((n,o)=>n+(new Date(o.endsAt)-new Date(o.startsAt))/60000,0);
+ const actMin=occ.filter(o=>o.kind!=='course'&&!String(o.name).startsWith(FOCUS)).reduce((n,o)=>n+(new Date(o.endsAt)-new Date(o.startsAt))/60000,0);
+ const already=new Set(occ.map(o=>String(o.name)).filter(n=>n.startsWith(FOCUS)).map(n=>n.slice(FOCUS.length).replace(/\s*·.*$/,'')));
+ // Yesterday: what Xiaoya's plan put on the page, and what of it actually got done.
+ const y=dateKey(plusDays(new Date(date+'T12:00'),-1));
+ const yPlanned=data.events.filter(e=>e.date===y&&String(e.name).startsWith(FOCUS)).map(e=>String(e.name).slice(FOCUS.length).replace(/\s*·.*$/,''));
+ const yDone=yPlanned.filter(t=>data.tasks.some(k=>k.title===t&&k.done&&k.completedAt&&dateKey(new Date(k.completedAt))<=y)).length;
+ const yMood=journal.find(j=>j.date===y)?.mood??null;
+ const slipped=yPlanned.length>0&&yDone<yPlanned.length;
+ const tired=(yMood!=null&&yMood<=2)||facts.some(f=>/累|疲|别排太满/.test(f.text||''));
+ let budget=I.budget*(slipped||tired?0.8:1);
+ // Free time, today counted from now (+5 min to get going). Variant 1 prefers later windows.
+ const lead=isToday?5:0;
+ let windows=freeWindows(data,date,{now,minimum:25}).map(w=>({from:Math.ceil((toMin(w.start)+lead)/5)*5,to:toMin(w.end)})).filter(w=>w.to-w.from>=25);
+ if(variant%2===1)windows=[...windows].reverse();
+ const freeTotal=windows.reduce((n,w)=>n+w.to-w.from,0);
+ const horizon=plusDays(new Date(date+'T23:59'),7);
+ const urgency=t=>t.due?(new Date(t.due)-new Date(date+'T12:00'))/3600000:1e4; // hours until due
+ const work=data.tasks.filter(t=>!t.done&&!already.has(t.title)&&(!t.due||new Date(t.due)<=horizon)).sort((a,b)=>urgency(a)-urgency(b));
+ const s=monday(new Date(date+'T12:00')),e=plusDays(s,7);
+ const behind=data.goals.filter(g=>!g.done).map(g=>({g,n:data.checkins.filter(c=>c.goalId===g.id&&new Date(c.at)>=s&&new Date(c.at)<e).length,target:g.weeklyTarget||1})).filter(x=>x.n<x.target&&!already.has(x.g.title));
+ const items=[];
+ for(const t of work){
+  const total=Math.max(15,t.minutes||30),steps=Math.max(1,Math.ceil(total/I.block)),len=Math.min(I.block,Math.ceil(total/steps/5)*5);
+  const h=urgency(t);
+  const why=h<0?'已经逾期，尽快补上':h<=36?(total<=60?'截止很近、量不大，先清掉':'截止很近，先做最关键的一段'):steps>1?(slipped&&yPlanned.includes(t.title)?'昨天没动，拆成 '+steps+' 小步更容易开始':'量比较大，拆成 '+steps+' 步，今天先做第 1 步'):t.due?'离截止还有 '+Math.round(h/24)+' 天，提前推进一点':'口袋里的小事，顺手做掉';
+  items.push({kind:'work',title:t.title,len,step:steps>1?1:0,steps,why,due:t.due,tag:h<0?'逾期':h<=36?'最急':t.due?shortDue(t.due,date):'口袋'});
+ }
+ if(I.goals&&behind.length){const b=behind[0];items.splice(Math.min(2,items.length),0,{kind:'goal',title:b.g.title,len:30,why:'本周 '+b.n+'/'+b.target+' 次，留 30 分钟',tag:'目标'})}
+ const drafts=[];let used=0;
+ for(const it of items){
+  if(drafts.length>=I.max||used+it.len>budget+10)continue;
+  // Goals like a later slot (after classes); work takes the earliest window that fits.
+  const pool=it.kind==='goal'?[...windows].sort((a,b)=>(b.from>=15*60)-(a.from>=15*60)):windows;
+  const w=pool.find(x=>x.to-x.from>=it.len);if(!w)continue;
+  const start=w.from,end=start+it.len;w.from=end+10;used+=it.len;
+  const name=FOCUS+it.title+(it.steps>1?' · 第 '+it.step+'/'+it.steps+' 步':'');
+  const d=makeDraft('event',{title:name,date,start:hm(start),end:hm(end),reason:it.why},now);
+  // Stable id (task + slot), so removing a step or pointing at it survives re-rendering.
+  drafts.push({...d,id:'p'+stableHash(it.kind+'|'+it.title+'|'+date+'|'+hm(start)),n:drafts.length+1,kind:it.kind,task:it.title,tag:it.tag,minutes:it.len});
+ }
+ drafts.sort((a,b)=>a.fields.start<b.fields.start?-1:1).forEach((d,i)=>d.n=i+1);
+ const dueSoon=data.tasks.filter(t=>!t.done&&t.due&&new Date(t.due)<=plusDays(new Date(date+'T12:00'),7));
+ const looked=[
+  '今天的课表与活动：'+(occ.length?occ.map(o=>o.startsAt.slice(11,16)+' '+String(o.name).slice(0,12)).join('、'):'没有'),
+  '7 天内截止：'+(dueSoon.length?dueSoon.slice(0,4).map(t=>String(t.title).slice(0,10)).join('、')+(dueSoon.length>4?' 等 '+dueSoon.length+' 项':''):'没有'),
+  '还空着：'+(windows.length?[...windows].sort((a,b)=>a.from-b.from).map(w=>hm(w.from)+'–'+hm(w.to)).join('、'):'今天没有成段的空闲'),
+  '昨天：'+(yPlanned.length?'计划 '+yPlanned.length+' 件，完成 '+yDone+' 件':'没有用小芽的方案')+(yMood!=null?'，心情 '+yMood+'/5':''),
+  ...(facts.length?['记得的事：'+facts.slice(-2).map(f=>'「'+String(f.text).slice(0,14)+'」').join('')]:[])];
+ const summary=!drafts.length?(freeTotal<25?'今天几乎没有成段的空闲，就不再往里塞了。':'今天没有需要排的事，空着的时间留给你自己。'):
+  (slipped||tired?'昨天'+(slipped?'计划没做完':'有点累')+'，今天量减一点：':'按「'+I.label+'」来：')+'排了 '+drafts.length+' 笔，共 '+Math.round(used/6)/10+' 小时，'+(freeTotal-used>=90?'其余时间留给你。':'剩下的空当不多了。');
+ // What the other two intensities would give (count + minutes), so the choice is informed.
+ const options=_quick?{}:Object.fromEntries(Object.keys(INTENSITIES).map(k=>{if(k===I.key)return [k,{count:drafts.length,minutes:used}];
+  const o=planDay(data,date,{now,intensity:k,journal,facts,variant,_quick:true});return [k,{count:o.drafts.length,minutes:o.drafts.reduce((n,d)=>n+d.minutes,0)}]}));
+ return {date,intensity:I.key,drafts,looked,summary,review:{planned:yPlanned.length,done:yDone,mood:yMood,slipped,tired},
+  minutes:{course:Math.round(courseMin),act:Math.round(actMin),work:drafts.filter(d=>d.kind==='work').reduce((n,d)=>n+d.minutes,0),goal:drafts.filter(d=>d.kind==='goal').reduce((n,d)=>n+d.minutes,0),free:freeTotal},options};
+}
+/** The instruction a connected model gets for 「用模型想一版」: same contract as the local engine. */
+export function planPrompt(intensity='balanced'){
+ const I=INTENSITIES[intensity]||INTENSITIES.balanced;
+ return '请帮我把今天剩下的时间排一下，强度「'+I.label+'」：最多 '+I.max+' 块，合计不超过 '+I.budget+' 分钟，单块不超过 '+I.block+' 分钟，块与块之间留 10 分钟。'+
+  '先查空闲时间、7 天内截止和目标；大任务拆小，只排今天该做的那一步。每一块都用 draft_event 画出，名称以「专注：」开头，reason 用 20 字内说明为什么这样排。'+
+  '信息不确定、会影响安排（例如提交方式、预计时长）就用 ask_user 问我，不要猜。最后用一两句话说明整体思路。';
+}
+function stableHash(s){let h=2166136261;for(const ch of String(s)){h^=ch.codePointAt(0);h=Math.imul(h,16777619)>>>0}return h.toString(36)}
+function shortDue(due,date){const d=Math.round((new Date(due.slice(0,10)+'T12:00')-new Date(date+'T12:00'))/86400000);return d<=0?'今天截止':d===1?'明天截止':'周'+'日一二三四五六'[new Date(due).getDay()]+'截止'}
+
 /**
  * Local day planner: fit pending work into today's real free windows, most urgent first.
  * Produces event drafts (focus blocks) — never writes. Max 4 blocks, 10-minute breathing room between.
  */
-export function planDayLocal(data,date,{now=new Date()}={}){
- // Today: leave five minutes to get going before the first block.
- const lead=date===dateKey(now)?5:0;
- const windows=freeWindows(data,date,{now,minimum:30}).map(w=>({from:Math.ceil((toMin(w.start)+lead)/5)*5,to:toMin(w.end)}));
- const horizon=plusDays(new Date(date+'T23:59'),7);
- const work=data.tasks.filter(t=>!t.done&&(!t.due||new Date(t.due)<=horizon)&&!(t.due&&new Date(t.due)<new Date(date+'T00:00')))
-  .sort((a,b)=>(a.due||'9')<(b.due||'9')?-1:(a.due||'9')>(b.due||'9')?1:0);
- const drafts=[];
- for(const t of work){
-  if(drafts.length>=4)break;
-  const need=Math.min(120,Math.max(25,t.minutes||30));
-  const w=windows.find(x=>x.to-x.from>=Math.min(need,45));if(!w)continue;
-  const len=Math.min(need,w.to-w.from);const start=w.from,end=start+len;
-  w.from=end+10;
-  const due=t.due?'截止 '+t.due.slice(5).replace('T',' '):'口袋里的小事';
-  drafts.push(makeDraft('event',{title:'专注：'+t.title,date,start:toHM(start),end:toHM(end),reason:due+' · 预计 '+(t.minutes||30)+' 分钟'},now));
- }
- return drafts;
+export function planDayLocal(data,date,{now=new Date(),intensity='balanced',journal=[],facts=[]}={}){
+ return planDay(data,date,{now,intensity,journal,facts}).drafts;
 }
 
 /**

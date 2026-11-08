@@ -1,4 +1,4 @@
-﻿// End-to-end QA for the Opus Original experiment.
+// End-to-end QA for the Opus Original experiment.
 // Real browser (Edge headless + optional WebKit), fixed clock, mocked model/weather endpoints (no paid calls).
 // Usage: node qa-opus.cjs [--webkit] [--shots]
 const http=require('node:http'),path=require('node:path'),fs=require('node:fs'),assert=require('node:assert/strict');
@@ -39,7 +39,7 @@ async function run(browserType,label){
   });
   await step(label+' pencil → evidence → 落墨 writes through executePlan; 擦掉 restores',async()=>{
    const before=await data();
-   await page.locator('.blk.pencil').first().click();
+   await page.locator('[data-expand]').first().click();
    await page.locator('.note.is-open [data-approve]').waitFor();
    const proof=await page.locator('.note.is-open .note-proof').innerText();
    assert.match(proof,/依据/);assert.match(proof,/落墨后/);
@@ -60,8 +60,8 @@ async function run(browserType,label){
    await page.evaluate(()=>window.__XY_OPUS.setScale('day'));
   });
   await step(label+' reject and snooze go through the agent respond() contract',async()=>{
-   const first=await page.locator('.blk.pencil').first().getAttribute('data-expand');
-   await page.locator('.blk.pencil').first().click();
+   const first=await page.locator('[data-expand]').first().getAttribute('data-expand');
+   await page.locator('[data-expand]').first().click();
    await page.locator('.note.is-open [data-reject]').click();
    const d=await data();assert.ok(d.decisions.some(x=>x.id===first&&x.status==='rejected'));
    const next=await page.locator('[data-expand]').first().getAttribute('data-expand');
@@ -129,6 +129,31 @@ async function run(browserType,label){
    await page.locator('.msg.is-past',{hasText:'我周三晚上有家教'}).first().waitFor();
    await page.locator('.talk-divider').waitFor();
    await page.locator('.icon-x').click();
+  });
+  await step(label+' today\'s plan: intensity, reasons, numbered blocks, drop a step, ink all as one erasable step',async()=>{
+   await page.locator('[data-day-today]').click().catch(()=>{});
+   const card=page.locator('#plan-card');await card.waitFor();
+   const props=()=>page.locator('.plan-prop').count(),blocks=()=>page.locator('.blk.plan').count();
+   assert.ok(await props()>=1);assert.equal(await blocks(),await props(),'every plan step is drawn on the timeline');
+   assert.ok(await page.locator('.plan-prop .plan-why').first().innerText(),'each step says why');
+   await page.locator('[data-plan-int="light"]').click();
+   assert.equal(await page.locator('[data-plan-int="light"]').getAttribute('aria-checked'),'true');
+   const nLight=await props();assert.ok(nLight>=1&&nLight<=2,'light plan is short');assert.equal(await blocks(),nLight);
+   await page.locator('[data-plan-int="sprint"]').click();const nSprint=await props();assert.ok(nSprint>=nLight);
+   await shot(page,label+'-desktop-plan-sprint');
+   await page.locator('.plan-prop [data-plan-drop]').last().click();assert.equal(await props(),nSprint-1,'× removes a step');
+   const before=await data(),n=await props();
+   await page.locator('[data-plan-ink]').click();
+   await page.waitForFunction(k=>window.__XY_OPUS.getData().events.length===k,before.events.length+n);
+   const after=await data();assert.equal(after.transactions.length,before.transactions.length+1,'one erasable step');
+   assert.ok(after.events.filter(e=>e.name.startsWith('专注：')).length>=n);
+   // Inked work is not planned again; erasing brings the plan back.
+   const inkedTasks=after.events.filter(e=>e.date==='2026-11-05'&&e.name.startsWith('专注：')).map(e=>e.name.slice(3).replace(/\s*·.*$/,''));
+   const shown=await page.locator('.plan-prop .plan-what b').allInnerTexts();
+   assert.ok(!shown.some(t=>inkedTasks.includes(t)),'already inked steps are not proposed again');
+   await page.locator('#whisper [data-whisper-action]').click();
+   await page.waitForFunction(k=>window.__XY_OPUS.getData().events.length===k,before.events.length);
+   await page.locator('[data-plan-int="balanced"]').click();
   });
   await step(label+' gentle reminder: a deadline 30 minutes away is whispered once and recorded',async()=>{
    // Earlier steps can legitimately consume the 60-minute reminder gap; start from an empty reminder log.
@@ -264,8 +289,14 @@ async function run(browserType,label){
     const msgs=body.messages,last=msgs.at(-1),tools=(body.tools||[]).map(t=>t.function.name);
     const reply=m=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({choices:[{message:m}]})});
     if(last.content==='Say OK')return reply({content:'OK'});
-    if(last.role==='tool'){const prev=msgs.filter(m=>m.role==='tool').map(m=>m.content).join('');
+    const planning=msgs.some(m=>m.role==='user'&&/今天剩下的时间排一下/.test(m.content));
+    if(last.role==='tool'&&!(planning&&!msgs.some(m=>m.role==='tool'&&String(m.content).includes('draft_id')))){const prev=msgs.filter(m=>m.role==='tool').map(m=>m.content).join('');
      return reply({content:prev.includes('draft_id')?'我画了 1 笔铅笔，你看看合不合适。':prev.includes('items')?'收到。我看到了你的日程。':'看不到。'})}
+    if(planning&&last.role==='user')return reply({content:null,tool_calls:[{id:'f1',type:'function',function:{name:'get_free_time',arguments:'{"date":"2026-11-05"}'}}]});
+    if(planning&&last.role==='tool'&&!msgs.some(m=>m.role==='tool'&&String(m.content).includes('draft_id')))return reply({content:null,tool_calls:[
+     {id:'k1',type:'function',function:{name:'ask_user',arguments:JSON.stringify({question:'电路报告是纸质还是线上提交？',options:['纸质','线上'] })}},
+     {id:'k2',type:'function',function:{name:'draft_event',arguments:JSON.stringify({title:'专注：工数习题第六章',date:'2026-11-05',start:'10:00',end:'10:45',reason:'明晚截止，先清掉'})}},
+     {id:'k3',type:'function',function:{name:'draft_event',arguments:JSON.stringify({title:'专注：电路实验报告 · 第 1/3 步',date:'2026-11-05',start:'15:00',end:'15:50',reason:'拆小更容易开始'})}}]});
     if(/帮我排/.test(last.content))return reply({content:null,tool_calls:[{id:'p1',type:'function',function:{name:'draft_event',arguments:JSON.stringify({title:'专注：工数习题第六章',date:'2026-11-05',start:'19:00',end:'19:45',reason:'明晚截止'})}}]});
     if(tools.includes('get_schedule'))return reply({content:null,tool_calls:[{id:'s1',type:'function',function:{name:'get_schedule',arguments:'{"from":"2026-11-05","days":1}'}}]});
     return reply({content:'我看不到你的日程，可以在「小芽能看到」里打开。'});
@@ -316,6 +347,19 @@ async function run(browserType,label){
    assert.doesNotMatch(sent,/test-key-ok/,'key only in the Authorization header');
    // The conversation persists on this device.
    assert.ok(await page.evaluate(()=>window.__XY_OPUS.memory.chat.all().some(m=>m.text.includes('我看到了你的日程'))));
+   // The plan card can ask the connected model for a version; questions arrive as chips, answers are remembered.
+   await page.locator('.icon-x').click();
+   await page.evaluate(()=>{const x=window.__XY_OPUS;x.ui.date=new Date().toISOString().slice(0,10);x.setScale('day')});
+   await page.locator('[data-plan-model]').click();
+   await page.locator('#plan-card .plan-head small',{hasText:'DeepSeek 想的一版'}).waitFor();
+   assert.equal(await page.locator('.plan-prop').count(),2);assert.equal(await page.locator('.blk.plan').count(),2);
+   assert.ok(await page.locator('#plan-card .plan-looked li').count()>=1,'what the model looked at is listed');
+   await shot(page,label+'-desktop-plan-model');
+   await page.locator('[data-plan-answer="线上"]').click();
+   assert.ok(await page.evaluate(()=>window.__XY_OPUS.memory.facts.all().some(f=>f.text.includes('线上'))),'answer remembered');
+   assert.equal(await page.locator('.plan-ask').count(),0,'answered question disappears');
+   await page.locator('[data-plan-local]').click();await page.locator('#plan-card .plan-head small',{hasText:'铅笔稿'}).waitFor();
+   await page.locator('#xiaoya').click();
    await page.evaluate(()=>window.__XY_OPUS.memory.consent.revoke());
    await page.route('https://api.deepseek.com/chat/completions',r=>r.abort('failed'));
    await page.locator('#line-input').fill('再说一次？');await page.locator('#line-input').press('Enter');
@@ -362,7 +406,7 @@ async function run(browserType,label){
    const small=await m.page.evaluate(()=>[...document.querySelectorAll('.scale button,.cover-btn,.line-send,.xiaoya,.ink-btn,.nav-arrow')].filter(b=>b.offsetParent&&b.getBoundingClientRect().height<40).map(b=>b.className));
    assert.deepEqual(small,[]);
    await shot(m.page,label+'-mobile-day');
-   await m.page.locator('.blk.pencil').first().tap();
+   await m.page.locator('[data-expand]').first().tap();
    await m.page.locator('.note.is-open [data-approve]').waitFor();
    await shot(m.page,label+'-mobile-pencil-open');
   });
@@ -390,7 +434,7 @@ async function run(browserType,label){
    await dk.page.evaluate(()=>window.__XY_OPUS.setScale('day'));
    const bg=await dk.page.evaluate(()=>getComputedStyle(document.body).backgroundColor);
    assert.equal(bg,'rgb(21, 23, 27)');
-   await dk.page.locator('.blk.pencil').first().tap();
+   await dk.page.locator('[data-expand]').first().tap();
    const anim=await dk.page.evaluate(()=>getComputedStyle(document.querySelector('.note-proof')).animationName);
    assert.equal(anim,'none');
    await shot(dk.page,label+'-mobile-dark-pencil');

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {demoData} from '../../core.js';
 import {checkSchedule} from '../../domain.js';
 import {createMemory,NO_CONSENT,COMPANION_CONSENT} from '../memory.mjs';
-import {toolSpecs,runTool,runAgent,systemPrompt,memoryCommand,isPlanRequest,planDayLocal,extractFromText,makeDraft} from '../agent.mjs';
+import {toolSpecs,runTool,runAgent,systemPrompt,memoryCommand,isPlanRequest,planDayLocal,planDay,planPrompt,extractFromText,makeDraft} from '../agent.mjs';
 
 const NOW=new Date('2026-11-05T10:00:00'); // Thursday
 function fakeStorage(){const m=new Map();return {getItem:k=>m.has(k)?m.get(k):null,setItem:(k,v)=>m.set(k,String(v)),removeItem:k=>m.delete(k),dump:()=>m}}
@@ -24,7 +24,7 @@ const MODEL={url:'https://api.example.test/v1/chat/completions',model:'mock-1',k
 
 test('tool specs expose only consented read tools, always the draft tools',()=>{
  const none=toolSpecs(NO_CONSENT).map(t=>t.function.name);
- assert.deepEqual(none.sort(),['draft_event','draft_goal','draft_task','remember']);
+ assert.deepEqual(none.sort(),['ask_user','draft_event','draft_goal','draft_task','remember']);
  const all=toolSpecs(COMPANION_CONSENT).map(t=>t.function.name);
  for(const n of ['get_schedule','get_free_time','get_tasks','get_goals','get_mood','get_journal','search_records'])assert.ok(all.includes(n),n);
 });
@@ -112,6 +112,48 @@ test('local day planner fits urgent work into real free windows without overlaps
  for(let i=1;i<spans.length;i++)assert.ok(spans[i][0]>=spans[i-1][1],'no overlap');
  assert.ok(spans[0][0]>='10:00','never in the past');
  for(const x of drafts)assert.doesNotThrow(()=>checkSchedule({id:'x',...x.fields}));
+});
+test('day plan: intensities differ in load, reasons are given, other options are summarised',()=>{
+ const d=demoData(NOW);
+ const light=planDay(d,'2026-11-05',{now:NOW,intensity:'light'}),bal=planDay(d,'2026-11-05',{now:NOW}),sprint=planDay(d,'2026-11-05',{now:NOW,intensity:'sprint'});
+ assert.ok(light.drafts.length<=2&&light.drafts.length>=1);
+ assert.ok(bal.drafts.length>=light.drafts.length&&sprint.drafts.length>=bal.drafts.length);
+ const mins=p=>p.drafts.reduce((n,x)=>n+x.minutes,0);
+ assert.ok(mins(light)<=110&&mins(sprint)>=mins(bal));
+ assert.deepEqual(bal.drafts.map(x=>x.n),bal.drafts.map((_,i)=>i+1),'numbered in time order');
+ assert.ok(bal.drafts.every(x=>x.reason&&x.fields.name.startsWith('专注：')));
+ assert.equal(bal.options.light.count,light.drafts.length);assert.equal(bal.options.sprint.count,sprint.drafts.length);
+ assert.ok(bal.looked.length>=4&&/课表/.test(bal.looked[0]));
+ assert.deepEqual(planDay(d,'2026-11-05',{now:NOW}).drafts.map(x=>x.id),bal.drafts.map(x=>x.id),'ids are stable across runs');
+ for(const x of sprint.drafts)assert.doesNotThrow(()=>checkSchedule({id:'x',...x.fields}));
+ const spans=sprint.drafts.map(x=>[x.fields.start,x.fields.end]);
+ for(let i=1;i<spans.length;i++)assert.ok(spans[i][0]>=spans[i-1][1],'no overlap');
+});
+test('day plan: big work is split; a goal behind schedule gets one block; inked work is not planned twice',()=>{
+ const d=demoData(NOW);
+ d.tasks.push({id:'big',title:'课程设计报告',due:'2026-11-10T23:00',minutes:180,type:'assignment',done:false});
+ const p=planDay(d,'2026-11-05',{now:NOW,intensity:'sprint'});
+ const big=p.drafts.find(x=>x.task==='课程设计报告');
+ assert.ok(big&&/第 1\/\d 步/.test(big.fields.name),'split into steps');
+ assert.ok(p.drafts.some(x=>x.kind==='goal'),'goal block present');
+ const first=p.drafts[0];
+ d.events.push({id:'e1',...first.fields});
+ const again=planDay(d,'2026-11-05',{now:NOW,intensity:'sprint'});
+ assert.ok(!again.drafts.some(x=>x.task===first.task),'already inked work is skipped');
+});
+test('day plan: yesterday slipped → lighter day and the reason says so',()=>{
+ const d=demoData(NOW);
+ d.events.push({id:'y1',name:'专注：电路实验报告',date:'2026-11-04',day:2,start:'19:00',end:'20:00',weekStart:1,weekEnd:54,parity:'all',exceptions:[]});
+ const p=planDay(d,'2026-11-05',{now:NOW,journal:[{date:'2026-11-04',mood:2}]});
+ assert.equal(p.review.planned,1);assert.equal(p.review.done,0);assert.ok(p.review.slipped);
+ assert.match(p.summary,/量减一点/);assert.match(p.looked[3],/计划 1 件，完成 0 件，心情 2\/5/);
+});
+test('ask_user tool yields a question card, not a guess',async()=>{
+ const ctx=ctxWith({...NO_CONSENT,schedule:true});
+ const {fetchImpl,requests}=scripted([{tool_calls:[call('ask_user',{question:'报告是纸质还是线上提交？',options:['纸质','线上','不知道']},'q')]},{content:'先按线上提交来排。'}]);
+ const r=await runAgent({question:planPrompt('light'),model:MODEL,ctx,fetchImpl});
+ assert.deepEqual(r.questions,[{question:'报告是纸质还是线上提交？',options:['纸质','线上','不知道']}]);
+ assert.match(requests[0].body.messages.at(-1).content,/轻松/);
 });
 test('paste-to-extract finds deadlines and events in a notice, skips chatter',()=>{
  const notice='各位同学好！\n1. 周六下午三点前交电路实验报告\n2. 下周一上午9点到11点在东3-204 期中答疑\n3. 大家辛苦了\n记得带学生证';

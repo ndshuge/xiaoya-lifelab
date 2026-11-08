@@ -19,7 +19,7 @@ import {createMemory} from './memory.mjs';
 import {createIntro} from './intro.mjs';
 import {createTutorial} from './tutorial.mjs';
 import {createTips} from './tips.mjs';
-import {extractFromText} from './agent.mjs';
+import {extractFromText,planDay,planPrompt,INTENSITIES} from './agent.mjs';
 import {needsDemoHistory,buildDemoHistory} from './demo-history.mjs';
 // The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
 import {createOceanAudio} from './ocean-audio.mjs';
@@ -225,8 +225,76 @@ function impact(a){
  if(a.type==='planGoal')return '在 '+shortDay(a.start.slice(0,10))+' '+timeLabel(a.start)+'–'+timeLabel(a.end)+' 留一段目标行动时间；完成后仍需你记录真实行动。';
  return '在 '+shortDay(a.start.slice(0,10))+' '+timeLabel(a.start)+'–'+timeLabel(a.end)+' 新增一段专注日程并建一个子事项；原截止时间和课程不变。';
 }
+// ---------- 小芽的今日方案 (planner card; local engine, or the connected model on request) ----------
+function planState(){
+ const today=dateKey(new Date());
+ if(!ui.planDay||ui.planDay.date!==today)ui.planDay={date:today,intensity:'balanced',variant:0,model:null,removed:new Set(),answered:new Map(),busy:false};
+ return ui.planDay;
+}
+/** The plan shown today: the model's version if one was requested for this intensity, otherwise the local engine. */
+function currentPlan(){
+ const today=dateKey(new Date());if(ui.date!==today)return null;
+ const data=state();if(isEmptyArchive(data))return null;
+ const st=planState();
+ let facts=[];try{facts=memory.facts.all()}catch{}
+ let base;
+ try{base=planDay(data,today,{now:new Date(),intensity:st.intensity,variant:st.variant,journal:consent.mood?journalAll():[],facts})}catch(e){console.warn('plan failed',e);return null}
+ if(st.model&&st.model.intensity===st.intensity){
+  const drafts=st.model.drafts.filter(d=>d.intent==='event'&&d.fields.date===today).sort((a,b)=>a.fields.start<b.fields.start?-1:1)
+   .map((d,i)=>({...d,n:i+1,kind:'work',task:d.fields.name.replace(/^专注：/,''),tag:'',minutes:minutesBetween(d.fields.start,d.fields.end)}));
+  return {...base,source:'model',drafts:drafts.filter(d=>!st.removed.has(d.id)),summary:st.model.text,trace:st.model.trace,questions:st.model.questions||[],provider:st.model.provider};
+ }
+ return {...base,source:'local',drafts:base.drafts.filter(d=>!st.removed.has(d.id)),questions:[]};
+}
+const minutesBetween=(a,b)=>{const m=s=>Number(s.slice(0,2))*60+Number(s.slice(3,5));return m(b)-m(a)};
+const planKey=d=>'plan:'+d.id;
+function renderPlanCard(p){
+ const st=planState(),model=talk.model();
+ const opt=k=>p.options?.[k]||{count:0,minutes:0},hrs=m=>Math.round(m/6)/10;
+ const mins=p.minutes||{},busy=(mins.course||0)+(mins.act||0)+(mins.work||0)+(mins.goal||0),scale=Math.max(busy+(mins.free||0)-(mins.work||0)-(mins.goal||0),1);
+ const bar=[['course',mins.course,'课'],['act',mins.act,'活动'],['work',mins.work,'作业'],['goal',mins.goal,'目标']].filter(x=>x[1]>0);
+ const looked=p.source==='model'?(p.trace||[]).filter(t=>!/^draft_|^ask_user$|^remember$/.test(t.name)).map(t=>(t.blocked?'被拦下 · ':'')+t.label+(t.note?'：'+t.note:'')):p.looked;
+ const review=p.review?.planned?'昨天按方案排了 '+p.review.planned+' 件，完成 '+p.review.done+' 件'+(p.review.mood!=null?' · 心情 '+p.review.mood+'/5':''):'';
+ return '<section class="plan-card" id="plan-card" aria-labelledby="plan-title">'+
+  '<header class="plan-head"><h2 id="plan-title">小芽的今日方案</h2><small>'+(p.source==='model'?esc(p.provider||'模型')+' 想的一版 · 铅笔稿':'铅笔稿 · 还没有写进日程')+'</small></header>'+
+  '<div class="plan-int" role="radiogroup" aria-label="今天的强度">'+['light','balanced','sprint'].map(k=>{const I=INTENSITIES[k],o=k===p.intensity?{count:p.drafts.length,minutes:p.drafts.reduce((n,d)=>n+(d.minutes||0),0)}:opt(k);
+   return '<button type="button" role="radio" data-plan-int="'+k+'" aria-checked="'+(k===p.intensity)+'"><b>'+I.label+'</b><small>'+o.count+' 件 · '+hrs(o.minutes)+'h</small></button>'}).join('')+'</div>'+
+  (bar.length?'<div class="plan-bar" aria-hidden="true">'+bar.map(([k,m])=>'<i class="k-'+k+'" style="width:'+Math.min(100,m/scale*100)+'%"></i>').join('')+'</div><p class="plan-legend">'+bar.map(([k,m,l])=>'<span class="k-'+k+'">'+l+' '+hrs(m)+'h</span>').join('')+(mins.free?'<span class="k-free">空闲 '+hrs(Math.max(0,mins.free-(mins.work||0)-(mins.goal||0)))+'h</span>':'')+'</p>':'')+
+  (looked?.length?'<details class="plan-looked"'+(p.source==='model'?' open':'')+'><summary>小芽查了 '+looked.length+' 样东西</summary><ol>'+looked.map((l,i)=>'<li><i>'+(i+1)+'</i>'+esc(l)+'</li>').join('')+'</ol></details>':
+   p.source==='model'?'<p class="plan-foot">这一版没有查看你的记录（可能未授权「课程与日程」），仅凭对话给出。</p>':'')+
+  '<p class="plan-say">'+esc(p.summary||'')+'</p>'+
+  (p.drafts.length?'<ol class="plan-props">'+p.drafts.map(d=>'<li class="plan-prop k-'+(d.kind||'work')+'" data-plan-id="'+esc(d.id)+'"><span class="plan-n">'+d.n+'</span><div class="plan-what"><b>'+esc(d.task||d.fields.name)+'</b><small>'+esc(d.fields.start+'–'+d.fields.end+(d.minutes?' · '+d.minutes+' 分钟':''))+'</small>'+(d.reason?'<span class="plan-why">'+esc(d.reason)+'</span>':'')+'</div>'+(d.tag?'<span class="plan-tag k-'+(d.kind||'work')+'">'+esc(d.tag)+'</span>':'')+'<button type="button" class="plan-drop" data-plan-drop="'+esc(d.id)+'" aria-label="去掉这一笔：'+esc(d.task||'')+'">×</button></li>').join('')+'</ol>':'')+
+  (p.questions||[]).filter(q=>!st.answered.has(q.question)).map(q=>'<div class="plan-ask"><b>有一件我不确定：</b>'+esc(q.question)+(q.options?.length?'<div class="plan-chips">'+q.options.map(o=>'<button type="button" data-plan-answer="'+esc(o)+'" data-q="'+esc(q.question)+'">'+esc(o)+'</button>').join('')+'</div>':'')+'</div>').join('')+
+  (review?'<p class="plan-review"><img src="'+assetFace(p.review.slipped?3:5)+'" alt="" width="26" height="26">'+esc(review)+'</p>':'')+
+  '<div class="plan-actions">'+(model?'<button type="button" class="ghost-btn" data-plan-model'+(st.busy?' disabled':'')+'>'+(st.busy?'正在想…':'用 '+esc(model.providerName)+' 想一版')+'</button>':'<button type="button" class="ghost-btn" data-plan-variant>换一版</button>')+
+   '<button type="button" class="ink-btn" data-plan-ink'+(p.drafts.length?'':' disabled')+'>'+(p.drafts.length?'落墨 '+p.drafts.length+' 笔':'没有要落墨的')+'</button></div>'+
+  (p.source==='model'?'<p class="plan-foot"><button type="button" class="link" data-plan-local>回到本地方案</button></p>':(!model?'<p class="plan-foot">连接你自己的模型后，小芽能读更多上下文、遇到不确定会先问你。<button type="button" class="link" data-open="model">连接模型</button></p>':''))+
+ '</section>';
+}
+async function planWithModel(){
+ const st=planState();if(st.busy)return;
+ if(!talk.model()){talk.connectSheet();return}
+ st.busy=true;render();setXiaoya('listen');
+ try{
+  const r=await talk.runPlan(planPrompt(st.intensity));
+  st.model={intensity:st.intensity,drafts:r.drafts,text:r.text,trace:r.trace,questions:r.questions||[],provider:talk.model()?.providerName};st.removed.clear();
+  whisper(r.drafts.length?'小芽用模型想了一版：'+r.drafts.length+' 笔铅笔':'模型这次没有给出可排的时间块');setXiaoya(r.drafts.length?'happy':'nod',2000);emit('plan-model',r.drafts.length);
+ }catch(e){whisper('这次没有连上模型：'+String(e.message||e).slice(0,80),null,'error');setXiaoya('idle')}
+ finally{st.busy=false;render()}
+}
+function inkPlan(){
+ const p=currentPlan();if(!p?.drafts.length)return;
+ const tx=inkDrafts(p.drafts.map(d=>({id:d.id,intent:'event',fields:d.fields,reason:d.reason})));
+ if(tx){planState().model=null;planState().removed.clear();emit('plan-inked',p.drafts.length);render()}
+}
+
 function renderDay(data){
- const now=new Date(),today=dateKey(now),cands=feed(),pencils=pencilStrokes(cands);
+ const now=new Date(),today=dateKey(now),cands=feed();
+ // Today's plan draws first, so the student agent's overlapping pencils stack under it as alternatives.
+ const plan=currentPlan();
+ const planPencils=(plan?.drafts||[]).map(d=>({id:planKey(d),step:0,steps:1,title:d.task||d.fields.name.replace(/^专注：/,''),start:d.fields.date+'T'+d.fields.start,end:d.fields.date+'T'+d.fields.end,date:d.fields.date,kind:'plan',candidate:null}));
+ const pencils=[...planPencils,...pencilStrokes(cands)];
+ const planNo=new Map((plan?.drafts||[]).map(d=>[planKey(d),d.n]));
  const day=buildDay(data,ui.date,{now,pencils});
  const ctx=safeContext(),h=headline(data,day,{now,pencils,context:ctx});
  const H=matchMedia('(max-width: 819px)').matches?46:56;
@@ -241,6 +309,9 @@ function renderDay(data){
   const y=top(b.top),hgt=Math.max(b.type==='pencil'?30:26,top(b.bottom)-y-2);
   const lane='--lane:'+(b.lane||0)+';--lanes:'+(b.lanes||1)+';';
   const compact=hgt<44?' is-compact':'';
+  if(b.type==='pencil'&&planNo.has(b.id)){
+   return '<button type="button" class="blk pencil plan'+compact+'" data-plan-focus="'+esc(b.id.slice(5))+'" style="top:'+y+'px;height:'+hgt+'px;'+lane+'" aria-label="今日方案第 '+planNo.get(b.id)+' 笔：'+esc(b.title)+' '+b.start+'–'+b.end+'"><span class="plan-n">'+planNo.get(b.id)+'</span><span class="blk-title">'+esc(b.title)+'</span><span class="blk-meta">'+b.start+'–'+b.end+' · 方案'+(b.others.length?' · 另有 '+b.others.length+' 个建议':'')+'</span></button>';
+  }
   if(b.type==='pencil'){
    const open=ui.open===b.id;
    return '<button type="button" class="blk pencil'+compact+(open?' is-open':'')+'" data-expand="'+esc(b.id)+'" style="top:'+y+'px;height:'+hgt+'px;'+lane+'" aria-label="铅笔建议：'+esc(b.title)+' '+b.start+'–'+b.end+'，点开看依据"><span class="blk-title">'+esc(b.title)+'</span><span class="blk-meta">'+b.start+'–'+b.end+(b.steps>1?' · 第 '+(b.step+1)+'/'+b.steps+' 段':'')+' · 铅笔</span>'+(b.others.length?'<span class="blk-stack">另有 '+b.others.length+' 笔也想用这段时间</span>':'')+'</button>';
@@ -260,14 +331,26 @@ function renderDay(data){
  for(const c of cands){const d=c.action?.start?.slice(0,10);if(d===ui.date||(!c.action&&ui.date===today))noteEntries.push({id:c.id,y:c.action?.start?top(minutesOf(c.action.start)):0,html:noteFor(c,{rival:stacked.get(c.id)})})}
  if(ui.date===today)for(const s of contextNotes())noteEntries.push({id:s.id,y:0,html:contextNote(s)});
  noteEntries.sort((a,b)=>a.y-b.y);
- const margin=noteEntries.length?noteEntries.map(n=>'<div class="note-slot" data-y="'+Math.max(0,n.y)+'">'+n.html+'</div>').join(''):'<p class="margin-empty">'+(ui.date<today?'这一天已经翻过去了。':'页边空着：小芽暂时没有要提的。')+'</p>';
+ const marginHead=plan&&noteEntries.length?'<p class="margin-head">小芽还留意到 '+noteEntries.length+' 件事<small>和上面的方案可能用同一段时间；点开看依据，二选一。</small></p>':'';
+ const margin=marginHead+(noteEntries.length?noteEntries.map(n=>'<div class="note-slot" data-y="'+Math.max(0,n.y)+'">'+n.html+'</div>').join(''):plan?'':'<p class="margin-empty">'+(ui.date<today?'这一天已经翻过去了。':'页边空着：小芽暂时没有要提的。')+'</p>');
  const weatherLine=ctx?.weather&&ui.date===today?'<p class="weather">'+esc(ctx.weather.cityLabel)+' · '+ctx.weather.days.slice(0,3).map(w=>(w.date===today?'今天':w.date===ctx.tomorrow?'明天':w.date.slice(5))+' '+w.temperatureMinC+'–'+w.temperatureMaxC+'° 降水 '+w.precipitationProbabilityMax+'%').join(' · ')+' <small>Open-Meteo</small></p>':'';
  const ahead=ui.date===today?renderAhead(data,cands,now):'';
+ const hour=now.getHours(),sky=ui.date!==today?'paper':hour<6||hour>=19?'night':hour>=17?'dusk':'day';
+ const face=h.tone==='remind'?4:plan?.drafts.length?5:3;
+ // With a plan, Xiaoya talks about the plan, not about a single pencil stroke.
+ let say=h.text;
+ if(plan?.drafts.length){
+  const first=plan.drafts.find(d=>d.tag==='最急'||d.tag==='逾期')||plan.drafts[0];
+  say=say.replace(/，?我在 \d\d:\d\d 画了一笔，等你决定/,'').replace(/。$/,'')+(say.replace(/，?我在 \d\d:\d\d 画了一笔，等你决定/,'').trim()?'。':'')+
+   '我按「'+INTENSITIES[plan.intensity].label+'」把今天排了 '+plan.drafts.length+' 笔，从「'+(first.task||'')+'」开始，你看看合不合适。';
+ }
  return '<section class="day" aria-labelledby="day-title">'+
-  '<div class="day-nav"><button type="button" class="nav-arrow" data-day-shift="-1" aria-label="前一天">‹</button><h1 id="day-title">'+(ui.date===today?'今天':md(ui.date))+'<small>'+(ui.date===today?md(ui.date)+' ':'')+DAYNAMES[weekday(new Date(ui.date+'T12:00'))]+'</small></h1><button type="button" class="nav-arrow" data-day-shift="1" aria-label="后一天">›</button>'+(ui.date!==today?'<button type="button" class="nav-today" data-day-today>回到今天</button>':'')+'</div>'+
-  '<p class="voice" data-tone="'+h.tone+'"><img src="'+assetFace(h.tone==='remind'?4:3)+'" alt="" width="30" height="30">'+(ui.date===today?esc(greeting(now)):'')+esc(h.text)+(ui.date===today&&!isEmptyArchive(data)?' <button type="button" class="plan-today" data-plan-today>✎ 帮我排今天</button>':'')+'</p>'+weatherLine+
+  // Sky header: the same world as the island. Time of day sets the sky; Xiaoya speaks in a bubble.
+  '<header class="day-sky" data-sky="'+sky+'"><span class="sky-sun" aria-hidden="true"></span><span class="sky-hill" aria-hidden="true"></span><span class="sky-hill b" aria-hidden="true"></span>'+
+   '<div class="sky-inner"><div class="day-nav"><button type="button" class="nav-arrow" data-day-shift="-1" aria-label="前一天">‹</button><h1 id="day-title">'+(ui.date===today?'今天':md(ui.date))+'<small>'+(ui.date===today?md(ui.date)+' ':'')+DAYNAMES[weekday(new Date(ui.date+'T12:00'))]+'</small></h1><button type="button" class="nav-arrow" data-day-shift="1" aria-label="后一天">›</button>'+(ui.date!==today?'<button type="button" class="nav-today" data-day-today>回到今天</button>':'')+'</div>'+
+   '<div class="sky-xy"><button type="button" class="sky-face" data-sky-talk aria-label="和小芽说话"><img src="'+assetFace(face)+'" alt="" width="96" height="96"></button><p class="voice" data-tone="'+h.tone+'">'+(ui.date===today?esc(greeting(now)):'')+esc(say)+'</p></div></div></header>'+weatherLine+
   (isEmptyArchive(data)?'<div class="starter" aria-label="试着写一行"><span>试着写一行：</span>'+['周五前交实验报告 90分钟','明天下午3点到5点 社团例会 @创新中心','每周跑步两次','买洗衣液'].map(s=>'<button type="button" data-try="'+esc(s)+'">'+esc(s)+'</button>').join('')+'<button type="button" class="starter-alt" data-import-cal>或导入课表</button></div>':'')+
-  '<div class="paper"><div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
+  '<div class="paper'+(plan?' has-plan':'')+'">'+(plan?renderPlanCard(plan):'')+'<div class="ribbon-wrap" style="--hour:'+H+'px;height:'+Math.ceil(map.height)+'px">'+
    '<ol class="hours" aria-hidden="true">'+hours.map(i=>'<li style="top:'+top(i*60)+'px">'+pad(i)+'</li>').join('')+'</ol>'+attentionMarker(day,top)+
    '<div class="ribbon" data-ribbon data-map="'+esc(JSON.stringify(map.segments.map(s=>[Math.round(s.y0),Math.round(s.y1),s.m0,s.m1,s.band?1:0])))+'" aria-label="'+esc(md(ui.date))+'时间带。点击空白处安排一件事。">'+hours.map(i=>'<span class="rule" style="top:'+top(i*60)+'px"></span>').join('')+bands+nowLine+ghosts+blocks+lines+
    '</div>'+
@@ -277,7 +360,11 @@ function renderDay(data){
 // Xiaoya sits in the time gutter beside what she is paying attention to; tapping her opens that note.
 function attentionMarker(day,top){
  const a=attentionOf(day);if(!a)return '';
- return '<button type="button" class="attention is-'+a.kind+'" style="top:'+Math.max(0,top(a.minute)-4)+'px" '+(a.kind==='pencil'?'data-expand="'+esc(a.id)+'"':'data-attention-conflict')+' aria-label="'+esc(a.label)+'" title="'+esc(a.label)+'"><img src="'+assetFace(a.kind==='pencil'?4:3)+'" alt="" width="30" height="30"></button>';
+ // On a plan block, Xiaoya points at that step of today's plan instead of a note.
+ const isPlan=a.kind==='pencil'&&String(a.id).startsWith('plan:');
+ const target=isPlan?'data-plan-focus="'+esc(String(a.id).slice(5))+'"':a.kind==='pencil'?'data-expand="'+esc(a.id)+'"':'data-attention-conflict';
+ const label=isPlan?'今日方案从这里开始：'+String(a.label).replace(/^我在这里画了一笔：/,''):a.label;
+ return '<button type="button" class="attention is-'+a.kind+'" style="top:'+Math.max(0,top(a.minute)-4)+'px" '+target+' aria-label="'+esc(label)+'" title="'+esc(label)+'"><img src="'+assetFace(a.kind==='pencil'?4:3)+'" alt="" width="30" height="30"></button>';
 }
 function greeting(now){
  let name='';try{name=memory.profile.get().name}catch{}
@@ -322,8 +409,11 @@ function renderFooter(date,now){
 function layoutMargin(){
  const margin=$('#margin');if(!margin)return;
  if(matchMedia('(max-width: 819px)').matches){margin.style.minHeight='';$$('.note-slot').forEach(s=>s.style.top='');return}
+ if(margin.closest('.paper.has-plan')){margin.style.minHeight='';$$('.note-slot').forEach(s=>s.style.top='');return} // alternatives flow under the timeline
  let cursor=0;
- for(const slot of $$('.note-slot')){const want=Number(slot.dataset.y)||0;const y=Math.max(want,cursor);slot.style.top=y+'px';cursor=y+slot.offsetHeight+12}
+ // Notes align with the ribbon; when the plan card sits above them, shift by the margin's offset from the ribbon.
+ const rib=$('.ribbon-wrap'),shift=rib?margin.getBoundingClientRect().top-rib.getBoundingClientRect().top:0;
+ for(const slot of $$('.note-slot')){const want=Math.max(0,(Number(slot.dataset.y)||0)-shift);const y=Math.max(want,cursor);slot.style.top=y+'px';cursor=y+slot.offsetHeight+12}
  margin.style.minHeight=cursor+'px';
 }
 function renderWeek(data){
@@ -973,6 +1063,15 @@ document.addEventListener('click',e=>{
  if(ds.attentionConflict!==undefined){const n=document.querySelector('.note[data-note^="conflict"]');if(n){n.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});n.querySelector('.note-head')?.click()}else whisper('这里有两件事重叠，点开时间块可以调整');return}
  if(ds.replay==='tips'){closeSheet();tips.reset();whisper('提示已重置：之后第一次见到的功能会再解释一次');setTimeout(()=>tips.check({scale:ui.scale}),400);return}
  if(ds.replay){closeSheet();setTimeout(()=>ds.replay==='intro'?playIntro():startTour(),reduced()?0:200);return}
+ if(ds.planInt){const st=planState();if(st.intensity!==ds.planInt){st.intensity=ds.planInt;st.removed.clear();render();emit('plan-intensity',ds.planInt)}return}
+ if(ds.planVariant!==undefined){const st=planState();st.variant++;st.removed.clear();render();whisper('换了一种排法：空当从'+(st.variant%2?'晚':'早')+'往'+(st.variant%2?'早':'晚')+'用');return}
+ if(ds.planModel!==undefined)return planWithModel();
+ if(ds.planLocal!==undefined){planState().model=null;planState().removed.clear();return render()}
+ if(ds.planInk!==undefined)return inkPlan();
+ if(ds.planDrop){planState().removed.add(ds.planDrop);return render()}
+ if(ds.planAnswer){const st=planState();st.answered.set(ds.q,ds.planAnswer);try{memory.facts.add(String(ds.q).replace(/[？?]$/,'')+'：'+ds.planAnswer,'user')}catch{}whisper('记下了：'+ds.planAnswer+'（小芽会记住）');return render()}
+ if(ds.planFocus){const li=document.querySelector('.plan-prop[data-plan-id="'+CSS.escape(ds.planFocus)+'"]');if(li){li.scrollIntoView({block:'center',behavior:reduced()?'instant':'smooth'});li.classList.remove('is-flash');void li.offsetWidth;li.classList.add('is-flash')}return}
+ if(ds.skyTalk!==undefined){talk.open(t);emit('talk-opened');return}
  if(ds.planToday!==undefined){talk.ask('帮我排一下今天剩下的时间');emit('plan-today');return}
  if(ds.try){lineInput.value=ds.try;updateDraft();lineInput.focus({preventScroll:true});return}
  if(ds.cover)return coverAction(ds.cover);
@@ -1060,7 +1159,7 @@ function startTour(){
  switchMode('demo');ui.scale='day';ui.date=dateKey(new Date());talk.close();render();
  tour=createTutorial({esc,face:n=>FACES[n]||FACES[4],
   onStep:s=>{if(s.id==='erase')clearTimeout(whisperTimer)},
-  onFinish:reason=>{if(reason==='done'){tips?.mark(['pencil','free','pocket','week','line','talk']);graduate()}else whisper('教学已跳过；封底里可以随时重新开始')},
+  onFinish:reason=>{if(reason==='done'){tips?.mark(['plan','pencil','free','pocket','week','line','talk']);graduate()}else whisper('教学已跳过；封底里可以随时重新开始')},
   steps:tourSteps()});
  tour.start();
 }
@@ -1076,7 +1175,8 @@ function tourSteps(){
    action:{label:'帮我写一句',run:fill('买洗衣液')},until:'line-committed'},
   {id:'event',chapter:C1,target:'#line-input',face:4,text:'写一个有起止时间的活动，它会画进今天或那一天的时间带。和别的事重叠时，我会标出冲突。',hint:'写下时，输入框上方会先显示我的理解；点那个标签可以改成事项 / 活动 / 目标 / 提问。',
    action:{label:'帮我写一句',run:fill('明天晚上7点到8点半 社团例会 在活动中心')},until:'line-committed'},
-  {id:'open',chapter:C2,enter:toDay,target:'.blk.pencil|.note.is-pencil .note-head',face:5,optional:true,text:'铅笔：虚线框是我画的建议——还没写进你的日程。点开它，看看我为什么这样排。',until:'pencil-opened'},
+  {id:'plan',chapter:C2,enter:toDay,target:'#plan-card .plan-int',face:4,optional:true,text:'这是我替你排的今天：带编号的虚线块就是方案。先选强度——轻松、平衡还是冲刺，下面写着件数和小时。',hint:'每一笔都写了为什么这样排；不想要的点 × 去掉。',until:'plan-intensity'},
+  {id:'open',chapter:C2,target:'.blk.pencil[data-expand]|.note.is-pencil .note-head',face:5,optional:true,text:'除了方案，我还会留意别的事。点开一条，看看我的依据。',until:'pencil-opened'},
   {id:'ink',chapter:C2,target:'.note.is-open [data-approve]',face:4,after:'open',text:'看完依据，满意就「落墨」。只有你落墨，它才会真的写进日程。',until:'inked'},
   {id:'erase',chapter:C2,target:'#whisper [data-whisper-action]',face:3,after:'ink',text:'落下的墨也能擦掉。点「擦掉」试试——反悔永远来得及。',until:'erased'},
   {id:'free',chapter:C2,target:'.free-band:not(.is-past)',face:4,optional:true,text:'浅色的空白带是你真正空着的时间。点一下就能在这里放一件事，或者从口袋里拿一件进来。',next:'知道了'},

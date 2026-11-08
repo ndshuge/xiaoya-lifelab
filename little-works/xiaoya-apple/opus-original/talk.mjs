@@ -253,6 +253,20 @@ export function createTalk({esc,getData,getJournal,getContext,getCandidates,memo
   model:()=>session.model?{providerName:session.model.providerName,url:session.model.url,model:session.model.model}:null,
   // A short-lived growth provider sharing the in-memory key; caller must clear() it after use.
   growthCredentials:()=>session.model?{endpoint:session.model.url,model:session.model.model,apiKey:session.model.key}:null,
+  /** One agent turn for the day planner (same model, consent and memory as the conversation). */
+  async runPlan(prompt){
+   if(!session.model)throw Error('还没有连接模型');
+   if(session.busy)throw Error('上一条还在路上');
+   session.busy=true;session.controller=new AbortController();const timer=setTimeout(()=>session.controller?.abort(),60000);
+   try{
+    const c=consent();
+    const ctx={data:getData(),journal:getJournal(false),consent:c,memory,facts:safe(()=>memory.facts.all(),[]),profile:safe(()=>memory.profile.get(),null),now:new Date()};
+    const r=await runAgent({question:prompt,model:session.model,history:[],ctx,signal:session.controller.signal});
+    save('xiaoya','（今日方案）'+r.text+(r.drafts.length?'（画了 '+r.drafts.length+' 笔铅笔）':''),session.model.providerName+' · 今日方案',r.trace);
+    return r;
+   }catch(e){if(e.code==='auth')disconnect('密钥被服务商拒绝，已断开');throw e.name==='AbortError'?Error('等待超时（60 秒）'):e}
+   finally{clearTimeout(timer);session.busy=false;session.controller=null}
+  },
   /** Show drafts produced elsewhere (paste extraction, AI 排今天 button) as a Xiaoya message with cards. */
   offerDrafts(drafts,reply,meta='本地规则'){open();const el=line('xy',text(reply),esc(meta));append(el,draftsHtml(drafts));save('xiaoya',reply,meta)},
   refresh:renderEnvelope};

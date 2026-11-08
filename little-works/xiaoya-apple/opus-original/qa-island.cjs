@@ -59,8 +59,10 @@ async function run(type,label){
    assert.ok(d.tasks.some(t=>t.title.includes('洗衣液')&&!t.due),'pocket task has no due');
    assert.ok(d.events.some(e=>e.title?.includes('社团例会')||e.name?.includes('社团例会')),'event written');
    // 第二章 · 排进去
-   await bubble('第二章 · 排进去');await p.waitForTimeout(300);await shot(p,label+'-tour-2-pencil');
-   await p.locator('.blk.pencil').first().click();
+   await bubble('第二章 · 排进去');await bubble('先选强度');await p.waitForTimeout(300);await shot(p,label+'-tour-2-plan');
+   await p.locator('[data-plan-int="light"]').click();
+   assert.equal(await p.locator('[data-plan-int="light"]').getAttribute('aria-checked'),'true');
+   await bubble('点开一条');await p.locator('[data-expand]').first().click();
    await bubble('满意就「落墨」');
    await p.locator('.note.is-open [data-approve]').click();
    await bubble('擦掉');await p.waitForTimeout(7000);
@@ -170,13 +172,13 @@ async function run(type,label){
   const t=await open(browser,base,{query:'?judge=1&intro=0'});
   await step(label+' first-time tips: once per feature, never during the tour, resettable',async()=>{
    const p=t.page;await p.waitForSelector('.day');
-   await p.locator('.tip.is-in[data-tip="pencil"]').waitFor({timeout:5000});await shot(p,label+'-tip-pencil');
+   await p.locator('.tip.is-in[data-tip="plan"]').waitFor({timeout:5000});await shot(p,label+'-tip-plan');
    assert.equal(await p.evaluate(()=>getComputedStyle(document.querySelector('.tip')).pointerEvents),'none','tip never blocks input');
    await p.locator('.tip-x').click();await p.locator('.tip').waitFor({state:'detached'});
    await p.evaluate(()=>window.__XY_OPUS.setScale('week'));
    await p.locator('.tip.is-in[data-tip="week"]').waitFor({timeout:6000});await shot(p,label+'-tip-week');
    await p.evaluate(()=>window.__XY_OPUS.setScale('day'));await p.waitForTimeout(1800);
-   assert.notEqual(await p.evaluate(()=>window.__XY_OPUS.tips.shown()),'pencil','pencil tip not repeated');
+   assert.notEqual(await p.evaluate(()=>window.__XY_OPUS.tips.shown()),'plan','plan tip not repeated');
    await p.locator('#xiaoya').click();await p.locator('.tip.is-in[data-tip="talk"]').waitFor({timeout:4000});
    await p.locator('[data-close="talk"]').first().click();
    await p.evaluate(()=>{window.__XY_OPUS.tips.reset();window.__XY_OPUS.startTour()});

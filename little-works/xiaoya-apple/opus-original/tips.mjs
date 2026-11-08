@@ -4,7 +4,8 @@
 // Seen ids are a non-private per-device flag list.
 const KEY='xiaoya-opus-original:tips:v1';
 export const TIPS=[
- {id:'pencil',sel:'.blk.pencil',text:'虚线框是小芽画的铅笔建议，还没写进日程。点开能看到为什么这样排；落墨才算数。'},
+ {id:'plan',sel:'#plan-card',text:'这是小芽排的今天：选强度、看每一笔的理由，满意就落墨。连接模型后，可以让她用模型再想一版。'},
+ {id:'pencil',sel:'.blk.pencil:not(.plan)',text:'虚线框是小芽画的铅笔建议，还没写进日程。点开能看到为什么这样排；落墨才算数。'},
  {id:'attention',sel:'.attention',text:'这个小标记表示今天有需要你看一眼的事：冲突、临近的截止，或者小芽的一条建议。'},
  {id:'free',sel:'.free-band:not(.is-past)',text:'浅色空白带是真正空着的时间。点一下就能放一件事，或者从口袋里拿一件进来。'},
  {id:'ghost',sel:'.blk.ghost|.witem.ghost',text:'划掉的半透明块是「这一次」停掉或调走的课，原来的位置留个痕迹，方便你记得。'},
