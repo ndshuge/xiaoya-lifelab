@@ -22,6 +22,7 @@ import {createTips} from './tips.mjs';
 import {extractFromText} from './agent.mjs';
 import {needsDemoHistory,buildDemoHistory} from './demo-history.mjs';
 // The 3D island (Three.js) is loaded lazily the first time it is needed, so the paper pages stay light.
+import {createOceanAudio} from './ocean-audio.mjs';
 const loadIsland=()=>import('./island.mjs');
 // App-wide event bus: the guided tour listens for real actions, never simulated clicks.
 const emit=(type,value)=>document.dispatchEvent(new CustomEvent('xy',{detail:{type,value}}));
@@ -345,6 +346,36 @@ function renderWeek(data){
 // ---------- 3D paper island (week) ----------
 let islandApi=null,islandHost=null,islandLoad=null,islandFailed=false;
 const FACES={2:assetFace(2),3:assetFace(3),4:assetFace(4),5:assetFace(5)};
+// The coastal soundtrack is explicitly opt-in and never persisted or started on navigation.
+let oceanAudio=null;
+function oceanAudioButton(){return islandHost?.querySelector('[data-ocean-audio]')||null}
+function syncOceanAudioButton(){
+ const btn=oceanAudioButton();if(!btn)return;
+ const on=!!oceanAudio?.isPlaying();
+ btn.setAttribute('aria-pressed',String(on));
+ btn.setAttribute('aria-label',on?'关闭海浪声':'开启海浪声');
+ btn.textContent=on?'海浪 · 开':'海浪 · 关';
+}
+function pauseOceanAudio(){if(!oceanAudio)return;void oceanAudio.stop();syncOceanAudioButton()}
+function installOceanAudioButton(){
+ const controls=islandHost?.querySelector('.island-controls');
+ if(!controls||controls.querySelector('[data-ocean-audio]'))return;
+ const btn=document.createElement('button');btn.type='button';btn.dataset.oceanAudio='';
+ btn.addEventListener('click',async()=>{
+  oceanAudio??=createOceanAudio();
+  btn.disabled=true;
+  try{
+   if(oceanAudio.isPlaying())await oceanAudio.stop();
+   else if(!(await oceanAudio.start()))whisper('此浏览器无法播放海浪声');
+  }catch{whisper('海浪声播放失败',null,'error')}
+  finally{syncOceanAudioButton();btn.disabled=false}
+ });
+ controls.append(btn);syncOceanAudioButton();
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseOceanAudio()});
+window.addEventListener('pagehide',()=>{
+ const audio=oceanAudio;oceanAudio=null;void audio?.dispose();syncOceanAudioButton();
+});
 function islandModel(){
  const data=state(),now=new Date(),cands=feed(),pencils=pencilStrokes(cands);
  const w=buildWeek(data,new Date(ui.weekStart+'T12:00'),{now,pencils});
@@ -392,6 +423,7 @@ async function mountIsland(){
   await islandLoad;
  }
  if(islandApi&&(ui.scale==='week'||ui.scale==='line'))islandApi.update(ui.scale==='line'?seasonModel():islandModel());
+ if(islandApi)installOceanAudioButton();
 }
 function weekSentence(w){
  const busiest=[...w.days].sort((a,b)=>b.busyMinutes-a.busyMinutes)[0];
@@ -460,6 +492,7 @@ function setScale(next,{date=null}={}){
  const order=['line','week','day'];const dir=order.indexOf(next)>order.indexOf(ui.scale)?'in':'out';
  try{localStorage.setItem(UI_KEY,JSON.stringify({scale:next}))}catch{}
  if(next===ui.scale&&!date)return;
+ if(next==='day')pauseOceanAudio();
  ui.scale=next;if(date){ui.date=date;ui.weekStart=dateKey(monday(new Date(date+'T12:00')))}ui.open=null;
  render();window.scrollTo({top:0,behavior:'instant'});emit('scale',next);
  // A CSS entrance on the new page only: zooming "in" toward the day, "out" toward the long line.

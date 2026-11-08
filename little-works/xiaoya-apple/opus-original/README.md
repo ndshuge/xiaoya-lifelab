@@ -1,5 +1,16 @@
 # 小芽 · 铅笔与墨水（Opus Original 实验版）
 
+## 2026-11-08 · 浅海生态增量版（独立施工分支，尚未上线）
+- **保持原有岛屿/纸艺建筑、日周长线、所有业务模块与本地数据 schema**，原有海面、浪高、泡沫和船只轨迹继续使用，未切换 Astro 或重构 Three.js。
+- 海水着色层新增沙纹、海草床、暗礁、水下焦散，夜间降低沙底透光；灯塔存在且夜间亮灯时，海面有低强度扫光。
+- 新增 12 条桌面鱼 / 6 条手机鱼的确定性鱼群，均在浅海内绕岛游动；点击空白海面最多形成三圈涟漪，并令鱼群短暂逃开再归队；点击旗帜、人物或拖动镜头不会触发。
+- 减少动态效果会冻结海水与鱼群、禁止点水涟漪；景物仍可触控；鱼群与焦散都在既有海面一次材质绘制，不增加独立渲染通道。
+- 源码：`fish-school.mjs`、`sea-art-glsl.mjs`、`water-touch.mjs`；集成仅触及 `coastal-life.mjs` 和 `island.mjs`。
+- 测试：`node --test tests/*.test.mjs`、`node qa-ocean-ecology.cjs --webkit`、`node qa-seaside.cjs --webkit`。项目浏览器 QA 依赖现有 Playwright Core 与 Edge/WebKit 安装。
+- 设计参考：xiaowuzicode/xiaodao-island（MIT，https://github.com/xiaowuzicode/xiaodao-island），主要借鉴分层的海水/鱼群/灯塔思路；实现沿用小芽已有结构和调色。
+- **尚未真机 iPhone Safari 复验，也未完成真实设备的帧率量化**；音效未添加（避免自动播放和声音打扰）。本版本仅在 `feature/xiaoya-ocean-ecology-20261108` 本地工作树，未合并或部署。
+
+
 独立实验，分支 `experiment/xiaoya-opus-original-20261105`。不修改 native-v4、共享业务模块、评委入口或 GitHub Pages。
 
 ## 打开预览

@@ -2,12 +2,20 @@
 // The water uses view-angle reflection and a sun lobe, with no extra reflection render of the scene.
 import * as T from './vendor/three/three.module.min.js';
 import {nearestOpenPoint,insideLand} from './island-layout.mjs';
+import {createFishSchool} from './fish-school.mjs';
+import {seaArtFragment} from './sea-art-glsl.mjs';
 const rand=seed=>{let n=seed;return()=>((n=n*16807%2147483647)/2147483647)};
 export function waveHeight(x,z,t){return -.025+.025*Math.sin(x*1.6+z*.7-t*1.45)+.015*Math.sin(-x*.9+z*2.9+t*1.2);}
-export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material:M}){
+export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material:M,beacon=null}){
  const group=new T.Group();group.name='living-shoreline';
  const shoreRand=rand(11*7919+13),radii=Array.from({length:64},()=>1+(shoreRand()-.5)*.09);
- const uniforms={uTime:{value:0},uNight:{value:0},uCoast:{value:new T.Vector2(bounds.rx,bounds.rz)},uRadii:{value:radii}};
+ const fishSchool=createFishSchool(bounds,lite?6:12);
+ const fishUniforms=fishSchool.sample(0).map(p=>new T.Vector4(p.x,p.z,p.heading,p.size));
+ const tapUniforms=Array.from({length:3},()=>new T.Vector4(-100,-100,-100,0));
+ const beaconUniform=new T.Vector4(beacon?.x||0,beacon?.z||0,beacon?1:0,.68);
+ let nextTap=0,tapCount=0;
+ const art=seaArtFragment({fishCount:fishUniforms.length,lite});
+ const uniforms={uTime:{value:0},uNight:{value:0},uCoast:{value:new T.Vector2(bounds.rx,bounds.rz)},uRadii:{value:radii},uFish:{value:fishUniforms},uTaps:{value:tapUniforms},uBeacon:{value:beaconUniform}};
  const ocean=new T.Mesh(new T.PlaneGeometry(40,40,lite?64:112,lite?64:112).rotateX(-Math.PI/2),new T.ShaderMaterial({uniforms,vertexShader:`
  uniform float uTime;uniform vec2 uCoast;varying vec3 vWorld;varying vec2 vSea;
  void main(){vec3 p=position;float shore=length(p.xz/uCoast);float mask=smoothstep(.96,1.2,shore);
@@ -18,6 +26,7 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
  float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
  float ripple(vec2 p){return noise(p)*.65+noise(mat2(.8,-.6,.6,.8)*p*2.17)*.35;}
+ ${art.head}
  void main(){vec2 p=vSea;float a=atan(p.y/uCoast.y,p.x/uCoast.x),index=mod(a+6.2831853,6.2831853)/6.2831853*64.;int i=int(floor(index));float radius=mix(uRadii[i],uRadii[(i+1)-((i+1)/64)*64],fract(index));float e=length(p/uCoast)/radius;
  float dx=.040*cos(p.x*1.6+p.y*.7-uTime*1.45)-.0135*cos(-p.x*.9+p.y*2.9+uTime*1.2);
  float dz=.0175*cos(p.x*1.6+p.y*.7-uTime*1.45)+.0435*cos(-p.x*.9+p.y*2.9+uTime*1.2);
@@ -36,7 +45,9 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  float foam=(1.-smoothstep(.009,.026,abs(e-1.024-curl)))*(.28+.19*sin(a*13.+uTime)*sin(a*29.-uTime*.5));
  foam+=(1.-smoothstep(.004,.013,abs(e-1.09-.009*sin(a*12.-uTime*.55))))*.08;
  col=mix(col,vec3(.81,.89,.79),foam);col*=mix(1.,.34,uNight);
- col=mix(col,vec3(.018,.055,.095),uNight*.3);gl_FragColor=vec4(col,1.);}
+ col=mix(col,vec3(.018,.055,.095),uNight*.3);
+ ${art.color}
+ gl_FragColor=vec4(col,1.);}
  `}));ocean.name='ocean-waves';group.add(ocean);
  const sphere=new T.SphereGeometry(1,16,12),cylinder=new T.CylinderGeometry(1,1,1,10);
  const mesh=(g,geo,mat,x=0,y=0,z=0)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);m.receiveShadow=true;g.add(m);return m};
@@ -81,12 +92,16 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  // Small flying silhouettes over the sea; no flock of foreground props.
  const gulls=[];for(let i=0;i<2;i++){const g=new T.Group();const body=oval(g,0,0,0,.028,.035,.12,ivory),wings=[];for(const side of [-1,1]){const shape=new T.Shape();shape.moveTo(0,0);shape.quadraticCurveTo(side*.2,.03,side*.3,-.065);shape.lineTo(side*.18,-.03);shape.lineTo(0,-.025);const mat=new T.MeshStandardMaterial({color:0xf3eee2,side:T.DoubleSide,roughness:1});const wing=mesh(g,new T.ShapeGeometry(shape),mat);wing.rotation.x=-Math.PI/2;wings.push(wing);}group.add(g);gulls.push({root:g,wings,i});}
  return {group,water:ocean,
+  tap(x,z,time){if(!fishSchool.scare(x,z,time))return false;
+   tapUniforms[nextTap].set(x,z,time,1);nextTap=(nextTap+1)%tapUniforms.length;tapCount++;return true;
+  },
   tick(time,night=0,reduced=false){const t=reduced?0:time;uniforms.uTime.value=t;uniforms.uNight.value=night;grassTime.value=t;
+   fishSchool.sample(t).forEach((f,i)=>fishUniforms[i].set(f.x,f.z,f.heading,f.size));
    boats.forEach(({root,phase},i)=>{const a=phase+t*.022,rx=bounds.rx+1.15,rz=bounds.rz+1.0,x=Math.cos(a)*rx,z=Math.sin(a)*rz;root.position.set(x,waveHeight(x,z,t)+.015,z);root.rotation.set(Math.sin(t*1.3+i)*.035,Math.atan2(rx*Math.sin(a),-rz*Math.cos(a)),Math.cos(t*1.05+i)*.04);root.userData.sail.rotation.y=Math.PI/2+Math.sin(t*.9+i)*.06;
     const w=wakes[i];w.position.set(x,.012,z);w.rotation.y=root.rotation.y;});
    rabbits.forEach(({root,at,i})=>{root.rotation.y=(i?-.6:.9)+Math.sin(t*.43+i)*.14;root.position.y=heightAt(at.x,at.z)+.018+Math.max(0,Math.sin(t*.7+i)-.9)*.15;});
    gulls.forEach(({root,wings,i})=>{const a=t*.06+i*3.2;root.position.set(Math.cos(a)*(bounds.rx+1.1),1.65+Math.sin(t*.3+i)*.12,Math.sin(a)*(bounds.rz+.8));root.rotation.y=-a;wings.forEach((w,j)=>w.rotation.z=Math.sin(t*4.5+i)*(j?1:-1)*.24);});
   },
-  diagnostics(){return {boats:boats.length,rabbits:rabbits.length,gulls:gulls.length,grass:sites.length,boatClearance:Math.min(...boats.map(({root:b})=>Math.hypot(b.position.x/bounds.rx,b.position.z/bounds.rz))),waterTime:uniforms.uTime.value};}
+  diagnostics(){return {boats:boats.length,rabbits:rabbits.length,gulls:gulls.length,grass:sites.length,fish:fishUniforms.length,taps:tapCount,beacon:!!beacon,fishSchool:fishSchool.diagnostics(),boatClearance:Math.min(...boats.map(({root:b})=>Math.hypot(b.position.x/bounds.rx,b.position.z/bounds.rz))),waterTime:uniforms.uTime.value};}
  };
 }
