@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict');
 const path=require('node:path');
 const {spawn}=require('node:child_process');
-const {chromium}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
+const {chromium,webkit}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
 const HERE=__dirname, PORT=4478;
 async function waitServer(){
  const url='http://127.0.0.1:'+PORT+'/little-works/xiaoya-apple/opus-original/?judge=1&intro=0&scene=week';
@@ -14,7 +14,7 @@ async function waitServer(){
 }
 (async()=>{
  const server=spawn(process.execPath,[path.join(HERE,'preview-server.mjs'),'--no-open','--port',String(PORT)],{cwd:HERE,stdio:'ignore',windowsHide:true});
- let browser;
+ let browser,safariBrowser;
  try{
   const url=await waitServer();
   browser=await chromium.launch({channel:'msedge',headless:true});
@@ -51,8 +51,32 @@ async function waitServer(){
   await mobile.close();
   assert.deepEqual(errors,[]);
   console.log('PASS: desktop/mobile opt-in ocean audio, no autoplay, pauses on navigation');
+  if(process.argv.includes('--webkit')){
+   safariBrowser=await webkit.launch({headless:true});
+   const safariContext=await safariBrowser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
+   const safari=await safariContext.newPage(),safariErrors=[];
+   safari.on('pageerror',e=>safariErrors.push(e.message));
+   await safari.goto(url);
+   const sbtn=safari.locator('.island-controls [data-ocean-audio]');
+   await sbtn.waitFor({timeout:10000});
+   assert.equal(await sbtn.getAttribute('aria-pressed'),'false');
+   const hasAudio=await safari.evaluate(()=>!!(window.AudioContext||window.webkitAudioContext));
+   await sbtn.tap();
+   if(hasAudio){
+    await safari.waitForFunction(()=>document.querySelector('[data-ocean-audio]')?.getAttribute('aria-pressed')==='true',null,{timeout:5000});
+    await sbtn.tap();
+    assert.equal(await sbtn.getAttribute('aria-pressed'),'false');
+   }else{
+    assert.equal(await sbtn.getAttribute('aria-pressed'),'false','no phantom playback in a headless browser without Web Audio');
+    assert.match(await safari.locator('#whisper').innerText(),/无法播放/);
+   }
+   assert.deepEqual(safariErrors,[]);
+   await safariContext.close();
+   console.log('PASS: WebKit opt-in sound toggle');
+  }
  }finally{
   if(browser)await browser.close();
+  if(safariBrowser)await safariBrowser.close();
   server.kill();
  }
 })().catch(e=>{console.error(e.stack||e);process.exitCode=1});
