@@ -1,3 +1,9 @@
+## 2026-11-06 · 评委入口更新
+- 固定评委入口默认进入小芽小岛纸岛版：little-works/xiaoya-apple/opus-original/?judge=1。
+- 上一正式版 Apple Native V4 完整保留于 little-works/xiaoya-apple/native-v4/?judge=1；小岛页「旧版」按钮一键进入，/versions/ 可浏览全部版本。
+- edition=native-v4 从根链接跳到 V4，edition=original 仍进入经典 LifeLab。
+- 本次只调整发布路由和导航，没有迁移或覆盖用户数据。真实 iPhone Safari 尚待真机验收。
+
 # 小芽 · 正式仓库与版本档案
 
 更新：2026-11-03
@@ -6,7 +12,7 @@
 
 - 固定地址：`https://ndshuge.github.io/xiaoya-lifelab/?judge=1`。
 - 对应 GitHub 仓库：`ndshuge/xiaoya-lifelab`，**并非星系仓库**。
-- 根目录 `index.html` 当前在仓库内部转到 `little-works/xiaoya-apple/native-v4/`，原查询参数 `judge=1` 被完整保留。
+- 根目录 `index.html` 当前在仓库内部转到 `little-works/xiaoya-apple/opus-original/`，原查询参数 `judge=1` 被完整保留。
 - GitHub Pages 的网页内容可以持续发布；当时提交的比赛 ZIP/视频/PDF 属于不可自动更新的历史材料。
 - 原独立仓库的根源码与 V3 目录完整保留，供回滚和功能审计。
 
@@ -14,7 +20,8 @@
 
 | 版本 | 仓库内路径 | 状态 |
 | --- | --- | --- |
-| **Apple Native V4 / DAYFLOW** | `little-works/xiaoya-apple/native-v4/` | 正式最新入口：今天／事项／发展 |
+| **Apple Native V4 / DAYFLOW** | `little-works/xiaoya-apple/native-v4/` | 上一正式版：今天／事项／发展 |
+| **Opus Original · 铅笔与墨水** | `little-works/xiaoya-apple/opus-original/` | 当前小岛纸岛正式版；评委入口默认进入 `?judge=1` 演示模式 |
 | **Apple Native V3** | `little-works/xiaoya-apple/native-v3/` | 2026-11-02 完整存档：原始 Apple 新版与 AI、成长规划 |
 | **Apple 早期版** | `little-works/xiaoya-apple/` | 保留历史设计 |
 | **经典 LifeLab** | `original.html` | 保留经典成熟功能 |

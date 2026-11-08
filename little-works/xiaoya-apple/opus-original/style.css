@@ -589,3 +589,8 @@ body:has(#draft:not([hidden])) .whisper{bottom:calc(var(--dock-h) + env(safe-are
 /* ---------- reduced motion ---------- */
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 body.reduce *,body.reduce *::before,body.reduce *::after{animation:none!important;transition:none!important}
+
+.edition-link{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;padding:7px 5px;color:var(--ink-3);font:600 12px/1.2 var(--serif);text-decoration:none;border-radius:7px}
+.edition-link:hover,.edition-link:focus-visible{color:var(--ink);background:rgba(90,85,60,.08)}
+.edition-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+@media(max-width:420px){.mast{gap:5px}.scale button{min-width:36px;padding:0 3px}.scale button[data-scale="line"]{min-width:50px}.edition-link{font-size:11px;padding:6px 2px}}
