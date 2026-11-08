@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>方向 B · 小岛日光</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+/* Direction B — Immersive. The day lives on the same island as the week: sky and sea set the time of day,
+   paper cards float on the water, and the timeline is a path of stepping stones (one icon per kind of thing).
+   Palette is sampled from the 3D island: sea teal, grass, flag cream/yellow/rose, lighthouse red. */
+:root{--sea1:#bfe3e3;--sea2:#7fc0c4;--sea3:#3f9aa4;--grass:#cfdcab;--grass2:#8faa5e;--deep:#2f4a33;
+ --cream:#fbf6e8;--card:#fffdf7;--ink:#1f2a2c;--ink2:#4c5a5c;--ink3:#7d8b8c;
+ --course:#5a7d4a;--act:#2f7d8c;--due:#c8553d;--goal:#b8892c;--free:#ffffffb3;
+ --sans:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--serif:"Noto Serif SC",serif}
+*{box-sizing:border-box}html,body{margin:0}
+body{font:15px/1.55 var(--sans);color:var(--ink);min-height:100vh;
+ background:linear-gradient(180deg,#f6efdc 0,#f3ecd7 210px,var(--sea1) 330px,var(--sea2) 70%,var(--sea3) 100%) fixed}
+/* sky header */
+.sky{position:relative;height:230px;overflow:hidden}
+.sun{position:absolute;right:30%;top:58px;width:84px;height:84px;border-radius:50%;background:radial-gradient(#ffe7a8,#f6cf73);box-shadow:0 0 60px #f6cf7388}
+.hill{position:absolute;left:-5%;right:-5%;bottom:-40px;height:120px;border-radius:50% 50% 0 0/100% 100% 0 0;background:linear-gradient(#d7e3b6,#bccf8c)}
+.hill.b{left:30%;right:-20%;bottom:-60px;background:linear-gradient(#c9d9a0,#a9c178);height:130px}
+.top{position:absolute;inset:18px 32px auto;display:flex;align-items:center;gap:16px;max-width:1180px;margin:0 auto}
+.date b{font:700 28px/1 var(--serif);color:var(--deep)}.date small{display:block;margin-top:6px;color:#6c7a5c;font-size:13px}
+.seg{margin-left:auto;display:flex;background:#ffffff8c;backdrop-filter:blur(10px);border-radius:999px;padding:4px;box-shadow:0 2px 10px #2f4a3314}
+.seg span{padding:7px 16px;border-radius:999px;font-size:14px;color:var(--ink2)}.seg .on{background:var(--deep);color:#fff;font-weight:600}
+.xy{position:absolute;left:max(32px,calc(50% - 560px));bottom:16px;display:flex;align-items:flex-end;gap:12px}
+.xy img{width:104px;height:104px;filter:drop-shadow(0 8px 10px #2f4a3330)}
+.bubble{max-width:520px;background:var(--card);border-radius:20px 20px 20px 6px;padding:12px 16px;font:600 16.5px/1.6 var(--serif);box-shadow:0 8px 24px #2f4a331f;margin-bottom:40px}
+.bubble em{font-style:normal;color:var(--due)}
+.main{max-width:1180px;margin:0 auto;padding:18px 32px 130px;display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:24px}
+/* path timeline */
+.path{background:#ffffffa6;backdrop-filter:blur(14px);border-radius:26px;padding:20px 22px;box-shadow:0 10px 40px #1f4a5022}
+.path h3{margin:0 0 12px;font:700 17px var(--serif);color:var(--deep);display:flex;justify-content:space-between}
+.path h3 small{font:13px var(--sans);color:var(--ink3)}
+.row{display:grid;grid-template-columns:52px 40px 1fr;gap:12px;align-items:center;position:relative;min-height:58px}
+.row time{font:600 13px var(--sans);color:var(--ink2);text-align:right}
+.row .dot{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;position:relative;z-index:1;box-shadow:0 3px 8px #0002}
+.row .dot svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.row::before{content:"";position:absolute;left:83px;top:0;bottom:0;border-left:3px dotted #a7c3b9}
+.row:first-of-type::before{top:50%}.row:last-of-type::before{bottom:50%}
+.card{border-radius:16px;padding:9px 14px;background:var(--card);box-shadow:0 1px 3px #0000000f}
+.card b{font-weight:600}.card small{display:block;color:var(--ink3);font-size:12.5px}
+.row.course .dot{background:var(--course)}.row.act .dot{background:var(--act)}.row.due .dot{background:var(--due)}.row.goal .dot{background:var(--goal)}
+.row.done{opacity:.5}
+.row.pencil .dot{background:var(--card);color:var(--ink2);border:2px dashed #8fa4a0;box-shadow:none}
+.row.pencil .card{background:#fffdf7cc;border:1.5px dashed #9fb0ab;box-shadow:none}
+.row.free .dot{background:#ffffffd0;color:var(--grass2);box-shadow:none}.row.free .card{background:transparent;box-shadow:none;color:var(--ink3);padding-left:0}
+.row.now .card{background:transparent;box-shadow:none;padding:0}
+.nowbar{display:flex;align-items:center;gap:8px;font:600 12px var(--sans);color:var(--due)}.nowbar i{flex:1;height:2px;background:var(--due);border-radius:1px}
+/* planner sheet */
+.sheet{position:sticky;top:18px;align-self:start;background:var(--card);border-radius:28px;padding:20px;box-shadow:0 18px 50px #1f4a5033}
+.sheet h2{margin:0;font:700 19px var(--serif);color:var(--deep)}.sheet p.sub{margin:4px 0 14px;color:var(--ink3);font-size:13px}
+.int{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.int div{border-radius:16px;padding:10px;border:1.5px solid #e6e1d0;text-align:center;font-size:13px;color:var(--ink2)}
+.int div b{display:block;font-size:15px;color:var(--ink)}
+.int .on{border-color:var(--sea3);background:#e9f5f4}
+.meter{height:10px;border-radius:5px;background:#eef0e6;overflow:hidden;display:flex;margin:4px 0 6px}.meter i{display:block;height:100%}
+.legend{display:flex;gap:12px;font-size:12px;color:var(--ink3);margin-bottom:14px}.legend span::before{content:"";display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:4px;background:var(--c)}
+.reason{display:flex;gap:10px;padding:10px 0;border-top:1px solid #efeadb;font-size:13.5px}
+.reason i{flex:none;width:22px;height:22px;border-radius:50%;background:#e9f5f4;color:var(--sea3);display:grid;place-items:center;font-style:normal;font-weight:700;font-size:12px}
+.btns{display:flex;gap:8px;margin-top:12px}.btn{flex:1;text-align:center;border-radius:16px;padding:12px 0;font-weight:600}
+.btn.p{background:var(--deep);color:#fff}.btn.s{background:#eef3ea;color:var(--deep)}
+.dock{position:fixed;left:50%;bottom:18px;translate:-50% 0;width:min(720px,calc(100vw - 24px));display:flex;gap:10px;align-items:center;background:#fffdf7f0;backdrop-filter:blur(14px);border-radius:999px;padding:7px 7px 7px 8px;box-shadow:0 12px 40px #1f4a5040}
+.dock img{width:42px;height:42px;border-radius:50%;background:#e4eed6}.dock span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink3)}.dock .btn{flex:none;padding:10px 20px;border-radius:999px}
+@media(max-width:819px){
+ .sky{height:250px}.top{inset:14px 16px auto}.date b{font-size:22px}.seg span{padding:6px 11px}
+ .xy{left:16px;right:16px;bottom:10px}.xy img{width:72px;height:72px}.bubble{font-size:14.5px;margin-bottom:24px}.sun{right:auto;left:48%;top:96px;width:44px;height:44px}
+ .main{grid-template-columns:1fr;padding:12px 12px 120px;gap:14px}.sheet{position:static;order:-1;border-radius:24px}.path{padding:16px 12px}
+ .row{grid-template-columns:44px 36px 1fr;gap:10px}.row .dot{width:36px;height:36px}.row::before{left:71px}}
+</style></head><body>
+<div class="sky"><div class="sun"></div><div class="hill"></div><div class="hill b"></div>
+ <div class="top"><div class="date"><b>11月5日 周四</b><small>第 10 教学周 · 晴 6–15°</small></div><div class="seg"><span class="on">日</span><span>周</span><span>长线</span></div></div>
+ <div class="xy"><img src="../../native-v4/assets/xiaoya-mood-5-hi.webp" alt=""><div class="bubble">早上好！下午有实验、晚上有例会，<em>工数习题明晚截止</em>。我把上午和傍晚排好了，要看看吗？</div></div>
+</div>
+<div class="main">
+ <section class="path"><h3>今天的小路 <small>3 件已定 · 4 笔铅笔</small></h3><div id="rows"></div></section>
+ <aside class="sheet">
+  <h2>小芽的今日方案</h2><p class="sub">读了：课表 · 截止 · 目标 · 昨天完成情况</p>
+  <div class="int"><div><b>轻松</b>2 件 · 1.2h</div><div class="on"><b>平衡</b>4 件 · 2.9h</div><div><b>冲刺</b>6 件 · 4.5h</div></div>
+  <div class="meter"><i style="width:22%;background:var(--course)"></i><i style="width:10%;background:var(--act)"></i><i style="width:30%;background:var(--due)"></i><i style="width:6%;background:var(--goal)"></i></div>
+  <div class="legend"><span style="--c:var(--course)">课 3.1h</span><span style="--c:var(--act)">活动 1.5h</span><span style="--c:var(--due)">作业 2.4h</span><span style="--c:var(--goal)">目标 0.5h</span></div>
+  <div class="reason"><i>1</i><div>工数明晚截止且只要 45 分钟，<b>先清掉</b>。</div></div>
+  <div class="reason"><i>2</i><div>报告昨天没动，<b>拆成 3 小步</b>，今天只写方法与数据。</div></div>
+  <div class="reason"><i>3</i><div>实验后你通常累，16:00 只放<b>30 分钟吉他</b>。</div></div>
+  <div class="btns"><span class="btn s">换一版</span><span class="btn p">落墨 4 笔</span></div>
+ </aside>
+</div>
+<div class="dock"><img src="../../native-v4/assets/xiaoya-mood-3-hi.webp" alt=""><span>写一行，或者问小芽…</span><span class="btn p">落笔</span></div>
+<script>
+const I={book:'<svg viewBox="0 0 24 24"><path d="M4 5h6a3 3 0 0 1 3 3v11a2 2 0 0 0-2-2H4z"/><path d="M20 5h-6a3 3 0 0 0-3 3v11a2 2 0 0 1 2-2h7z"/></svg>',
+ flask:'<svg viewBox="0 0 24 24"><path d="M9 3h6M10 3v6l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3"/></svg>',
+ pen:'<svg viewBox="0 0 24 24"><path d="M4 20l4-1 11-11-3-3L5 16z"/></svg>',
+ flag:'<svg viewBox="0 0 24 24"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
+ music:'<svg viewBox="0 0 24 24"><path d="M9 18V6l10-2v12"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="16" r="2"/></svg>',
+ people:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20a6 6 0 0 1 12 0M14 20a4 4 0 0 1 7 0"/></svg>',
+ leaf:'<svg viewBox="0 0 24 24"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19l7-7"/></svg>'};
+const rows=[['course done','08:00',I.book,'高等数学','东 2-103 · 已上完'],['now','09:30','','<div class="nowbar">现在 09:30<i></i></div>',''],
+ ['pencil','10:00',I.pen,'✎ 工数习题第六章','45 分钟 · 明晚 22:00 截止'],['pencil','10:55',I.pen,'✎ 电路报告 · 方法与数据','60 分钟 · 第 1/3 步'],
+ ['free','12:00',I.leaf,'午饭和午休','空 2 小时'],['course','14:00',I.flask,'电子技术实验','东 3-204 · 到 15:35'],['pencil goal','16:00',I.music,'✎ 练吉他','30 分钟 · 本周 0/2'],
+ ['act','19:00',I.people,'机器人社团例会','创新中心 · 到 20:30'],['pencil','21:00',I.pen,'✎ 线代第 3 章','40 分钟 · 周一测验'],['due','22:00',I.flag,'明晚此时：工数习题截止','还有 36 小时']];
+document.getElementById('rows').innerHTML=rows.map(([k,t,i,a,b])=>'<div class="row '+k+'"><time>'+t+'</time><span class="dot">'+i+'</span><div class="card">'+(k==='now'?a:'<b>'+a+'</b><small>'+b+'</small>')+'</div></div>').join('');
+</script>
+</body></html>

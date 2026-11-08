@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>方向 A · 手账 2.0</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+/* Direction A — Clean. The paper journal, grown up: one strong headline, a calm sans UI, colour that carries
+   meaning (ink green = class, ink blue = activity, red = deadline), and Xiaoya's plan as a pencilled slip. */
+:root{--paper:#f6f2ea;--sheet:#fffdf8;--ink:#1d2330;--ink2:#4a5263;--ink3:#7c8494;--rule:#e6dfd2;
+ --class:#3f6b4f;--class-bg:#e6efe3;--act:#2f5d8a;--act-bg:#e3ecf6;--due:#c4513d;--due-bg:#fbe9e4;--pencil:#8a8577;--sprout:#7aa35a;
+ --sans:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--serif:"Noto Serif SC",serif}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--paper);color:var(--ink);font:15px/1.55 var(--sans)}
+.wrap{max-width:1180px;margin:0 auto;padding:22px 32px 120px}
+header{display:flex;align-items:center;gap:18px}
+.date b{font:700 30px/1 var(--serif);letter-spacing:.02em}.date small{display:block;color:var(--ink3);font-size:13px;margin-top:6px}
+.seg{margin-left:auto;display:flex;background:#ece6da;border-radius:12px;padding:3px}
+.seg span{padding:7px 16px;border-radius:9px;font-size:14px;color:var(--ink2)}.seg .on{background:var(--sheet);color:var(--ink);box-shadow:0 1px 2px #0001;font-weight:600}
+.grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;margin-top:26px}
+/* Xiaoya's voice */
+.voice{display:flex;gap:14px;align-items:flex-start;margin-bottom:18px}
+.voice img{width:64px;height:64px;border-radius:50%;background:#e8efdc;flex:none}
+.voice p{margin:4px 0 0;font:600 19px/1.6 var(--serif)}.voice p em{font-style:normal;color:var(--due)}
+.voice small{display:block;font:13px var(--sans);color:var(--ink3);margin-top:4px}
+/* timeline */
+.sheet{background:var(--sheet);border-radius:18px;box-shadow:0 1px 0 #0000000a,0 8px 30px #6b5a3a12;padding:18px 18px 18px 8px}
+.tl{position:relative;display:grid;grid-template-columns:52px 1fr;row-gap:0}
+.hr{font:12px var(--sans);color:var(--ink3);text-align:right;padding-right:10px;height:60px;transform:translateY(-8px)}
+.slots{position:relative;border-left:1px solid var(--rule)}
+.blk{position:absolute;left:10px;right:8px;border-radius:12px;padding:8px 12px;font-size:14px;display:flex;flex-direction:column;justify-content:center}
+.blk b{font-weight:600}.blk small{color:var(--ink2);font-size:12.5px}
+.blk.class{background:var(--class-bg);color:var(--class);box-shadow:inset 3px 0 0 var(--class)}
+.blk.act{background:var(--act-bg);color:var(--act);box-shadow:inset 3px 0 0 var(--act)}
+.blk.done{opacity:.55}.blk.done b{text-decoration:line-through;text-decoration-thickness:1px}
+.blk.pencil{background:transparent;color:var(--ink);border:0;flex-direction:row;align-items:center;justify-content:flex-start;gap:10px;padding:0 14px}
+.blk.pencil svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.blk.pencil b,.blk.pencil small{position:relative;padding-left:4px}.blk.pencil small{color:var(--pencil)}
+.now{position:absolute;left:-5px;right:0;height:0;border-top:2px solid var(--ink)}
+.now::before{content:"";position:absolute;left:0;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--ink)}
+.now span{position:absolute;right:0;top:-22px;font:600 12px var(--sans);background:var(--ink);color:#fff;border-radius:8px;padding:2px 7px}
+.due{position:absolute;left:10px;right:8px;height:0;border-top:2px solid var(--due)}
+.due span{position:absolute;left:0;top:-11px;background:var(--due-bg);color:var(--due);font:600 12px var(--sans);border-radius:999px;padding:2px 9px}
+.gap{position:absolute;left:10px;right:8px;border-radius:12px;background:repeating-linear-gradient(90deg,transparent 0 6px,#efe9dc 6px 7px);color:var(--ink3);font-size:12.5px;display:flex;align-items:center;padding:0 12px}
+/* plan slip */
+.slip{background:var(--sheet);border-radius:18px;padding:18px 18px 16px;box-shadow:0 1px 0 #0000000a,0 8px 30px #6b5a3a12;position:relative}
+.slip h2{margin:0;font:700 18px var(--serif)}.slip .sub{color:var(--ink3);font-size:13px;margin:4px 0 12px}
+.loop{display:flex;gap:4px;margin:0 0 14px}.loop i{flex:1;height:4px;border-radius:2px;background:#e9e3d6}.loop i.on{background:var(--sprout)}
+.loopl{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink3);margin-top:-8px;margin-bottom:14px}
+.int{display:flex;gap:6px;margin-bottom:14px}.int span{flex:1;text-align:center;padding:8px 0;border-radius:10px;border:1px solid var(--rule);font-size:13.5px;color:var(--ink2)}
+.int .on{border-color:var(--ink);background:var(--ink);color:#fff;font-weight:600}
+.step{display:grid;grid-template-columns:64px 1fr auto;gap:10px;padding:11px 0;border-top:1px dashed #dcd4c4;align-items:start}
+.step time{font:600 13px var(--sans);color:var(--ink2);padding-top:2px}
+.step b{display:block;font-weight:600}.step small{color:var(--ink3);font-size:12.5px;display:block;margin-top:2px}
+.tag{font-size:11.5px;border-radius:999px;padding:2px 8px;white-space:nowrap;margin-top:2px}.tag.r{background:var(--due-bg);color:var(--due)}.tag.g{background:var(--class-bg);color:var(--class)}
+.why{margin:10px 0 14px;padding:10px 12px;background:#f3efe5;border-radius:12px;font-size:13px;color:var(--ink2)}
+.why b{color:var(--ink)}
+.actions{display:flex;gap:8px}.btn{flex:1;text-align:center;padding:11px 0;border-radius:12px;font-weight:600;font-size:14.5px}
+.btn.ink{background:var(--ink);color:#fff}.btn.ghost{border:1px solid var(--rule);color:var(--ink2)}
+.review{margin-top:16px;display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--ink2);background:var(--sheet);border-radius:16px;padding:12px 14px}
+.review b{color:var(--ink)}
+.dock{position:fixed;left:50%;bottom:18px;translate:-50% 0;width:min(720px,calc(100vw - 24px));display:flex;gap:10px;align-items:center;background:var(--sheet);border-radius:20px;padding:8px 8px 8px 10px;box-shadow:0 10px 40px #3b2f1a26,0 0 0 1px #0000000d}
+.dock img{width:40px;height:40px;border-radius:50%;background:#e8efdc}.dock span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink3)}.dock .btn{flex:none;padding:10px 18px}
+@media(max-width:819px){.wrap{padding:14px 16px 110px}.date b{font-size:24px}.grid{grid-template-columns:1fr;gap:16px;margin-top:14px}
+ .voice img{width:48px;height:48px}.voice p{font-size:16.5px}.seg span{padding:6px 11px}.order-plan{order:-1}}
+</style></head><body>
+<div class="wrap">
+ <header><div class="date"><b>11月5日 周四</b><small>第 10 教学周 · 演示档案</small></div><div class="seg"><span class="on">日</span><span>周</span><span>长线</span></div></header>
+ <div class="grid">
+  <section>
+   <div class="voice"><img src="../../native-v4/assets/xiaoya-mood-4-hi.webp" alt=""><div><p>早上好。下午有实验、晚上有例会，<em>工数习题明晚截止</em>。我把上午和傍晚的空当排好了，你看看。</p><small>依据：今天的课表 · 3 项截止 · 昨天的完成情况</small></div></div>
+   <div class="sheet"><div class="tl" id="tl"></div></div>
+  </section>
+  <aside class="order-plan">
+   <div class="slip">
+    <h2>小芽排的今天</h2><p class="sub">铅笔稿 · 还没有写进日程</p>
+    <div class="loop"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+    <div class="loopl"><span>看懂</span><span>分析</span><span>出方案</span><span>你确认</span><span>复盘</span></div>
+    <div class="int"><span>轻松</span><span class="on">平衡</span><span>冲刺</span></div>
+    <div class="step"><time>10:00</time><div><b>工数习题第六章</b><small>45 分钟 · 明晚 22:00 截止</small></div><span class="tag r">最急</span></div>
+    <div class="step"><time>10:55</time><div><b>电路实验报告 · 先写方法与数据</b><small>60 分钟 · 拆成 3 步中的第 1 步</small></div><span class="tag r">周六截止</span></div>
+    <div class="step"><time>16:00</time><div><b>练吉他</b><small>30 分钟 · 本周 0/2 次</small></div><span class="tag g">目标</span></div>
+    <div class="step"><time>21:00</time><div><b>线代第 3 章复习</b><small>40 分钟 · 周一测验前留两次</small></div><span class="tag r">周一</span></div>
+    <p class="why"><b>为什么这样排：</b>昨天计划 3 件只完成了 2 件，报告没动，所以今天把报告拆小、放在精力最好的上午；实验和例会之间只留轻松的事。</p>
+    <div class="actions"><span class="btn ghost">逐条调整</span><span class="btn ink">全部落墨</span></div>
+   </div>
+   <div class="review"><img src="../../native-v4/assets/xiaoya-mood-3-hi.webp" alt="" width="34" height="34" style="border-radius:50%;background:#e8efdc"><div><b>昨天的复盘</b><br>完成 2/3 · 专注 85 分钟 · 心情 2/5。今天的量我减了一点。</div></div>
+  </aside>
+ </div>
+</div>
+<div class="dock"><img src="../../native-v4/assets/xiaoya-mood-3-hi.webp" alt=""><span>写一行，或者问小芽：下周两场考试帮我排一下</span><span class="btn ink">落笔</span></div>
+<script>
+// Hours 08–22 with a compressed rhythm; pixel positions are illustrative for the mockup only.
+const H=60,start=8,y=t=>{const [h,m]=t.split(':').map(Number);return (h+m/60-start)*H};
+const tl=document.getElementById('tl');let hrs='',slots='';
+for(let h=start;h<=22;h++)hrs+='<div class="hr">'+String(h).padStart(2,'0')+'</div>';
+const blk=(cls,a,b,title,sub)=>'<div class="blk '+cls+'" style="top:'+y(a)+'px;height:'+(y(b)-y(a)-4)+'px"><b>'+title+'</b><small>'+sub+'</small></div>';
+const pencil=(a,b,title,sub)=>{const h=y(b)-y(a)-4;return '<div class="blk pencil" style="top:'+y(a)+'px;height:'+h+'px"><svg preserveAspectRatio="none" viewBox="0 0 100 '+h+'"><path d="M2 3 Q50 1 98 3 Q99 '+h/2+' 98 '+(h-3)+' Q50 '+(h-1)+' 2 '+(h-3)+' Q1 '+h/2+' 2 3" fill="#f7f3ea" stroke="#8a8577" stroke-width="1.3" stroke-dasharray="5 3" vector-effect="non-scaling-stroke" stroke-linecap="round"/></svg><b>✎ '+title+'</b><small>'+sub+'</small></div>'};
+slots+=blk('class done','08:00','09:35','高等数学','东 2-103 · 已上完');
+slots+=pencil('10:00','10:45','工数习题第六章','小芽的铅笔 · 45 分钟');
+slots+=pencil('10:55','11:55','电路报告 · 方法与数据','小芽的铅笔 · 第 1/3 步');
+slots+='<div class="gap" style="top:'+y('12:00')+'px;height:'+(y('14:00')-y('12:00')-4)+'px">12:00–14:00 午饭和午休</div>';
+slots+=blk('class','14:00','15:35','电子技术实验','东 3-204');
+slots+=pencil('16:00','16:30','练吉他','小芽的铅笔 · 目标');
+slots+=blk('act','19:00','20:30','机器人社团例会','创新中心');
+slots+=pencil('21:00','21:40','线代第 3 章','小芽的铅笔');
+slots+='<div class="now" style="top:'+y('09:30')+'px"><span>09:30</span></div>';
+tl.innerHTML='<div>'+hrs+'</div><div class="slots" style="height:'+(14*H)+'px">'+slots+'</div>';
+</script>
+</body></html>

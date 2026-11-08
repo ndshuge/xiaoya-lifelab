@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>方向 C · 和小芽一起排</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@600;700&display=swap">
+<style>
+/* Direction C — Hybrid, agent-first. The conversation IS the planning surface: Xiaoya's working steps are
+   visible (what she read, what she weighed), and every proposal is numbered so it can be traced from the
+   reasoning on the left to the pencil block on the right. Solid readable content; only the dock floats. */
+:root{--bg:#f3f1ec;--panel:#fffefb;--ink:#1b2130;--ink2:#4b5365;--ink3:#80889a;--line:#e7e3da;
+ --sprout:#6f9a4e;--sprout-bg:#edf3e5;--course:#3e6a52;--course-bg:#e5efe8;--act:#36608f;--act-bg:#e4ecf6;--due:#c4513d;--due-bg:#fbeae5;--pencil:#8d8778;
+ --sans:-apple-system,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;--serif:"Noto Serif SC",serif}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--sans)}
+.app{display:grid;grid-template-columns:420px minmax(0,1fr);min-height:100vh}
+/* left: Xiaoya at work */
+.talk{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:20px 20px 110px}
+.who{display:flex;align-items:center;gap:12px;margin-bottom:18px}.who img{width:52px;height:52px;border-radius:50%;background:var(--sprout-bg)}
+.who b{font:700 18px var(--serif)}.who small{display:block;color:var(--ink3);font-size:12.5px}
+.who .see{margin-left:auto;font-size:12px;color:var(--ink2);background:#f2efe8;border-radius:999px;padding:5px 10px}
+.me{align-self:flex-end;background:var(--ink);color:#fff;border-radius:18px 18px 4px 18px;padding:9px 14px;max-width:85%;margin:4px 0 14px}
+.work{border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:12px;font-size:13px;color:var(--ink2)}
+.work summary{list-style:none;display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink)}
+.work summary::after{content:"展开";margin-left:auto;font-weight:400;color:var(--ink3);font-size:12px}
+.work ol{margin:8px 0 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.work li{display:flex;gap:8px}.work li i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--sprout-bg);color:var(--sprout);display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700}
+.say{font:600 16px/1.7 var(--serif);margin:2px 0 12px}
+.props{display:grid;gap:8px}
+.prop{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:start;padding:10px 12px;border-radius:14px;background:#faf8f3;border:1px solid var(--line)}
+.prop .n{width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:700 12px var(--sans)}
+.prop b{font-weight:600}.prop small{display:block;color:var(--ink3);font-size:12.5px}
+.prop .why{color:var(--ink2);font-size:12.5px;margin-top:3px}
+.prop .t{font:600 12.5px var(--sans);color:var(--ink2);white-space:nowrap}
+.ask{margin:12px 0 0;padding:10px 12px;border-radius:14px;background:#fff7e6;border:1px solid #f1dfb6;font-size:13.5px}
+.ask b{display:block;margin-bottom:6px}.chips{display:flex;gap:6px;flex-wrap:wrap}.chips span{border:1px solid #e3cf9c;border-radius:999px;padding:4px 10px;font-size:12.5px;background:#fffdf6}
+.go{display:flex;gap:8px;margin-top:14px}.btn{flex:1;text-align:center;padding:11px 0;border-radius:14px;font-weight:600}.btn.ink{background:var(--ink);color:#fff}.btn.gh{border:1px solid var(--line);color:var(--ink2)}
+/* right: the day */
+.day{padding:22px 32px 110px}
+.head{display:flex;align-items:center;gap:14px;margin-bottom:16px}.head b{font:700 28px var(--serif)}.head small{color:var(--ink3);font-size:13px;display:block}
+.seg{margin-left:auto;display:flex;background:#e9e5dc;border-radius:12px;padding:3px}.seg span{padding:7px 15px;border-radius:9px;font-size:14px;color:var(--ink2)}.seg .on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px #0001}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat{background:var(--panel);border-radius:16px;padding:12px 14px}.stat b{font:700 22px var(--sans)}.stat small{display:block;color:var(--ink3);font-size:12px}
+.stat.r b{color:var(--due)}.stat.g b{color:var(--sprout)}
+.board{background:var(--panel);border-radius:20px;padding:16px 16px 16px 6px;position:relative}
+.tl{display:grid;grid-template-columns:50px 1fr}
+.hr{height:58px;font-size:12px;color:var(--ink3);text-align:right;padding-right:10px;transform:translateY(-8px)}
+.slots{position:relative;border-left:1px solid var(--line)}
+.b{position:absolute;left:10px;right:10px;border-radius:12px;padding:7px 12px;font-size:14px;overflow:hidden}
+.b small{display:block;font-size:12px;opacity:.85}.b b{font-weight:600}
+.b.course{background:var(--course-bg);color:var(--course)}.b.act{background:var(--act-bg);color:var(--act)}.b.done{opacity:.5}
+.b.p{background:repeating-linear-gradient(135deg,#fbf9f4 0 8px,#f4f0e6 8px 9px);border:1.5px dashed var(--pencil);color:var(--ink);padding-left:44px}
+.b.p .n{position:absolute;left:10px;top:50%;translate:0 -50%;width:24px;height:24px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:700 12px var(--sans)}
+.b.p small{color:var(--pencil)}
+.now{position:absolute;left:-5px;right:0;border-top:2px solid var(--due)}.now::before{content:"";position:absolute;left:0;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--due)}
+.free{position:absolute;left:10px;right:10px;border-radius:12px;border:1px dashed #dcd6c8;color:var(--ink3);font-size:12.5px;display:flex;align-items:center;padding:0 12px}
+.dock{position:fixed;left:calc(210px + 50%);bottom:18px;translate:-50% 0;width:min(640px,calc(100vw - 460px));display:flex;gap:10px;align-items:center;background:#fffefbf2;backdrop-filter:blur(14px);border-radius:20px;padding:8px 8px 8px 14px;box-shadow:0 10px 40px #1b213022,0 0 0 1px #0000000a}
+.dock span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink3)}.dock .btn{flex:none;padding:10px 18px}
+@media(max-width:899px){.app{grid-template-columns:1fr}.talk{border-right:0;padding:14px 14px 8px;order:0}.day{padding:8px 12px 110px}
+ .head{display:none}.stats{grid-template-columns:repeat(2,1fr)}.dock{left:50%;width:calc(100vw - 24px)}.work ol{display:none}.work summary::after{content:"5 步"}
+ .mtop{display:flex!important}}
+.mtop{display:none;align-items:center;gap:10px;margin-bottom:12px}.mtop b{font:700 20px var(--serif)}.mtop .seg{margin-left:auto}
+</style></head><body>
+<div class="app">
+ <section class="talk">
+  <div class="mtop"><b>11月5日 周四</b><div class="seg"><span class="on">日</span><span>周</span><span>长线</span></div></div>
+  <div class="who"><img src="../../native-v4/assets/xiaoya-mood-4-hi.webp" alt=""><div><b>小芽</b><small>已连接 DeepSeek · 按需查询</small></div><span class="see">能看到 4 类 ›</span></div>
+  <div class="me">今天有点累，帮我排一下，别排太满</div>
+  <details class="work" open><summary><span style="color:var(--sprout)">●</span> 小芽查了 5 样东西</summary>
+   <ol><li><i>1</i>今天的课表：高数（已上完）、实验 14:00、例会 19:00</li><li><i>2</i>7 天内截止：工数（明晚）、电路报告（周六）、线代测验（周一）</li>
+   <li><i>3</i>空闲：09:30–12:00、15:35–19:00、20:30–22:00</li><li><i>4</i>昨天：计划 3 件完成 2 件，心情 2/5</li><li><i>5</i>本机记忆：「实验后容易累」</li></ol></details>
+  <p class="say">那就按「轻松」来：只排 3 笔，傍晚留空给你休息。</p>
+  <div class="props">
+   <div class="prop"><span class="n">1</span><div><b>工数习题第六章</b><small>明晚截止 · 45 分钟</small><div class="why">最急、量小，上午精力好先清掉</div></div><span class="t">10:00</span></div>
+   <div class="prop"><span class="n">2</span><div><b>电路报告 · 方法与数据</b><small>第 1/3 步 · 50 分钟</small><div class="why">昨天没动，拆小一点更容易开始</div></div><span class="t">10:55</span></div>
+   <div class="prop"><span class="n">3</span><div><b>线代第 3 章</b><small>40 分钟</small><div class="why">例会后只做轻量复习</div></div><span class="t">21:00</span></div>
+  </div>
+  <div class="ask"><b>有一件我不确定：</b>周六的报告，老师要求的是纸质版还是线上提交？<div class="chips"><span>纸质</span><span>线上</span><span>不知道，周五提醒我问</span></div></div>
+  <div class="go"><span class="btn gh">再轻一点</span><span class="btn ink">落墨 3 笔</span></div>
+ </section>
+ <section class="day">
+  <div class="head"><div><b>11月5日 周四</b><small>第 10 教学周 · 演示档案</small></div><div class="seg"><span class="on">日</span><span>周</span><span>长线</span></div></div>
+  <div class="stats"><div class="stat"><b>3</b><small>节课 / 活动</small></div><div class="stat r"><b>3</b><small>项 7 天内截止</small></div><div class="stat"><b>5.8h</b><small>今天还空着</small></div><div class="stat g"><b>2/3</b><small>昨天完成</small></div></div>
+  <div class="board"><div class="tl" id="tl"></div></div>
+ </section>
+</div>
+<div class="dock"><span>接着跟小芽说…</span><span class="btn ink">发送</span></div>
+<script>
+const H=58,s=8,y=t=>{const [h,m]=t.split(':').map(Number);return (h+m/60-s)*H};let hrs='',sl='';
+for(let h=s;h<=22;h++)hrs+='<div class="hr">'+String(h).padStart(2,'0')+'</div>';
+const b=(c,a,e,t,u,n)=>'<div class="b '+c+'" style="top:'+y(a)+'px;height:'+(y(e)-y(a)-4)+'px">'+(n?'<span class="n">'+n+'</span>':'')+'<b>'+t+'</b><small>'+u+'</small></div>';
+sl+=b('course done','08:00','09:35','高等数学','东 2-103 · 已上完');
+sl+=b('p','10:00','10:45','工数习题第六章','铅笔 · 45 分钟',1);
+sl+=b('p','10:55','11:45','电路报告 · 方法与数据','铅笔 · 第 1/3 步',2);
+sl+=b('course','14:00','15:35','电子技术实验','东 3-204');
+sl+='<div class="free" style="top:'+y('15:45')+'px;height:'+(y('18:50')-y('15:45'))+'px">15:35–19:00 留空 · 休息</div>';
+sl+=b('act','19:00','20:30','机器人社团例会','创新中心');
+sl+=b('p','21:00','21:40','线代第 3 章','铅笔 · 40 分钟',3);
+sl+='<div class="now" style="top:'+y('09:30')+'px"></div>';
+document.getElementById('tl').innerHTML='<div>'+hrs+'</div><div class="slots" style="height:'+14*H+'px">'+sl+'</div>';
+</script>
+</body></html>
