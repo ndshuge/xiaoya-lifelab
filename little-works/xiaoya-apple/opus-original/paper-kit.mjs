@@ -73,6 +73,16 @@ export function createPaperKit({material:M,windowMat,lampMats}){
   for(let i=0;i<6;i++){const a=i/6*Math.PI*2;box(lantern,.007,.09,.007,ink,Math.cos(a)*.073,.05,Math.sin(a)*.073);}
   mesh(new T.ConeGeometry(.108,.075,20),roof,lantern,0,.13,0);
   box(lantern,.014,.044,.014,roofEdge,0,.19,0);
+  const beamGeo=new T.BufferGeometry();
+  beamGeo.setAttribute('position',new T.Float32BufferAttribute([0,0,0,1.75,-.085,-.28,1.75,-.085,.28],3));
+  beamGeo.setAttribute('uv',new T.Float32BufferAttribute([0,.5,1,0,1,1],2));
+  const beamMat=new T.ShaderMaterial({
+   uniforms:{uAlpha:{value:0}},
+   vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
+   fragmentShader:'uniform float uAlpha;varying vec2 vUv;void main(){float edge=1.-abs(vUv.y*2.-1.);float fade=pow(1.-vUv.x,1.4);gl_FragColor=vec4(.98,.79,.52,uAlpha*edge*fade);}',
+   transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending
+  });
+  const beam=new T.Mesh(beamGeo,beamMat);beam.name='deadline-lighthouse-beam';beam.visible=false;beam.position.y=.05;beam.raycast=()=>{};lantern.add(beam);g.userData.beam=beam;
   g.userData.stages=[assembly,middle,upper];
   g.userData.fold=u=>{assembly.position.y=.035-.105*(1-smooth(clamp(u*3)));middle.position.y=.015+.125*smooth(clamp((u-.15)/.55));upper.position.y=.012+.12*smooth(clamp((u-.4)/.6));};g.userData.fold(1);return g;
  }

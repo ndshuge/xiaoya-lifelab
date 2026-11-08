@@ -2,22 +2,37 @@
 // The water uses view-angle reflection and a sun lobe, with no extra reflection render of the scene.
 import * as T from './vendor/three/three.module.min.js';
 import {nearestOpenPoint,insideLand} from './island-layout.mjs';
+import {createFishSchool} from './fish-school.mjs';
+import {createOceanArtShader} from './sea-art-glsl.mjs';
 const rand=seed=>{let n=seed;return()=>((n=n*16807%2147483647)/2147483647)};
 export function waveHeight(x,z,t){return -.025+.025*Math.sin(x*1.6+z*.7-t*1.45)+.015*Math.sin(-x*.9+z*2.9+t*1.2);}
 export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material:M}){
  const group=new T.Group();group.name='living-shoreline';
  const shoreRand=rand(11*7919+13),radii=Array.from({length:64},()=>1+(shoreRand()-.5)*.09);
- const uniforms={uTime:{value:0},uNight:{value:0},uCoast:{value:new T.Vector2(bounds.rx,bounds.rz)},uRadii:{value:radii}};
+ const school=createFishSchool(bounds,lite?4:8);
+ const fish=Array.from({length:8},()=>new T.Vector4(-100,-100,0,.1));
+ const tapUniforms=Array.from({length:2},()=>new T.Vector4(-100,-100,-100,0));
+ let tapNext=0,tapCount=0;
+ const uniforms={uTime:{value:0},uNight:{value:0},uCoast:{value:new T.Vector2(bounds.rx,bounds.rz)},uRadii:{value:radii},uFishCount:{value:school.count},uFish:{value:fish},uTaps:{value:tapUniforms}};
  const ocean=new T.Mesh(new T.PlaneGeometry(40,40,lite?64:112,lite?64:112).rotateX(-Math.PI/2),new T.ShaderMaterial({uniforms,vertexShader:`
  uniform float uTime;uniform vec2 uCoast;varying vec3 vWorld;varying vec2 vSea;
  void main(){vec3 p=position;float shore=length(p.xz/uCoast);float mask=smoothstep(.96,1.2,shore);
  p.y=-.025+mask*(.025*sin(p.x*1.6+p.z*.7-uTime*1.45)+.015*sin(-p.x*.9+p.z*2.9+uTime*1.2));
  vSea=p.xz;vec4 w=modelMatrix*vec4(p,1.);vWorld=w.xyz;gl_Position=projectionMatrix*viewMatrix*w;}
  `,fragmentShader:`
- uniform float uTime,uNight,uRadii[64];uniform vec2 uCoast;varying vec3 vWorld;varying vec2 vSea;
+ uniform float uTime,uNight,uRadii[64];uniform vec2 uCoast;uniform int uFishCount;uniform vec4 uFish[8],uTaps[2];varying vec3 vWorld;varying vec2 vSea;
  float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
  float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
  float ripple(vec2 p){return noise(p)*.65+noise(mat2(.8,-.6,.6,.8)*p*2.17)*.35;}
+ ${createOceanArtShader({lite})}
+ float fishInk(vec2 p,vec4 f){
+   vec2 d=p-f.xy;
+   float front=d.x*sin(f.z)+d.y*cos(f.z),side=d.x*cos(f.z)-d.y*sin(f.z);
+   float body=length(vec2(front/(f.w*1.25),side/(f.w*.53)));
+   float core=1.-smoothstep(.8,1.04,body);
+   float tail=(1.-smoothstep(.18,.42,abs(front/f.w+1.34)))*(1.-smoothstep(.26,.49,abs(side/f.w)));
+   return max(core,tail*.7);
+ }
  void main(){vec2 p=vSea;float a=atan(p.y/uCoast.y,p.x/uCoast.x),index=mod(a+6.2831853,6.2831853)/6.2831853*64.;int i=int(floor(index));float radius=mix(uRadii[i],uRadii[(i+1)-((i+1)/64)*64],fract(index));float e=length(p/uCoast)/radius;
  float dx=.040*cos(p.x*1.6+p.y*.7-uTime*1.45)-.0135*cos(-p.x*.9+p.y*2.9+uTime*1.2);
  float dz=.0175*cos(p.x*1.6+p.y*.7-uTime*1.45)+.0435*cos(-p.x*.9+p.y*2.9+uTime*1.2);
@@ -26,7 +41,16 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  vec3 n=normalize(vec3(-dx,1.,-dz)),v=normalize(cameraPosition-vWorld),sun=normalize(vec3(-.25,.9,-.55));
  float fres=.025+.65*pow(1.-max(dot(n,v),0.),4.);float spec=pow(max(dot(reflect(-sun,n),v),0.),110.);
  vec3 deep=vec3(.028,.24,.34),shallow=vec3(.17,.54,.55),sky=vec3(.59,.76,.74);
- vec3 col=mix(shallow,deep,smoothstep(1.02,1.9,e));col=mix(col,sky,fres*.8);
+ vec3 base=oceanArt(p,e,uTime,uNight);
+ vec3 col=mix(base,deep,smoothstep(1.58,2.3,e)*.62);col=mix(col,sky,fres*.8);
+ if(e>1.09&&e<2.08){
+   float allFish=0.;
+   for(int fi=0;fi<8;fi++){
+      if(fi>=uFishCount)break;
+      allFish=max(allFish,fishInk(p,uFish[fi]));
+   }
+   col=mix(col,vec3(.055,.28,.3),allFish*(.72-uNight*.24));
+ }
  col+=vec3(1.,.87,.62)*spec*(1.-uNight*.65)*.28;
  col+=(r-.5)*vec3(.025,.045,.04);
  float swell=sin(p.x*4.1+p.y*1.35+noise(p*.65)*3.1-uTime*1.35);
@@ -35,7 +59,18 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  float curl=sin(a*19.+sin(a*7.)+uTime*.8)*.007;
  float foam=(1.-smoothstep(.009,.026,abs(e-1.024-curl)))*(.28+.19*sin(a*13.+uTime)*sin(a*29.-uTime*.5));
  foam+=(1.-smoothstep(.004,.013,abs(e-1.09-.009*sin(a*12.-uTime*.55))))*.08;
- col=mix(col,vec3(.81,.89,.79),foam);col*=mix(1.,.34,uNight);
+ float taps=0.;
+ for(int ti=0;ti<2;ti++){
+    float age=uTime-uTaps[ti].z;
+    if(age>=0.&&age<3.2){
+      float dist=distance(p,uTaps[ti].xy);
+      float front=age*.85;
+      taps+=exp(-age*.75)*(1.-smoothstep(.04,.14,abs(dist-front)))*smoothstep(0.,.2,dist);
+    }
+ }
+ col=mix(col,vec3(.81,.89,.79),foam);
+ col+=vec3(.10,.16,.15)*min(taps,1.)*(1.-uNight*.6);
+ col*=mix(1.,.34,uNight);
  col=mix(col,vec3(.018,.055,.095),uNight*.3);gl_FragColor=vec4(col,1.);}
  `}));ocean.name='ocean-waves';group.add(ocean);
  const sphere=new T.SphereGeometry(1,16,12),cylinder=new T.CylinderGeometry(1,1,1,10);
@@ -81,12 +116,18 @@ export function createCoastalLife({bounds,lite=false,heightAt,obstacles,material
  // Small flying silhouettes over the sea; no flock of foreground props.
  const gulls=[];for(let i=0;i<2;i++){const g=new T.Group();const body=oval(g,0,0,0,.028,.035,.12,ivory),wings=[];for(const side of [-1,1]){const shape=new T.Shape();shape.moveTo(0,0);shape.quadraticCurveTo(side*.2,.03,side*.3,-.065);shape.lineTo(side*.18,-.03);shape.lineTo(0,-.025);const mat=new T.MeshStandardMaterial({color:0xf3eee2,side:T.DoubleSide,roughness:1});const wing=mesh(g,new T.ShapeGeometry(shape),mat);wing.rotation.x=-Math.PI/2;wings.push(wing);}group.add(g);gulls.push({root:g,wings,i});}
  return {group,water:ocean,
+  tapAt(x,z,time,reduced=false){
+    if(reduced||!school.scare(x,z,time))return false;
+    tapUniforms[tapNext%tapUniforms.length].set(x,z,time,1);
+    tapNext++;tapCount++;return true;
+  },
   tick(time,night=0,reduced=false){const t=reduced?0:time;uniforms.uTime.value=t;uniforms.uNight.value=night;grassTime.value=t;
+   school.sample(t).forEach((f,i)=>fish[i].set(f.x,f.z,f.heading,f.size));
    boats.forEach(({root,phase},i)=>{const a=phase+t*.022,rx=bounds.rx+1.15,rz=bounds.rz+1.0,x=Math.cos(a)*rx,z=Math.sin(a)*rz;root.position.set(x,waveHeight(x,z,t)+.015,z);root.rotation.set(Math.sin(t*1.3+i)*.035,Math.atan2(rx*Math.sin(a),-rz*Math.cos(a)),Math.cos(t*1.05+i)*.04);root.userData.sail.rotation.y=Math.PI/2+Math.sin(t*.9+i)*.06;
     const w=wakes[i];w.position.set(x,.012,z);w.rotation.y=root.rotation.y;});
    rabbits.forEach(({root,at,i})=>{root.rotation.y=(i?-.6:.9)+Math.sin(t*.43+i)*.14;root.position.y=heightAt(at.x,at.z)+.018+Math.max(0,Math.sin(t*.7+i)-.9)*.15;});
    gulls.forEach(({root,wings,i})=>{const a=t*.06+i*3.2;root.position.set(Math.cos(a)*(bounds.rx+1.1),1.65+Math.sin(t*.3+i)*.12,Math.sin(a)*(bounds.rz+.8));root.rotation.y=-a;wings.forEach((w,j)=>w.rotation.z=Math.sin(t*4.5+i)*(j?1:-1)*.24);});
   },
-  diagnostics(){return {boats:boats.length,rabbits:rabbits.length,gulls:gulls.length,grass:sites.length,boatClearance:Math.min(...boats.map(({root:b})=>Math.hypot(b.position.x/bounds.rx,b.position.z/bounds.rz))),waterTime:uniforms.uTime.value};}
+  diagnostics(){return {fishCount:school.count,fish:fish.slice(0,school.count).map(f=>({x:f.x,z:f.y})),waterTaps:tapCount,school:school.diagnostics(),boats:boats.length,rabbits:rabbits.length,gulls:gulls.length,grass:sites.length,boatClearance:Math.min(...boats.map(({root:b})=>Math.hypot(b.position.x/bounds.rx,b.position.z/bounds.rz))),waterTime:uniforms.uTime.value};}
  };
 }

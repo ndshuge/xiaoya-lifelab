@@ -32,3 +32,10 @@
 - 本机 WebKit 偶发整轮点击超时（同时期系统 WMI/netstat 也卡顿），重跑通过，判断为环境问题，但未彻底排除。
 - Edge 中曾两次出现「打卡表单内容被替换」的偶发失败，3 次以上重跑未复现；测试已加诊断输出，原因未查明。
 - 单次「加课」（exception type `add`）仍未提供界面，可用单次活动代替。
+
+## 2026-11-08 海洋生态增量（待发布开发分支）
+现有纸岛、日期旗、DDL 灯塔、小芽桌宠与业务逻辑不变。海水仍为一个 ShaderMaterial pass，在浅滩增加分层颜色吸收、沙纹、稀疏海草、礁石与光线焦散；程序化鱼群以纸艺水下剪影呈现，点击空白海水会出现涟漪并暂时惊散鱼群。带截止事项的灯塔夜间有轻量扫光，移动端减为 4 只鱼且跳过较贵的礁石层；减少动态效果时不播放鱼与涟漪动画。没有模型、图片或音频下载。
+
+测试：`node --test tests/*.test.mjs`、`node qa-ocean-ecology.cjs --webkit`、`node qa-seaside.cjs --webkit`。现场运行证据见 `docs/qa/2026-11-08-xiaoya-ocean-ecology.md`（相对仓库根）。
+
+技术思路参考 [xiaowuzicode/xiaodao-island](https://github.com/xiaowuzicode/xiaodao-island)，其开源许可证为 MIT；该功能使用自行编写的 Shader 与运动模型，未移植原项目素材。此分支尚未公开发布到评委入口。
