@@ -196,6 +196,13 @@ function render(){
  document.body.dataset.scale=ui.scale;document.body.dataset.view=ui.view;document.body.dataset.mode=store.mode();
  renderMast(data);
  const page=$('#page');
+ // Keep the WebGL canvas attached to the document while replacing the page. Safari can lose its surface on detach.
+ if(islandHost?.isConnected){
+  let parking=$('#island-parking');
+  if(!parking){parking=document.createElement('div');parking.id='island-parking';parking.style.cssText='position:fixed;left:-200vw;top:0;visibility:hidden;pointer-events:none;z-index:-1';document.body.append(parking)}
+  parking.style.width=(islandHost.clientWidth||innerWidth)+'px';parking.style.height=(islandHost.clientHeight||Math.round(innerHeight*.62))+'px';
+  parking.append(islandHost);
+ }
  const html=ui.view==='week'?renderWeek(data):ui.view==='line'?renderLine(data):ui.view==='pocket'?renderPocketView(data,{filter:ui.pocketFilter,now:new Date()}):ui.view==='journal'?renderJournalPage():renderDay(data);
  page.innerHTML=html;page.setAttribute('aria-busy','false');
  document.querySelectorAll('#scale [data-view]').forEach(b=>{const on=b.dataset.view===ui.view;b.setAttribute('aria-selected',String(on));b.tabIndex=on?0:-1});
@@ -443,7 +450,7 @@ function renderWeek(data){
   '<p class="legend"><span class="lg course">课程</span><span class="lg event">活动</span><span class="lg due">截止（时刻）</span><span class="lg pencil">✎ 铅笔建议</span><span class="lg conflict">重叠</span></p></section>';
 }
 // ---------- 3D paper island (week) ----------
-let islandApi=null,islandHost=null,islandLoad=null,islandFailed=false;
+let islandApi=null,islandHost=null,islandLoad=null,islandFailed=false,islandModelKey=null;
 const FACES={2:assetFace(2),3:assetFace(3),4:assetFace(4),5:assetFace(5)};
 // The coastal soundtrack is explicitly opt-in and never persisted or started on navigation.
 let oceanAudio=null;
@@ -515,14 +522,31 @@ async function mountIsland(){
  const slot=$('#island-slot');if(!slot)return;
  if(!islandHost){islandHost=document.createElement('div');islandHost.className='island-host'}
  slot.append(islandHost);
- if(islandFailed){slot.classList.add('is-fallback');return}
+ // Only show the loading label on a genuinely cold WebGL start.
+ if(islandHost.dataset.painted!=='true')slot.classList.add('is-loading');
+ if(islandFailed){slot.classList.remove('is-loading');slot.classList.add('is-fallback');return}
  if(!islandApi){
-  islandLoad||=loadIsland().then(m=>{islandApi=m.createIsland(islandHost,{onPick:islandPick,reduced,faces:FACES});if(!islandApi)throw Error('WebGL 不可用')})
-   .catch(()=>{islandFailed=true;slot.classList.add('is-fallback')});
+  islandLoad||=loadIsland().then(m=>{
+   islandApi=m.createIsland(islandHost,{onPick:islandPick,reduced,faces:FACES,onFrame:()=>{
+    islandHost.dataset.painted='true';
+    islandHost.closest('.island-slot')?.classList.remove('is-loading');
+   }});
+   if(!islandApi)throw Error('WebGL 不可用');
+  }).catch(()=>{
+   islandFailed=true;
+   islandHost.closest('.island-slot')?.classList.remove('is-loading');
+   islandHost.closest('.island-slot')?.classList.add('is-fallback');
+  });
   await islandLoad;
  }
- if(islandApi&&(ui.scale==='week'||ui.scale==='line'))islandApi.update(ui.scale==='line'?seasonModel():islandModel());
- if(islandApi)installOceanAudioButton();
+ // A slow dynamic import may finish after the user has switched tabs.
+ if(!islandApi||!slot.isConnected||slot!==$('#island-slot')||!['week','line'].includes(ui.view))return;
+ const model=ui.view==='line'?seasonModel():islandModel();
+ const key=JSON.stringify(model);
+ if(key!==islandModelKey){islandApi.update(model);islandModelKey=key}
+ // Reusing the canvas must restart painting even before IntersectionObserver fires.
+ islandApi.resume();
+ installOceanAudioButton();
 }
 function weekSentence(w){
  const busiest=[...w.days].sort((a,b)=>b.busyMinutes-a.busyMinutes)[0];
@@ -597,7 +621,9 @@ function setView(next,{date=null,filter=null}={}){
  render();
  window.scrollTo({top:date||filter?0:(ui.scroll[next]||0),behavior:'instant'});
  emit('view',next);if(SCALE_IDS.includes(next))emit('scale',next);
- const page=$('#page');if(!reduced()&&SCALE_IDS.includes(next)){page.dataset.zoom=dir;page.classList.remove('is-entering');void page.offsetWidth;page.classList.add('is-entering')}
+ // Pocket/Journal are not zoom levels: fading the entire 3D page from zero makes navigation look frozen.
+ const page=$('#page');page.classList.remove('is-entering');
+ if(!reduced()&&SCALE_IDS.includes(prior)&&SCALE_IDS.includes(next)){page.dataset.zoom=dir;void page.offsetWidth;page.classList.add('is-entering')}
 }
 function setScale(next,opts={}){if(SCALE_IDS.includes(next))setView(next,opts)}
 
