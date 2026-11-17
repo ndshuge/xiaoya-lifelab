@@ -4,7 +4,7 @@
 const http=require('node:http'),path=require('node:path'),fs=require('node:fs'),assert=require('node:assert/strict');
 const {chromium,webkit}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
 const ROOT=path.resolve(__dirname,'../../..');
-const SHOTS=path.join(ROOT,'docs/qa/evidence/2026-11-05-opus-original');
+const SHOTS=path.join(ROOT,'docs/qa/evidence/2026-11-17-xiaoya-simple-ui');
 const args=new Set(process.argv.slice(2));
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.json':'application/json','.png':'image/png'};
 const NOW=new Date('2026-11-05T09:30:00+08:00');
@@ -15,7 +15,7 @@ async function step(name,fn){await settle(currentPage);try{await fn();results.pu
 async function shot(page,name){if(!args.has('--shots'))return;fs.mkdirSync(SHOTS,{recursive:true});await page.waitForTimeout(450);await page.screenshot({path:path.join(SHOTS,name+'.png'),fullPage:false})}
 async function newPage(browser,base,{mobile=false,judge=true}={}){
  const context=await browser.newContext(mobile?{viewport:{width:390,height:844},deviceScaleFactor:2,isMobile:browser.browserType().name()!=='firefox',hasTouch:true}:{viewport:{width:1280,height:860}});
- const page=await context.newPage();currentPage=page;
+ const page=await context.newPage();page.setDefaultTimeout(12000);currentPage=page;
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error'&&!/fonts\.(googleapis|gstatic)/.test(m.text()))errors.push(m.text())});
  // Fonts are a progressive enhancement; keep QA offline and deterministic.
  await page.route(/fonts\.(googleapis|gstatic)\.com/,r=>r.fulfill({status:200,contentType:'text/css',body:''}));
@@ -54,7 +54,13 @@ async function run(browserType,label){
    assert.ok(await page.locator('.blk.ink .sprout-dot').count()>=1);
    await shot(page,label+'-desktop-inked');
    await page.evaluate(()=>window.__XY_OPUS.setScale('line'));
+   await page.locator('.cover-btn').click();
+   await page.locator('#sheet-body .settings-row[data-settings-section=archive]').click();
+   await page.locator('[data-settings-detail=history]').click();
    await page.locator('[data-erase="'+tx.id+'"]').click();
+   await page.locator('.sheet-cancel').click();
+   await page.locator('.sheet-cancel').click();
+   await page.locator('.sheet-cancel').click();
    await page.waitForFunction(n=>window.__XY_OPUS.getData().events.length===n,before.events.length);
    assert.equal((await data()).transactions.at(-1).status,'undone');
    await page.evaluate(()=>window.__XY_OPUS.setScale('day'));
@@ -83,7 +89,9 @@ async function run(browserType,label){
    await line.fill('每周练两次吉他');await line.press('Enter');
    await page.waitForFunction(()=>window.__XY_OPUS.getData().goals.some(g=>g.title.includes('吉他')&&g.weeklyTarget===2));
    await line.fill('买洗衣液');await line.press('Enter');
-   await page.locator('.slip-title',{hasText:'买洗衣液'}).waitFor();
+   await page.locator('#scale [data-view=pocket]').click();
+   await page.locator('.pocket-task-main',{hasText:'买洗衣液'}).waitFor();
+   await page.locator('#scale [data-view=day]').click();
    await line.fill('明天什么时候有空？');await line.press('Enter');
    await page.locator('#talk:not([hidden])').waitFor();
    await page.locator('.msg-xy .msg-text',{hasText:'较完整的空档'}).waitFor();
@@ -213,7 +221,8 @@ async function run(browserType,label){
   });
   await step(label+' designed confirm: cancel keeps, confirm deletes, 擦掉 restores',async()=>{
    page.once('dialog',()=>{throw Error('native dialog must not appear')});
-   await page.locator('.slip-title',{hasText:'买洗衣液'}).click();
+   await page.locator('#scale [data-view=pocket]').click();
+   await page.locator('.pocket-task-main',{hasText:'买洗衣液'}).click();
    await page.locator('[data-delete="task"]').click();
    await page.locator('#confirm[open]').waitFor();
    assert.equal(await page.evaluate(()=>document.activeElement.id),'confirm-cancel','destructive confirm focuses the safe choice');
@@ -226,20 +235,26 @@ async function run(browserType,label){
    await page.waitForFunction(()=>!window.__XY_OPUS.getData().tasks.some(t=>t.title==='买洗衣液'));
    await page.locator('#whisper [data-whisper-action]').click();
    await page.waitForFunction(()=>window.__XY_OPUS.getData().tasks.some(t=>t.title==='买洗衣液'));
+   await page.evaluate(()=>window.__XY_OPUS.setScale('day'));
   });
-  await step(label+' journal footer: mood draft stays unsaved until 合上, persists across reload, private key',async()=>{
-   await page.locator('.mood[data-mood="4"]').click();
-   assert.equal(await page.locator('#journal-status').innerText(),'未保存');
+  await step(label+' independent journal: unsaved draft, explicit save, reload and private key',async()=>{
+   await page.locator('#scale [data-view=journal]').click();
+   await page.locator('[data-journal-edit="2026-11-05"]').click();
+   await page.locator('.journal-mood:has(input[value="4"])').click();
    assert.equal(await page.evaluate(()=>localStorage.getItem('xiaoya-dayflow:journal:v1:demo')),null,'mood is not autosaved');
-   await page.locator('#journal-note').fill('实验课的电路终于调通了。');
-   await shot(page,label+'-desktop-footer');
-   await page.locator('[data-journal-save]').click();
+   await page.locator('#sheet-body textarea[name=note]').fill('实验课的电路终于调通了。');
+   await shot(page,label+'-desktop-journal-editor');
+   await page.locator('#sheet-ok').click();
+   await page.locator('#sheet').waitFor({state:'hidden'});
    const stored=JSON.parse(await page.evaluate(()=>localStorage.getItem('xiaoya-dayflow:journal:v1:demo')));
    assert.equal(stored[0].mood,4);assert.equal(stored[0].date,'2026-11-05');
-   await page.reload();await page.waitForSelector('.day,.week,.line-scale');
+   await page.reload();await page.waitForSelector('.journal-page,.day,.week,.line-scale');
+   await page.locator('#scale [data-view=journal]').click();
+   await page.locator('[data-journal-edit="2026-11-05"]').click();
+   assert.equal(await page.locator('#sheet-body textarea[name=note]').inputValue(),'实验课的电路终于调通了。');
+   assert.equal(await page.locator('#sheet-body input[name=mood]:checked').inputValue(),'4');
+   await page.locator('.sheet-cancel').click();
    await page.evaluate(()=>window.__XY_OPUS.setScale('day'));
-   assert.equal(await page.locator('#journal-note').inputValue(),'实验课的电路终于调通了。');
-   assert.equal(await page.locator('.mood[data-mood="4"]').getAttribute('aria-checked'),'true');
   });
   await step(label+' week and long line render real records',async()=>{
    await page.locator('#scale [data-scale="week"]').click();
@@ -370,6 +385,8 @@ async function run(browserType,label){
    let calls=0;
    await page.route(/api\.open-meteo\.com/,r=>{calls++;r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({daily:{time:['2026-11-05','2026-11-06','2026-11-07','2026-11-08'],precipitation_probability_max:[10,80,30,0],temperature_2m_min:[6,7,5,4],temperature_2m_max:[15,13,14,16]}})})});
    await page.locator('.cover-btn').click();
+   await page.locator('#sheet-body .settings-row[data-settings-section=ai]').click();
+   await page.locator('[data-settings-detail=context]').click();
    await page.locator('[data-cover="weather"]').click();
    assert.equal(calls,0,'no network without consent');
    await page.locator('#sheet-body select[name=city]').selectOption('xian');
@@ -378,11 +395,14 @@ async function run(browserType,label){
    await page.waitForFunction(()=>document.querySelector('#sheet-body')?.innerText.includes('已获取'));
    assert.equal(calls,1);
    await page.locator('#sheet-ok').click();
+   await page.locator('.sheet-cancel').click();
+   await page.locator('.sheet-cancel').click();
    await page.evaluate(()=>window.__XY_OPUS.setScale('day'));
    await page.locator('.weather',{hasText:'西安'}).waitFor();
   });
   await step(label+' demo/personal archives stay isolated; export carries journal',async()=>{
    await page.locator('.cover-btn').click();
+   await page.locator('#sheet-body .settings-row[data-settings-section=archive]').click();
    const [download]=await Promise.all([page.waitForEvent('download'),page.locator('[data-cover="export"]').click()]);
    const exported=JSON.parse(fs.readFileSync(await download.path(),'utf8'));
    assert.equal(exported.archiveMode,'demo');assert.ok(exported.journalV1.length>=1);assert.equal(exported.schema,1);
