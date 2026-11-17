@@ -110,7 +110,7 @@ function skyAt(hour){
  return {hemi:col(a.hemi,b.hemi),hi:lerp(a.hi,b.hi,t),sun:col(a.sun,b.sun),si:lerp(a.si,b.si,t),sky:[mixHex(a.sky[0],b.sky[0]),mixHex(a.sky[1],b.sky[1])],night:lerp(a.night,b.night,t),exp:lerp(a.exp,b.exp,t),hour:h};
 }
 
-export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={}){
+export function createIsland(host,{onPick=()=>{},onFrame=()=>{},reduced=()=>false,faces={}}={}){
  let renderer;
  try{renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'})}catch(e){host.dataset.webgl='off';return null}
  if(!renderer.getContext()){host.dataset.webgl='off';return null}
@@ -430,7 +430,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  }
 
  // ---------- animation loop ----------
- let raf=0,visible=true,hop=0,opening=null,openingResolve=null;
+ let raf=0,visible=true,hop=0,opening=null,openingResolve=null,firstPaint=false;
  function frame(){if(!disposed&&!raf&&visible)raf=requestAnimationFrame(tick)}
  const camW=new THREE.Vector3(),tmpQ=new THREE.Quaternion();
  function tick(now){
@@ -485,6 +485,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
   if(hoverRoot)showTip(hoverRoot);
   grade.uniforms.time.value=clock%10;
   placeCamera();renderer.info.reset();composer.render(dt);
+  if(model&&!firstPaint){firstPaint=true;onFrame()}
   if((busy||down)&&!disposed)frame();
  }
  const io=new IntersectionObserver(es=>{visible=es[0].isIntersecting&&document.visibilityState==='visible';if(visible){last=performance.now();frame()}});io.observe(host);
@@ -518,6 +519,7 @@ export function createIsland(host,{onPick=()=>{},reduced=()=>false,faces={}}={})
  let lastModel=null;
  return {
   update(m){if(lastModel&&lastModel.kind!==m.kind){firstBuild=true;known=new Set();walk.t=null}lastModel=m;update(m)},
+  resume(){visible=document.visibilityState==='visible'&&host.isConnected;last=performance.now();fit();},
   playOpening,
   celebrate(){hop=1;frame()},
   speak,
