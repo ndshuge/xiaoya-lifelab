@@ -3,7 +3,7 @@
 const http=require('node:http'),path=require('node:path'),fs=require('node:fs'),os=require('node:os'),assert=require('node:assert/strict');
 const {chromium,webkit}=require('E:/CHATGPT/projects/ai-academy/video-studio/node_modules/playwright-core');
 const ROOT=path.resolve(__dirname,'../../..');
-const SHOTS=path.join(ROOT,'docs/qa/evidence/2026-11-05-opus-original');
+const SHOTS=path.join(ROOT,'docs/qa/evidence/2026-11-17-xiaoya-simple-ui');
 const args=new Set(process.argv.slice(2));
 const MIME={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.svg':'image/svg+xml','.webp':'image/webp','.json':'application/json','.png':'image/png'};
 const NOW=new Date('2026-11-05T09:30:00+08:00');
@@ -25,12 +25,12 @@ async function run(type,label){
    return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({choices:[{message:{content:JSON.stringify({choices:opts.map(o=>({goalId:o.goalId,routeId:'steady',reason:'本周负担适中，按记录保持每周两次的稳定推进。'}))})}}]})});}
   return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({choices:[{message:{content:user.includes('Say OK')?'OK':'好的。'}}]})});
  });
- const page=await context.newPage();await page.clock.setFixedTime(NOW);
+ const page=await context.newPage();page.setDefaultTimeout(12000);await page.clock.setFixedTime(NOW);
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  page.on('dialog',d=>{errors.push('native dialog: '+d.message());d.dismiss()});
  await page.goto(base+'/little-works/xiaoya-apple/opus-original/?judge=1&intro=0&history=0&tips=0');await page.waitForSelector('.day');
  const data=()=>page.evaluate(()=>window.__XY_OPUS.getData());
- const S=async(name,fn)=>{await closeLayers(page);await page.evaluate(()=>{window.__XY_OPUS.ui.date=new Date().toLocaleDateString('sv-SE');window.__XY_OPUS.render()});await step(label+' '+name,fn)};
+ const S=async(name,fn)=>{await closeLayers(page);await page.evaluate(()=>{window.__XY_OPUS.setScale('day');window.__XY_OPUS.ui.date=new Date().toLocaleDateString('sv-SE');window.__XY_OPUS.render()});await step(label+' '+name,fn)};
  try{
   await S('task: edit title/minutes from its deadline line, complete, restore',async()=>{
    await page.evaluate(()=>{window.__XY_OPUS.ui.date='2026-11-06';window.__XY_OPUS.render()});
@@ -60,9 +60,12 @@ async function run(type,label){
   });
   await S('semester: dates enable teaching weeks in the masthead',async()=>{
    await page.locator('.cover-btn').click();
+   await page.locator('[data-settings-section=semester]').click();
+   await page.locator('[data-settings-detail=edit]').click();
    await page.locator('#sheet-body input[name=semStart]').fill('2026-09-07');
    await page.locator('#sheet-body input[name=semEnd]').fill('2027-01-17');
    await page.locator('#sheet-ok').click();
+   await page.waitForFunction(()=>window.__XY_OPUS.getData().semester.start==='2026-09-07',null,{timeout:6000}).catch(async()=>{throw Error('semester write failed: '+JSON.stringify(await page.evaluate(()=>({sem:window.__XY_OPUS.getData().semester,feedback:document.querySelector('#whisper')?.innerText,open:document.querySelector('#sheet')?.open}))))});
    await page.locator('.mast-sub',{hasText:'第 9 教学周'}).waitFor();
   });
   await S('calendar: CSV import shows a preview, then ink adds courses (erasable)',async()=>{
@@ -76,6 +79,8 @@ async function run(type,label){
    assert.match((await data()).transactions.at(-1).title,/导入/);
   });
   await S('calendar: ICS export contains courses, events and deadlines',async()=>{
+   await page.locator('.cover-btn').click();
+   await page.locator('[data-settings-section=semester]').click();
    const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('[data-export-ics]').first().click()]);
    const ics=fs.readFileSync(await dl.path(),'utf8');
    assert.match(ics,/BEGIN:VCALENDAR/);assert.match(ics,/SUMMARY:数据结构/);assert.match(ics,/SUMMARY:截止：线性代数阶段测验/);
@@ -91,11 +96,15 @@ async function run(type,label){
    await page.waitForFunction(()=>window.__XY_OPUS.getData().events.some(e=>e.name==='户外定向越野'&&e.outdoor===true));
    await page.evaluate(()=>window.__XY_OPUS.setScale('day'));
    await page.locator('.cover-btn').click();
+   await page.locator('[data-settings-section=ai]').click();
+   await page.locator('[data-settings-detail=context]').click();
    await page.locator('#sheet-body select[name=city]').selectOption('xian');
    await page.locator('#sheet-body input[name=weather]').check();
    await page.locator('[data-cover="weather"]').click();
    await page.waitForFunction(()=>document.querySelector('#sheet-body')?.innerText.includes('已获取'));
    await page.locator('#sheet-ok').click();
+   await page.locator('.sheet-cancel').click();
+   await page.locator('.sheet-cancel').click();
    await page.locator('.note.is-context',{hasText:'户外活动'}).locator('.note-head').click();
    await page.locator('[data-approve-context]').waitFor();
    await shot(page,label+'-audit-weather-note');
@@ -104,9 +113,15 @@ async function run(type,label){
   });
   await S('mood: saved low mood + explicit consent → gentle-day note; without consent nothing',async()=>{
    await page.locator('#line-input').fill('今天18点前交班级表格');await page.locator('#line-input').press('Enter');
-   await page.locator('.mood[data-mood="2"]').click();await page.locator('[data-journal-save]').click();
+   await page.locator('#scale [data-view=journal]').click();
+   await page.locator('[data-journal-edit="2026-11-05"]').click();
+   await page.locator('.journal-mood:has(input[value="2"])').click();
+   await page.locator('#sheet-ok').click();
+   await page.locator('#scale [data-view=day]').click();
    assert.equal(await page.locator('.note.is-context',{hasText:'轻一点'}).count(),0,'no consent → no mood-based advice');
    await page.locator('.cover-btn').click();
+   await page.locator('[data-settings-section=ai]').click();
+   await page.locator('[data-settings-detail=context]').click();
    await page.locator('#sheet-body input[name=mood]').check();
    await page.locator('#sheet-ok').click();
    await page.locator('.note.is-context',{hasText:'轻一点'}).waitFor();
@@ -121,9 +136,11 @@ async function run(type,label){
    await page.waitForFunction(()=>window.__XY_OPUS.getData().events.some(e=>e.goalId&&e.source==='Agent 已批准方案'));
   });
   await S('growth with model: explicit choice; only goal summary sent; model picks among given routes',async()=>{
+   await page.evaluate(()=>window.__XY_OPUS.setScale('line'));
    await page.locator('#xiaoya').click();await page.locator('.talk-connect').click();
    await page.locator('#sheet-body input[name=key]').fill('audit-test-key');await page.locator('#sheet-body input[name=consent]').check();
    await page.locator('#sheet-ok').click();await page.locator('#talk-status',{hasText:'已连接'}).waitFor();
+   await page.locator('#sheet').waitFor({state:'hidden'});
    await page.locator('.icon-x').click();
    await page.locator('[data-analyze]').click();
    await page.locator('#sheet[open] .facts').waitFor();
@@ -135,6 +152,7 @@ async function run(type,label){
   });
   await S('backup: export demo → restore into empty personal archive (ack required) incl. journal',async()=>{
    await page.locator('.cover-btn').click();
+   await page.locator('[data-settings-section=archive]').click();
    const [dl]=await Promise.all([page.waitForEvent('download'),page.locator('[data-cover="export"]').click()]);
    const file=path.join(os.tmpdir(),'xiaoya-audit-backup.json');fs.copyFileSync(await dl.path(),file);
    await page.locator('[data-cover="mode"]').click();
@@ -147,10 +165,10 @@ async function run(type,label){
    await page.waitForFunction(()=>window.__XY_OPUS.getData().courses.some(c=>c.name==='数据结构'));
    assert.ok(await page.evaluate(()=>window.__XY_OPUS.journal.all().length>=1),'journal restored');
    // Clean the personal archive again so the audit leaves no residue.
-   await page.locator('.cover-btn').click();await page.locator('[data-cover="clear"]').click();
+   await page.locator('.cover-btn').click();await page.locator('[data-settings-section=archive]').click();await page.locator('[data-settings-detail=manage]').click();await page.locator('[data-cover="clear"]').click();
    await page.locator('#confirm-ack').check();await page.locator('#confirm-ok').click();
    await page.waitForFunction(()=>window.__XY_OPUS.getData().tasks.length===0&&window.__XY_OPUS.journal.all().length===0);
-   await page.locator('.cover-btn').click();await page.locator('[data-cover="mode"]').click();
+   await page.locator('.cover-btn').click();await page.locator('[data-settings-section=archive]').click();await page.locator('[data-cover="mode"]').click();
    await page.waitForFunction(()=>window.__XY_OPUS.getMode()==='demo');
   });
   await S('compatibility: the official native-v4 page reads what this experiment wrote',async()=>{

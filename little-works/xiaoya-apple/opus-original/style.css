@@ -796,3 +796,133 @@ body[data-scale="day"]{background:linear-gradient(180deg,var(--paper) 0,var(--pa
 .day .mood[aria-checked="true"]{box-shadow:inset 0 0 0 1.5px var(--sprout)}
 .day #journal-note{border:1.5px solid var(--rule-strong);border-radius:14px;padding:4px 14px;background-color:var(--paper)}
 .day #journal-note:focus{border-color:var(--sea);box-shadow:0 0 0 3px color-mix(in srgb,var(--sea) 16%,transparent)}
+
+/* Five destinations keep the existing paper and ink identity, without a second Dock. */
+.mast{flex-direction:column;align-items:stretch;gap:2px;padding-bottom:8px}
+.mast-top{display:flex;align-items:center;justify-content:space-between;min-width:0;gap:12px}
+.mast-date{flex:1}
+.mast .cover-btn{width:auto;min-width:70px;height:44px;display:flex;gap:5px;padding:0 10px;font-size:14px;font-weight:600}
+.mast .cover-btn svg{height:18px;width:18px}
+.scale{width:100%;justify-content:space-between;gap:0;min-width:0}
+.scale button,.scale button[data-scale="line"]{min-width:0;flex:1;padding:0 2px;font:600 15px var(--serif);white-space:nowrap}
+.scale-thumb{transform:none;transition:left .22s var(--ease),width .22s var(--ease);bottom:2px}
+@media(max-width:350px){.scale button{font-size:14px}}
+
+/* Compact grouped settings: details are separate views in the existing modal. */
+.settings-home{max-width:600px;margin:auto}
+.settings-group{margin:6px 0 18px}
+.settings-group h3{font:600 14px var(--sans);color:var(--ink-2);margin:0 0 8px;padding:0 5px}
+.settings-rows{border:1px solid var(--rule);border-radius:16px;background:var(--card);overflow:hidden;margin:8px 0 12px}
+.settings-row,.settings-action{display:flex;align-items:center;gap:10px;min-height:54px;width:100%;padding:10px 14px;border:0;border-bottom:1px solid var(--rule);background:transparent;text-align:left;text-decoration:none;color:var(--ink);font:600 15px/1.5 var(--sans)}
+.settings-row:last-child,.settings-action:last-child{border-bottom:0}
+.settings-row:hover,.settings-action:hover{background:var(--ink-wash)}
+.settings-row span,.settings-action span{flex:1;min-width:0}
+.settings-row small,.settings-action small{font:400 12px/1.4 var(--sans);color:var(--ink-3);text-align:right;flex-shrink:1}
+.settings-row i,.settings-action i{font-style:normal;font-size:20px;color:var(--ink-3);margin-left:4px}
+.settings-check{display:flex;align-items:center;gap:12px;min-height:52px;padding:10px 12px;border-bottom:1px solid var(--rule);font-size:15px}
+.settings-check:last-child{border-bottom:0}
+.settings-check input{width:20px;height:20px;accent-color:var(--sprout);flex-shrink:0}
+.settings-check+ .settings-rows{margin-top:16px}
+@media(max-width:390px){.settings-row,.settings-action{padding:10px 12px;font-size:14px}.settings-row small,.settings-action small{max-width:43%}}
+
+
+/* Separate journal destination, reusing the original paper, ink and sprout tokens. */
+.journal-page{max-width:760px;margin:20px auto 28px;min-width:0;padding-bottom:24px}
+.journal-head,.journal-chart-header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.journal-head h1{font:700 30px var(--serif);margin:0}
+.journal-head .ink-btn,.journal-head .ghost-btn{min-height:44px}
+.journal-head-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+@media(max-width:390px){.journal-head-actions button{font-size:12px;padding:0 9px}}
+.journal-chart-header{margin:26px 0 8px}
+.journal-chart-header h2,.journal-summary h2{font:600 16px var(--sans);margin:0}
+.journal-summary{margin-top:20px;padding:18px 20px;border:1px solid var(--rule);border-radius:16px;background:var(--card)}
+.journal-summary p{font:400 15px/1.65 var(--sans);margin:8px 0 0;overflow-wrap:anywhere;white-space:pre-wrap}
+.journal-chart{border:1px solid var(--rule);border-radius:16px;background:var(--card);padding:12px 14px}
+.journal-chart-graphic{width:100%;overflow:hidden}
+.mood-plot{display:block;width:100%;height:auto;cursor:crosshair;touch-action:manipulation}
+.plot-axis text{font:12px var(--sans);fill:var(--ink-3)}
+.journal-chart-count{font:600 13px var(--sans);color:var(--ink-2);margin:4px 0}
+.journal-chart-count small{font-weight:400;color:var(--ink-3)}
+.journal-chart-selected{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:14px 0 2px}
+.journal-chart-selected button{min-height:44px;min-width:44px;border:1px solid var(--rule-strong);border-radius:10px;background:transparent;color:var(--ink)}
+.journal-chart-selected span{font-size:14px;color:var(--ink-2);text-align:center;min-width:148px}
+.journal-chart-selected .ghost-btn{min-width:auto;padding:0 12px}
+.journal-data{margin-top:14px;font:13px var(--sans);color:var(--ink-2)}
+.journal-data summary{min-height:42px;cursor:pointer;display:flex;align-items:center}
+.journal-data table{width:100%;border-collapse:collapse;font:13px var(--sans)}
+.journal-data th,.journal-data td{padding:7px 8px;text-align:left;border-bottom:1px solid var(--rule)}
+.journal-ranges{display:flex;gap:8px;margin:18px 0}
+.journal-ranges button{min-height:44px;padding:0 18px;border:1px solid var(--rule-strong);border-radius:999px;background:transparent;color:var(--ink)}
+.journal-ranges button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.journal-entries{list-style:none;margin:10px 0 0;padding:0;border:1px solid var(--rule);background:var(--card);border-radius:16px;overflow:hidden}
+.journal-entries li:not(:last-child){border-bottom:1px solid var(--rule)}
+.journal-entries button{width:100%;min-height:68px;border:0;background:transparent;display:grid;grid-template-columns:minmax(90px,auto) 1fr auto;align-items:center;gap:5px 10px;padding:12px 16px;text-align:left;color:var(--ink)}
+.journal-entries button:hover{background:var(--ink-wash)}
+.journal-entries b{font:600 14px var(--sans)}
+.journal-entries span{font:600 14px var(--sans)}
+.journal-entries small{grid-column:1/3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-3);font:13px var(--sans)}
+.journal-entries i{grid-column:3;grid-row:1/3;font-style:normal;color:var(--ink-3);font-size:20px}
+.journal-moods{border:0;margin:14px 0;padding:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.journal-moods legend{font:600 14px var(--sans);margin-bottom:10px}
+.journal-mood{display:flex;align-items:center;flex-direction:column;justify-content:center;gap:4px;cursor:pointer;min-width:0;min-height:90px;padding:7px 2px;border:1px solid var(--rule-strong);border-radius:12px;background:var(--paper)}
+.journal-mood:has(input:checked){border-color:var(--sprout);box-shadow:0 0 0 2px color-mix(in srgb,var(--sprout) 25%,transparent)}
+.journal-mood:focus-within{outline:2px solid var(--sprout);outline-offset:2px}
+.journal-mood input{position:absolute;opacity:0;width:1px;height:1px}
+.journal-mood img{max-width:100%;height:43px;object-fit:contain}
+.journal-mood span{font:12px var(--sans);white-space:nowrap;color:var(--ink-2)}
+.journal-read-mood{font:700 18px var(--serif)}
+.journal-read-note{font:15px/1.7 var(--sans);white-space:pre-wrap;overflow-wrap:anywhere;min-height:60px}
+.journal-teaser{margin:20px 0}
+.journal-teaser button{width:100%;min-height:50px;background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:10px 14px;text-align:left;color:var(--ink-2);font:600 14px var(--sans)}
+.journal-teaser button:hover{border-color:var(--sprout)}
+.goal-chart{border:1px solid var(--rule);border-radius:14px;padding:12px;margin:12px 0 22px;background:var(--card)}
+.goal-chart-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font:13px var(--sans)}
+.goal-chart-head div{display:flex;gap:2px;flex-shrink:0}
+.goal-chart-head button{min-height:40px;padding:0 12px;border:1px solid var(--rule-strong);background:transparent;border-radius:9px;color:var(--ink)}
+.goal-chart-head button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.goal-bars{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:4px}
+.goal-bar{display:flex;flex-direction:column;justify-content:end;align-items:center;gap:4px;min-width:0;min-height:130px;padding:0 1px 2px;border:1px solid transparent;border-radius:8px;background:transparent;color:var(--ink);font:11px var(--sans)}
+.goal-bar:hover,.goal-bar.is-selected{background:var(--ink-wash);border-color:var(--rule)}
+.goal-bar-plot{display:flex;align-items:end;height:68px;width:70%;border-bottom:1px solid var(--rule-strong)}
+.goal-bar-plot i{display:block;width:100%;min-height:0;background:var(--sprout);border-radius:4px 4px 0 0}
+.goal-bar b{font:600 12px var(--sans)}
+.goal-bar small{font:10px var(--sans);white-space:nowrap}
+@media(max-width:390px){
+ .journal-head h1{font-size:26px}
+ .journal-summary{padding:14px 16px}
+ .journal-chart{padding:8px}
+ .plot-axis text{font-size:27px}
+ .journal-moods{gap:4px}
+ .journal-mood{min-height:78px}
+ .journal-mood img{height:34px}
+ .journal-mood span{font-size:10px}
+ .goal-chart{padding:8px}
+ .goal-chart-head{flex-wrap:wrap}
+ .goal-bar small{font-size:9px}
+}
+
+/* Independent pocket, still using the original paper-and-ink surfaces. */
+.pocket-page{max-width:760px;margin:20px auto 0;padding-bottom:24px}
+.pocket-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.pocket-head h1{font:700 30px var(--serif);margin:0}
+.pocket-head .ink-btn{min-height:44px}
+.pocket-filters{display:flex;gap:6px;overflow-x:auto;margin:22px 0}
+.pocket-filters button{border:1px solid var(--rule-strong);background:transparent;border-radius:999px;min-height:44px;padding:0 15px;white-space:nowrap}
+.pocket-filters button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.pocket-filters button small{font:inherit;opacity:.7}
+.pocket-group{margin:16px 0 28px}
+.pocket-group h2{font:600 14px var(--sans);color:var(--ink-2);margin:0 0 8px}
+.pocket-group ul{list-style:none;margin:0;padding:0;background:var(--card);border-radius:16px;border:1px solid var(--rule);overflow:hidden}
+.pocket-task{display:flex;align-items:center;gap:12px;min-height:62px;padding:8px 13px;border-bottom:1px solid var(--rule)}
+.pocket-task:last-child{border-bottom:0}
+.pocket-task .slip-check{flex:0 0 30px}
+.pocket-task-main{border:0;background:none;text-align:left;flex:1;min-width:0;min-height:44px;padding:4px 0;display:flex;justify-content:center;flex-direction:column}
+.pocket-task-main b{font-weight:600;font-size:15px;overflow-wrap:anywhere}
+.pocket-task-main small{color:var(--ink-3);margin-top:3px}
+.pocket-task>span{color:var(--ink-3);font-size:20px}
+.pocket-task.is-overdue .pocket-task-main small{color:var(--alarm)}
+.pocket-empty{color:var(--ink-2);padding:20px 0}
+.pocket-summary{margin:20px 0 0}
+.pocket-summary button{width:100%;text-align:left;min-height:52px;border:1px solid var(--alarm);border-radius:12px;background:var(--alarm-soft);color:var(--ink);padding:10px 14px;font-weight:600}
+.pocket-detail h3{font:700 22px var(--serif);overflow-wrap:anywhere}
+@media(max-width:370px){.pocket-head h1{font-size:26px}.pocket-head .ink-btn{padding:0 12px}.pocket-filters button{padding:0 10px}}

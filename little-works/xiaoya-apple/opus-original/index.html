@@ -18,18 +18,20 @@
 <a class="skip" href="#page">跳到页面内容</a>
 <div class="app" id="app">
   <header class="mast">
-    <div class="mast-date" id="mast-date"><span class="mast-day">小芽</span></div>
-    <nav class="scale" id="scale" role="tablist" aria-label="时间尺度">
-      <button role="tab" type="button" data-scale="day" aria-selected="true">日</button>
-      <button role="tab" type="button" data-scale="week" aria-selected="false">周</button>
-      <button role="tab" type="button" data-scale="line" aria-selected="false">长线</button>
+    <div class="mast-top">
+      <div class="mast-date" id="mast-date"><span class="mast-day">小芽</span></div>
+      <button type="button" class="cover-btn" data-open="cover" aria-label="打开设置">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h11.5a2.5 2.5 0 0 1 2.5 2.5v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H19"/></svg><span>设置</span>
+      </button>
+    </div>
+    <nav class="scale" id="scale" role="tablist" aria-label="主要页面">
+      <button role="tab" type="button" data-view="day" data-scale="day" aria-selected="true">日</button>
+      <button role="tab" type="button" data-view="week" data-scale="week" aria-selected="false">周</button>
+      <button role="tab" type="button" data-view="line" data-scale="line" aria-selected="false">长线</button>
+      <button role="tab" type="button" data-view="pocket" aria-selected="false">口袋</button>
+      <button role="tab" type="button" data-view="journal" aria-label="心情日记" aria-selected="false">心情</button>
       <span class="scale-thumb" aria-hidden="true"></span>
     </nav>
-    <a id="opus-previous-version" class="edition-link" href="../native-v4/?judge=1" aria-label="打开上一正式版 Apple Native V4">旧版</a>
-    <a id="opus-version-library" class="edition-link" href="../../../versions/" aria-label="查看全部小芽版本">版本</a>
-    <button type="button" class="cover-btn" data-open="cover" aria-label="封底：档案、授权与设置">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h11.5a2.5 2.5 0 0 1 2.5 2.5v12.5H7.5A2.5 2.5 0 0 1 5 17V4.5Z"/><path d="M5 17a2.5 2.5 0 0 1 2.5-2.5H19"/></svg>
-    </button>
   </header>
   <main id="page" class="page" tabindex="-1" aria-live="polite" aria-busy="true">
     <div class="boot" aria-label="正在打开这一页">
